@@ -207,14 +207,6 @@ function ModelViewer() {
         directionalLight.castShadow = true;
         scene.add(directionalLight);
 
-        // Add grid for reference
-        const gridHelper = new THREE.GridHelper(20, 20);
-        scene.add(gridHelper);
-        
-        // Add axes for reference
-        const axesHelper = new THREE.AxesHelper(10);
-        scene.add(axesHelper);
-
         // Load the original 3D court model
         const loader = new GLTFLoader();
         loader.load(
@@ -283,10 +275,6 @@ function ModelViewer() {
                 homeX: pos.x, // Store home position
                 homeZ: pos.z   // Store home position
             };
-            
-            // Add helpers to visualize players - moved to court ends
-            const helper = new THREE.BoxHelper(player, 0x00ff00);
-            scene.add(helper);
             
             return player;
         });
