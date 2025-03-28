@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import PoseDetector from './poseDetection';
 
 function createPlayer(x, z, rotation, scale = 1) {
     const group = new THREE.Group();
@@ -126,6 +127,7 @@ function ModelViewer() {
     const containerRef = useRef(null);
     const playersRef = useRef([]);
     const ballRef = useRef(null);
+    const poseDetectorRef = useRef(null);
     const gameStateRef = useRef({
         ballVelocity: new THREE.Vector3(0, 0, 0),
         ballInPlay: false,
@@ -137,7 +139,8 @@ function ModelViewer() {
         returnToCenter: {
             player1: false,
             player2: false
-        }
+        },
+        usePoseDetection: true // Enable pose detection
     });
     
     // Temp vars to store player movement data with court ends positions
@@ -146,7 +149,7 @@ function ModelViewer() {
         { targetX: 8, targetZ: 0, isLeftSide: false, moveTime: 0, swinging: false, swingTime: 0 }
     ]);
 
-    // Instructions overlay
+    // Instructions overlay updated with pose detection
     const [instructions] = useState(
         <div style={{
             position: 'absolute',
@@ -164,6 +167,7 @@ function ModelViewer() {
             <ul style={{ paddingLeft: '20px', margin: '10px 0' }}>
                 <li>Players move automatically</li>
                 <li>SPACEBAR: Swing racket at ball</li>
+                <li>Swing your arm to hit the ball (using webcam)</li>
                 <li>Press SPACEBAR first to serve the ball</li>
                 <li>Click anywhere to restart game</li>
             </ul>
@@ -350,92 +354,114 @@ function ModelViewer() {
             }
         }
         
-        // Function to handle keyboard input
+        // Setup pose detection
+        async function setupPoseDetection() {
+            try {
+                const poseDetector = new PoseDetector();
+                await poseDetector.setup();
+                
+                // Register swing callback
+                poseDetector.onSwing(() => {
+                    console.log("Pose detection: Swing detected!");
+                    handleSwing();
+                });
+                
+                poseDetectorRef.current = poseDetector;
+                console.log("Pose detection initialized");
+            } catch (error) {
+                console.error("Error setting up pose detection:", error);
+                gameStateRef.current.usePoseDetection = false;
+            }
+        }
+        
+        // Function to handle swings (from pose detection or spacebar)
+        function handleSwing(swingDirection = 'right') {
+            console.log("Handling swing!", swingDirection);
+            const gameState = gameStateRef.current;
+            const player1 = players[0];
+            
+            // Swing racket animation
+            const playerData1 = playerData.current[0];
+            if (!playerData1.swinging) {
+                playerData1.swinging = true;
+                playerData1.swingTime = 0;
+                
+                console.log("Player 1 swinging racket!");
+                
+                // Get racket position in world space
+                const rightArm = player1.userData.rightArm;
+                const racketGroup = player1.userData.racketGroup;
+                const racketPos = new THREE.Vector3();
+                
+                // Get racket's world position for more accurate collision
+                racketGroup.getWorldPosition(racketPos);
+                
+                // Calculate racket-to-ball distance instead of player-to-ball
+                const racketToBallDistance = racketPos.distanceTo(ball.position);
+                console.log("Racket to ball distance: " + racketToBallDistance.toFixed(2));
+                
+                // If ball not in play yet and racket is close enough, serve it
+                if (!gameState.ballInPlay && racketToBallDistance < 1.2) {
+                    gameState.ballInPlay = true;
+                    gameState.waitingToServe = false;
+                    
+                    // Direct the serve clearly toward player 2 with better trajectory
+                    const targetX = 8; // Player 2's position
+                    const targetZ = 0; // Center of the court
+                    
+                    // Calculate direction to target
+                    const dirVec = new THREE.Vector3(targetX - player1.position.x, 6, targetZ - player1.position.z);
+                    dirVec.normalize();
+                    
+                    // Add velocity with slight randomness for variation
+                    gameState.ballVelocity.set(
+                        dirVec.x * (12 + Math.random() * 2), // Consistent X direction toward player 2
+                        6 + Math.random(),                   // Good arc height
+                        dirVec.z * (4 + Math.random() * 2)   // Z direction toward center with slight variation
+                    );
+                    
+                    gameState.lastHitBy = 0;
+                    console.log("Ball served toward player 2!");
+                } 
+                // If ball is close to racket during play, hit it
+                else if (racketToBallDistance < 1.0) { 
+                    // Calculate new velocity based on swing direction
+                    const baseSpeed = 12 + Math.random() * 3; // Base speed
+                    const arcHeight = 6 + Math.random() * 2;  // Arc height
+                    
+                    // Determine Z direction based on swing direction
+                    let zVelocity;
+                    if (swingDirection === 'left') {
+                        zVelocity = -4 - Math.random() * 2; // Hit to the left
+                    } else if (swingDirection === 'right') {
+                        zVelocity = 4 + Math.random() * 2;  // Hit to the right
+                    } else {
+                        zVelocity = (Math.random() - 0.5) * 4; // Random direction
+                    }
+                    
+                    // Set velocity with the determined direction
+                    gameState.ballVelocity.set(
+                        baseSpeed,  // Always going right from player 1
+                        arcHeight,  // Arc height
+                        zVelocity   // Z direction based on swing
+                    );
+                    
+                    gameState.lastHitBy = 0;
+                    // Flag player 1 to return to center
+                    gameState.returnToCenter.player1 = true;
+                    console.log("Ball hit by player 1! Direction:", swingDirection);
+                } else {
+                    console.log("Swing missed - ball too far from racket! Distance: " + racketToBallDistance.toFixed(2));
+                }
+            }
+        }
+        
+        // Function to handle keyboard input - updated to use handleSwing
         function handleKeyDown(event) {
             console.log(`Key pressed: ${event.code}`);
             
             if (event.code === 'Space') {
-                const gameState = gameStateRef.current;
-                const player1 = players[0];
-                
-                // Swing racket animation
-                const playerData1 = playerData.current[0];
-                if (!playerData1.swinging) {
-                    playerData1.swinging = true;
-                    playerData1.swingTime = 0;
-                    
-                    console.log("Player 1 swinging racket!");
-                    
-                    // Get racket position in world space
-                    const rightArm = player1.userData.rightArm;
-                    const racketGroup = player1.userData.racketGroup;
-                    const racketPos = new THREE.Vector3();
-                    
-                    // Get racket's world position for more accurate collision
-                    racketGroup.getWorldPosition(racketPos);
-                    
-                    // Calculate racket-to-ball distance instead of player-to-ball
-                    const racketToBallDistance = racketPos.distanceTo(ball.position);
-                    console.log("Racket to ball distance: " + racketToBallDistance.toFixed(2));
-                    
-                    // If ball not in play yet and racket is close enough, serve it
-                    if (!gameState.ballInPlay && racketToBallDistance < 1.2) {
-                        gameState.ballInPlay = true;
-                        gameState.waitingToServe = false;
-                        
-                        // Direct the serve clearly toward player 2 with better trajectory
-                        const targetX = 8; // Player 2's position
-                        const targetZ = 0; // Center of the court
-                        
-                        // Calculate direction to target
-                        const dirVec = new THREE.Vector3(targetX - player1.position.x, 6, targetZ - player1.position.z);
-                        dirVec.normalize();
-                        
-                        // Add velocity with slight randomness for variation
-                        gameState.ballVelocity.set(
-                            dirVec.x * (12 + Math.random() * 2), // Consistent X direction toward player 2
-                            6 + Math.random(),                   // Good arc height
-                            dirVec.z * (4 + Math.random() * 2)   // Z direction toward center with slight variation
-                        );
-                        
-                        gameState.lastHitBy = 0;
-                        console.log("Ball served toward player 2!");
-                    } 
-                    // If ball is close to racket during play, hit it
-                    else if (racketToBallDistance < 1.0) { 
-                        // Calculate new velocity based on player position with more controlled randomness
-                        const directionX = 1; // Always going right from player 1
-                        const angleVariation = Math.random() * 0.2 - 0.1; // -10% to +10% angle variation (tighter)
-                        
-                        // Apply angle variation to create more varied shots
-                        const xVelocity = directionX * (12 + Math.random() * 3); // Faster
-                        const yVelocity = 6 + Math.random() * 2; // Higher arc
-                        const zVelocity = (Math.random() - 0.5) * 4; // More z variation
-                        
-                        // Calculate normalized direction vector and then apply angle variation
-                        const magnitude = Math.sqrt(xVelocity * xVelocity + zVelocity * zVelocity);
-                        const normalizedX = xVelocity / magnitude;
-                        const normalizedZ = zVelocity / magnitude;
-                        
-                        // Apply rotation to the normalized vector
-                        const rotatedX = normalizedX * Math.cos(angleVariation) - normalizedZ * Math.sin(angleVariation);
-                        const rotatedZ = normalizedX * Math.sin(angleVariation) + normalizedZ * Math.cos(angleVariation);
-                        
-                        // Set final velocity
-                        gameState.ballVelocity.set(
-                            rotatedX * magnitude,
-                            yVelocity,
-                            rotatedZ * magnitude
-                        );
-                        
-                        gameState.lastHitBy = 0;
-                        // Flag player 1 to return to center
-                        gameState.returnToCenter.player1 = true;
-                        console.log("Ball hit by player 1! Racket distance: " + racketToBallDistance.toFixed(2));
-                    } else {
-                        console.log("Swing missed - ball too far from racket! Distance: " + racketToBallDistance.toFixed(2));
-                    }
-                }
+                handleSwing();
             }
         }
         
@@ -810,6 +836,11 @@ function ModelViewer() {
         // Start animation
         animate();
         
+        // Setup pose detection if enabled
+        if (gameStateRef.current.usePoseDetection) {
+            setupPoseDetection();
+        }
+        
         // Add event listeners
         window.addEventListener('keydown', handleKeyDown);
         renderer.domElement.addEventListener('click', startGame);
@@ -830,6 +861,12 @@ function ModelViewer() {
             window.removeEventListener('click', startGame);
             renderer.domElement.removeEventListener('click', startGame);
             renderer.dispose();
+            
+            // Clean up pose detector
+            if (poseDetectorRef.current) {
+                poseDetectorRef.current.cleanup();
+            }
+            
             containerRef.current?.removeChild(renderer.domElement);
         };
     }, []);
