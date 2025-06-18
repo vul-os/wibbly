@@ -2,39 +2,112 @@ import React, { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
+const PowerBox = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
   const meshRef = useRef();
   const groupRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
+  const [dragStartPos, setDragStartPos] = useState(null);
   const { camera, gl } = useThree();
 
-  // Define connection ports for the control unit
+  // Define connection ports for the power box
   const connectionPorts = [
     {
-      id: 'electric_power',
+      id: 'electric_out_1',
       type: 'electric',
-      label: 'Power Input',
-      offset: [0, -1.3, -0.6],
-      direction: [0, -1, 0],
-      required: true
+      label: 'Power Output 1',
+      offset: [0.55, 1.0, 0],
+      direction: [1, 0, 0],
+      required: false
+    },
+    {
+      id: 'electric_out_2',
+      type: 'electric',
+      label: 'Power Output 2',
+      offset: [0, 1.0, 0.55],
+      direction: [0, 0, 1],
+      required: false
+    },
+    {
+      id: 'electric_out_3',
+      type: 'electric',
+      label: 'Power Output 3',
+      offset: [-0.55, 1.0, 0],
+      direction: [-1, 0, 0],
+      required: false
+    },
+    {
+      id: 'electric_out_4',
+      type: 'electric',
+      label: 'Power Output 4',
+      offset: [0, 1.0, -0.55],
+      direction: [0, 0, -1],
+      required: false
     }
   ];
 
+  // Grid snap size (CAD-like behavior)
+  const GRID_SIZE = gridSize || 1.0;
+
   const snapToGrid = (value) => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
-  useFrame(() => {
+  // Create lightning bolt texture
+  const createLightningTexture = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    
+    // Clear background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw lightning bolt
+    ctx.fillStyle = '#FFD700'; // Gold color
+    ctx.strokeStyle = '#FFA000'; // Darker gold outline
+    ctx.lineWidth = 2;
+    
+    ctx.beginPath();
+    // Lightning bolt shape
+    ctx.moveTo(64, 20);  // Top center
+    ctx.lineTo(45, 55);  // Left side
+    ctx.lineTo(60, 55);  // Small right jog
+    ctx.lineTo(40, 100); // Bottom left
+    ctx.lineTo(75, 65);  // Right side up
+    ctx.lineTo(60, 65);  // Small left jog
+    ctx.lineTo(80, 30);  // Top right
+    ctx.closePath();
+    
+    ctx.fill();
+    ctx.stroke();
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+  };
+
+  useFrame((state) => {
     if (meshRef.current) {
       if (isSelected) {
-        meshRef.current.material.emissive.setHex(0x444444);
+        meshRef.current.children.forEach(child => {
+          if (child.material && child.material.emissive) {
+            child.material.emissive.setHex(0x444444);
+          }
+        });
       } else if (hovered && isDraggable) {
-        meshRef.current.material.emissive.setHex(0x222222);
+        meshRef.current.children.forEach(child => {
+          if (child.material && child.material.emissive) {
+            child.material.emissive.setHex(0x222222);
+          }
+        });
       } else {
-        meshRef.current.material.emissive.setHex(0x000000);
+        meshRef.current.children.forEach(child => {
+          if (child.material && child.material.emissive) {
+            child.material.emissive.setHex(0x000000);
+          }
+        });
       }
     }
     
@@ -53,6 +126,7 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
     
     event.stopPropagation();
     let hasMovedMouse = false;
+    setDragStartPos(position);
     gl.domElement.style.cursor = 'grabbing';
     
     const handlePointerMove = (moveEvent) => {
@@ -90,6 +164,7 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
       // If no mouse movement occurred, it's a click, not a drag
       if (!hasMovedMouse) {
         setIsDragging(false);
+        setDragStartPos(null);
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
         
         // Remove event listeners
@@ -104,6 +179,7 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
       }
       
       setIsDragging(false);
+      setDragStartPos(null);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
       
       document.removeEventListener('mousemove', handlePointerMove);
@@ -120,12 +196,6 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
     
     // Prevent default to avoid text selection
     event.preventDefault?.();
-  };
-
-  const handleClick = (event) => {
-    if (!isDragging) {
-      onClick?.(event);
-    }
   };
 
   const handlePortClick = (port, event) => {
@@ -176,12 +246,19 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
     >
-      {/* Grid snap indicators when dragging */}
+      {/* Grid snap indicators - show snapping points when dragging */}
       {isDragging && gridSnap && (
-        <mesh position={[0, -1.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.8, 1.2, 16]} />
-          <meshBasicMaterial color="#ffeb3b" transparent opacity={0.3} />
-        </mesh>
+        <>
+          <mesh position={[0, -1.0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.8, 1.2, 16]} />
+            <meshBasicMaterial color="#ffeb3b" transparent opacity={0.3} />
+          </mesh>
+          
+          <mesh position={[0, 2, 0]}>
+            <sphereGeometry args={[0.05]} />
+            <meshBasicMaterial color="#ffeb3b" />
+          </mesh>
+        </>
       )}
       
       {/* Invisible larger collision box for easier interaction */}
@@ -189,75 +266,99 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
         onPointerDown={handlePointerDown}
         visible={false}
       >
-        <boxGeometry args={[3, 3.5, 2]} />
+        <boxGeometry args={[2, 2, 2]} />
       </mesh>
       
-      {/* Main Cabinet */}
-      <mesh
-        ref={meshRef}
-        castShadow
-        receiveShadow
-      >
-        <boxGeometry args={[2, 2.5, 1]} />
-        <meshLambertMaterial color="#2196F3" />
-      </mesh>
-      
-      {/* Control Panel */}
-      <mesh position={[0, 0, 0.55]} castShadow>
-        <boxGeometry args={[1.8, 2.2, 0.1]} />
-        <meshLambertMaterial color="#1976d2" />
-      </mesh>
-      
-      {/* Display Screen */}
-      <mesh position={[0, 0.6, 0.6]} castShadow>
-        <boxGeometry args={[1.2, 0.8, 0.05]} />
-        <meshLambertMaterial color="#000000" />
-      </mesh>
-      
-      {/* Screen Content */}
-      <mesh position={[0, 0.6, 0.65]} castShadow>
-        <boxGeometry args={[1.1, 0.7, 0.01]} />
-        <meshLambertMaterial color="#00ff00" />
-      </mesh>
-      
-      {/* Control Buttons (Row 1) */}
-      {[-0.4, -0.1, 0.2, 0.5].map((x, i) => (
-        <mesh key={`btn1-${i}`} position={[x, -0.3, 0.65]} castShadow>
-          <cylinderGeometry args={[0.08, 0.08, 0.05, 8]} />
-          <meshLambertMaterial color="#ff9800" />
+      {/* Main power box structure */}
+      <group ref={meshRef}>
+        {/* Main Power Box Body - taller and thinner */}
+        <mesh position={[0, 1.0, 0]} castShadow>
+          <boxGeometry args={[1.0, 2.0, 1.0]} />
+          <meshLambertMaterial color="#FF9800" />
         </mesh>
-      ))}
-      
-      {/* Control Buttons (Row 2) */}
-      {[-0.4, -0.1, 0.2, 0.5].map((x, i) => (
-        <mesh key={`btn2-${i}`} position={[x, -0.6, 0.65]} castShadow>
-          <cylinderGeometry args={[0.08, 0.08, 0.05, 8]} />
-          <meshLambertMaterial color="#4caf50" />
+        
+        {/* Top Cover */}
+        <mesh position={[0, 2.05, 0]} castShadow>
+          <boxGeometry args={[1.1, 0.1, 1.1]} />
+          <meshLambertMaterial color="#F57400" />
         </mesh>
-      ))}
-      
-      {/* Emergency Stop */}
-      <mesh position={[0, -1, 0.65]} castShadow>
-        <cylinderGeometry args={[0.12, 0.12, 0.08, 8]} />
-        <meshLambertMaterial color="#f44336" />
-      </mesh>
-      
-      {/* Cable Connections */}
-      <mesh position={[0, -1.3, -0.3]} castShadow>
-        <cylinderGeometry args={[0.05, 0.05, 0.4, 8]} />
-        <meshLambertMaterial color="#333333" />
-      </mesh>
-      
-      {/* Ventilation Grilles */}
-      <mesh position={[-0.7, 1, 0.3]} castShadow>
-        <boxGeometry args={[0.4, 0.6, 0.05]} />
-        <meshLambertMaterial color="#666666" />
-      </mesh>
-      
-      <mesh position={[0.7, 1, 0.3]} castShadow>
-        <boxGeometry args={[0.4, 0.6, 0.05]} />
-        <meshLambertMaterial color="#666666" />
-      </mesh>
+        
+        {/* Base */}
+        <mesh position={[0, -0.05, 0]} castShadow>
+          <boxGeometry args={[1.1, 0.1, 1.1]} />
+          <meshLambertMaterial color="#E65100" />
+        </mesh>
+        
+        {/* Lightning Bolt Symbol on Front */}
+        <mesh position={[0, 1.0, 0.51]} castShadow>
+          <planeGeometry args={[0.6, 0.6]} />
+          <meshBasicMaterial 
+            map={createLightningTexture()} 
+            transparent={true}
+            alphaTest={0.1}
+          />
+        </mesh>
+        
+        {/* Lightning Bolt Symbol on Top Lid - visible from above */}
+        <mesh position={[0, 2.11, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow>
+          <planeGeometry args={[0.8, 0.8]} />
+          <meshBasicMaterial 
+            map={createLightningTexture()} 
+            transparent={true}
+            alphaTest={0.1}
+          />
+        </mesh>
+        
+        {/* Warning Stripes */}
+        <mesh position={[0.45, 1.0, 0]} castShadow>
+          <boxGeometry args={[0.05, 1.8, 0.9]} />
+          <meshLambertMaterial color="#FFD700" />
+        </mesh>
+        <mesh position={[-0.45, 1.0, 0]} castShadow>
+          <boxGeometry args={[0.05, 1.8, 0.9]} />
+          <meshLambertMaterial color="#FFD700" />
+        </mesh>
+        
+        {/* Ventilation Grilles */}
+        <mesh position={[0, 1.6, 0.51]} castShadow>
+          <boxGeometry args={[0.8, 0.05, 0.02]} />
+          <meshLambertMaterial color="#333333" />
+        </mesh>
+        <mesh position={[0, 1.4, 0.51]} castShadow>
+          <boxGeometry args={[0.8, 0.05, 0.02]} />
+          <meshLambertMaterial color="#333333" />
+        </mesh>
+        <mesh position={[0, 1.2, 0.51]} castShadow>
+          <boxGeometry args={[0.8, 0.05, 0.02]} />
+          <meshLambertMaterial color="#333333" />
+        </mesh>
+        
+        {/* Status Indicators */}
+        <mesh position={[0.3, 1.8, 0.51]}>
+          <sphereGeometry args={[0.04, 8, 8]} />
+          <meshLambertMaterial 
+            color="#00E676"
+            emissive="#00E676"
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+        <mesh position={[0.1, 1.8, 0.51]}>
+          <sphereGeometry args={[0.04, 8, 8]} />
+          <meshLambertMaterial 
+            color="#2196F3"
+            emissive="#2196F3"
+            emissiveIntensity={0.3}
+          />
+        </mesh>
+        <mesh position={[-0.1, 1.8, 0.51]}>
+          <sphereGeometry args={[0.04, 8, 8]} />
+          <meshLambertMaterial 
+            color="#FF5722"
+            emissive="#FF5722"
+            emissiveIntensity={0.3}
+          />
+        </mesh>
+      </group>
       
       {/* Connection Ports */}
       {connectionPorts.map((port) => {
@@ -296,14 +397,25 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
             
             {/* Port Type Indicator */}
             <mesh position={[0, 0.3, 0]} scale={[scale, scale, scale]}>
-              {port.type === 'electric' && <octahedronGeometry args={[0.08]} />}
-              {port.type === 'liquid' && <sphereGeometry args={[0.08, 8, 8]} />}
-              {port.type === 'gas' && <coneGeometry args={[0.08, 0.12, 6]} />}
+              <octahedronGeometry args={[0.08]} />
               <meshLambertMaterial 
                 color={getPortColor(port)}
                 emissive={getPortColor(port)}
                 emissiveIntensity={0.5}
               />
+            </mesh>
+            
+            {/* Port Direction Indicator */}
+            <mesh 
+              position={[port.direction[0] * 0.4, port.direction[1] * 0.4, port.direction[2] * 0.4]}
+              rotation={[
+                port.direction[0] !== 0 ? Math.PI / 2 : 0,
+                port.direction[2] !== 0 ? Math.PI / 2 : 0,
+                0
+              ]}
+            >
+              <coneGeometry args={[0.05, 0.2, 4]} />
+              <meshBasicMaterial color={getPortColor(port)} transparent opacity={0.7} />
             </mesh>
             
             {/* Port Label (when hovered) */}
@@ -320,14 +432,13 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
       {/* Selection indicator when selected and draggable */}
       {isSelected && isDraggable && (
         <>
-          <mesh position={[0, 2, 0]}>
+          <mesh position={[0, 2.0, 0]}>
             <cylinderGeometry args={[0.1, 0.1, 0.3, 6]} />
             <meshLambertMaterial color="#ffeb3b" emissive="#ffeb3b" emissiveIntensity={0.3} />
           </mesh>
           
-          {/* Grid position indicator */}
-          <mesh position={[0, -1.8, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.5, 0.7, 16]} />
+          <mesh position={[0, -0.3, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[1.0, 1.3, 16]} />
             <meshBasicMaterial color="#2196F3" transparent opacity={0.5} />
           </mesh>
         </>
@@ -357,15 +468,39 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
 };
 
 // Export the component with its connection port definitions
-ControlUnit.connectionPorts = [
+PowerBox.connectionPorts = [
   {
-    id: 'electric_power',
+    id: 'electric_out_1',
     type: 'electric',
-    label: 'Power Input',
-    offset: [0, -1.3, -0.6],
-    direction: [0, -1, 0],
-    required: true
+    label: 'Power Output 1',
+    offset: [0.55, 1.0, 0],
+    direction: [1, 0, 0],
+    required: false
+  },
+  {
+    id: 'electric_out_2',
+    type: 'electric',
+    label: 'Power Output 2',
+    offset: [0, 1.0, 0.55],
+    direction: [0, 0, 1],
+    required: false
+  },
+  {
+    id: 'electric_out_3',
+    type: 'electric',
+    label: 'Power Output 3',
+    offset: [-0.55, 1.0, 0],
+    direction: [-1, 0, 0],
+    required: false
+  },
+  {
+    id: 'electric_out_4',
+    type: 'electric',
+    label: 'Power Output 4',
+    offset: [0, 1.0, -0.55],
+    direction: [0, 0, -1],
+    required: false
   }
 ];
 
-export default ControlUnit; 
+export default PowerBox; 

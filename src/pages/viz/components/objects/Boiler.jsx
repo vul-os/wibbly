@@ -17,8 +17,8 @@ const Boiler = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, 
       id: 'electric_in',
       type: 'electric',
       label: 'Power Input',
-      offset: [-1.3, 0.8, 0],
-      direction: [-1, 0, 0],
+      offset: [0, -1.0, -1.3],
+      direction: [0, 0, -1],
       required: true
     },
     {
@@ -374,8 +374,8 @@ Boiler.connectionPorts = [
     id: 'electric_in',
     type: 'electric',
     label: 'Power Input',
-    offset: [-1.3, 0.8, 0],
-    direction: [-1, 0, 0],
+    offset: [0, -1.0, -1.3],
+    direction: [0, 0, -1],
     required: true
   },
   {

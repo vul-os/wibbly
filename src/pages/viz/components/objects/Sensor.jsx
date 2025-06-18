@@ -60,11 +60,17 @@ const Sensor = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, 
     }
     
     event.stopPropagation();
-    setIsDragging(true);
+    let hasMovedMouse = false;
     gl.domElement.style.cursor = 'grabbing';
     
     const handlePointerMove = (moveEvent) => {
       if (!onDrag) return;
+      
+      // Only set dragging to true when we actually move
+      if (!hasMovedMouse) {
+        hasMovedMouse = true;
+        setIsDragging(true);
+      }
       
       // Get intersection with ground plane
       const raycaster = new THREE.Raycaster();
@@ -89,6 +95,22 @@ const Sensor = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, 
     };
 
     const handlePointerUp = () => {
+      // If no mouse movement occurred, it's a click, not a drag
+      if (!hasMovedMouse) {
+        setIsDragging(false);
+        gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
+        
+        // Remove event listeners
+        document.removeEventListener('mousemove', handlePointerMove);
+        document.removeEventListener('mouseup', handlePointerUp);
+        document.removeEventListener('touchmove', handlePointerMove);
+        document.removeEventListener('touchend', handlePointerUp);
+        
+        // Trigger click handler
+        onClick?.(event);
+        return;
+      }
+      
       setIsDragging(false);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
       
@@ -105,7 +127,7 @@ const Sensor = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, 
     document.addEventListener('touchend', handlePointerUp);
     
     // Prevent default to avoid text selection
-    moveEvent.preventDefault?.();
+    event.preventDefault?.();
   };
 
   const handleClick = (event) => {
@@ -173,7 +195,6 @@ const Sensor = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, 
       {/* Invisible larger collision box for easier interaction */}
       <mesh
         onPointerDown={handlePointerDown}
-        onClick={handleClick}
         visible={false}
       >
         <boxGeometry args={[2, 2, 2]} />

@@ -23,7 +23,9 @@ const PlantVisualization = () => {
     { type: 'pump', label: 'Pump', color: '#F44336', description: 'Electric + Liquid I/O' },
     { type: 'valve', label: 'Valve', color: '#FF9800', description: 'Electric Control + Liquid I/O' },
     { type: 'sensor', label: 'Sensor', color: '#9C27B0', description: 'Signal Output' },
-    { type: 'controlUnit', label: 'Control Unit', color: '#2196F3', description: 'Multi-Connection Hub' }
+    { type: 'controlUnit', label: 'Control Unit', color: '#2196F3', description: 'Multi-Connection Hub' },
+    { type: 'conveyorBelt', label: 'Conveyor Belt', color: '#607D8B', description: 'Moving Belt with Electric Power' },
+    { type: 'powerBox', label: 'Power Box', color: '#FF9800', description: '⚡ Electrical Distribution with 4 Outputs' }
   ];
 
   const gridSizes = [

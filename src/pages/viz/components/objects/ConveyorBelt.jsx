@@ -2,40 +2,100 @@ import React, { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
+const ConveyorBelt = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
   const meshRef = useRef();
   const groupRef = useRef();
+  const beltMaterialRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
+  const [dragStartPos, setDragStartPos] = useState(null);
   const { camera, gl } = useThree();
 
-  // Define connection ports for the control unit
+  // Define connection ports for the conveyor belt
   const connectionPorts = [
     {
-      id: 'electric_power',
+      id: 'electric_in',
       type: 'electric',
       label: 'Power Input',
-      offset: [0, -1.3, -0.6],
-      direction: [0, -1, 0],
+      offset: [3.2, 0.6, -1.2],
+      direction: [0, 0, -1],
       required: true
     }
   ];
 
+  // Grid snap size (CAD-like behavior)
+  const GRID_SIZE = gridSize || 1.0;
+
   const snapToGrid = (value) => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
-  useFrame(() => {
+  // Create conveyor belt texture
+  const createConveyorTexture = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    
+    // Base belt color - dark gray/black
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Create red diagonal arrows (chevron pattern)
+    ctx.strokeStyle = '#F44336'; // Red color
+    ctx.lineWidth = 20;
+    ctx.beginPath();
+    
+    // Draw multiple diagonal lines to create arrow pattern
+    for (let i = 0; i < canvas.width; i += 60) {
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + 40, canvas.height);
+    }
+    ctx.stroke();
+    
+    // Add belt texture details
+    ctx.fillStyle = '#333333';
+    for (let i = 0; i < canvas.width; i += 30) {
+      ctx.fillRect(i, 0, 4, canvas.height);
+    }
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(8, 2);
+    
+    return texture;
+  };
+
+  useFrame((state) => {
     if (meshRef.current) {
       if (isSelected) {
-        meshRef.current.material.emissive.setHex(0x444444);
+        meshRef.current.children.forEach(child => {
+          if (child.material && child.material.emissive) {
+            child.material.emissive.setHex(0x444444);
+          }
+        });
       } else if (hovered && isDraggable) {
-        meshRef.current.material.emissive.setHex(0x222222);
+        meshRef.current.children.forEach(child => {
+          if (child.material && child.material.emissive) {
+            child.material.emissive.setHex(0x222222);
+          }
+        });
       } else {
-        meshRef.current.material.emissive.setHex(0x000000);
+        meshRef.current.children.forEach(child => {
+          if (child.material && child.material.emissive) {
+            child.material.emissive.setHex(0x000000);
+          }
+        });
       }
+    }
+    
+    // Animate belt texture when running (always running when component exists)
+    if (beltMaterialRef.current && beltMaterialRef.current.map) {
+      const time = state.clock.elapsedTime;
+      beltMaterialRef.current.map.offset.x = time * 0.8; // Faster movement like the example
     }
     
     // Scale slightly when dragging for better visual feedback
@@ -53,6 +113,7 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
     
     event.stopPropagation();
     let hasMovedMouse = false;
+    setDragStartPos(position);
     gl.domElement.style.cursor = 'grabbing';
     
     const handlePointerMove = (moveEvent) => {
@@ -90,6 +151,7 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
       // If no mouse movement occurred, it's a click, not a drag
       if (!hasMovedMouse) {
         setIsDragging(false);
+        setDragStartPos(null);
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
         
         // Remove event listeners
@@ -104,6 +166,7 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
       }
       
       setIsDragging(false);
+      setDragStartPos(null);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
       
       document.removeEventListener('mousemove', handlePointerMove);
@@ -120,12 +183,6 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
     
     // Prevent default to avoid text selection
     event.preventDefault?.();
-  };
-
-  const handleClick = (event) => {
-    if (!isDragging) {
-      onClick?.(event);
-    }
   };
 
   const handlePortClick = (port, event) => {
@@ -176,12 +233,19 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
     >
-      {/* Grid snap indicators when dragging */}
+      {/* Grid snap indicators - show snapping points when dragging */}
       {isDragging && gridSnap && (
-        <mesh position={[0, -1.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.8, 1.2, 16]} />
-          <meshBasicMaterial color="#ffeb3b" transparent opacity={0.3} />
-        </mesh>
+        <>
+          <mesh position={[0, -1.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[2.0, 2.5, 16]} />
+            <meshBasicMaterial color="#ffeb3b" transparent opacity={0.3} />
+          </mesh>
+          
+          <mesh position={[0, 2, 0]}>
+            <sphereGeometry args={[0.05]} />
+            <meshBasicMaterial color="#ffeb3b" />
+          </mesh>
+        </>
       )}
       
       {/* Invisible larger collision box for easier interaction */}
@@ -189,75 +253,98 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
         onPointerDown={handlePointerDown}
         visible={false}
       >
-        <boxGeometry args={[3, 3.5, 2]} />
+        <boxGeometry args={[8, 2, 3]} />
       </mesh>
       
-      {/* Main Cabinet */}
-      <mesh
-        ref={meshRef}
-        castShadow
-        receiveShadow
-      >
-        <boxGeometry args={[2, 2.5, 1]} />
-        <meshLambertMaterial color="#2196F3" />
-      </mesh>
-      
-      {/* Control Panel */}
-      <mesh position={[0, 0, 0.55]} castShadow>
-        <boxGeometry args={[1.8, 2.2, 0.1]} />
-        <meshLambertMaterial color="#1976d2" />
-      </mesh>
-      
-      {/* Display Screen */}
-      <mesh position={[0, 0.6, 0.6]} castShadow>
-        <boxGeometry args={[1.2, 0.8, 0.05]} />
-        <meshLambertMaterial color="#000000" />
-      </mesh>
-      
-      {/* Screen Content */}
-      <mesh position={[0, 0.6, 0.65]} castShadow>
-        <boxGeometry args={[1.1, 0.7, 0.01]} />
-        <meshLambertMaterial color="#00ff00" />
-      </mesh>
-      
-      {/* Control Buttons (Row 1) */}
-      {[-0.4, -0.1, 0.2, 0.5].map((x, i) => (
-        <mesh key={`btn1-${i}`} position={[x, -0.3, 0.65]} castShadow>
-          <cylinderGeometry args={[0.08, 0.08, 0.05, 8]} />
-          <meshLambertMaterial color="#ff9800" />
+      {/* Main conveyor structure */}
+      <group ref={meshRef}>
+        {/* Base Frame */}
+        <mesh position={[0, 0.2, 0]} castShadow>
+          <boxGeometry args={[7.5, 0.2, 1.5]} />
+          <meshLambertMaterial color="#444444" />
         </mesh>
-      ))}
-      
-      {/* Control Buttons (Row 2) */}
-      {[-0.4, -0.1, 0.2, 0.5].map((x, i) => (
-        <mesh key={`btn2-${i}`} position={[x, -0.6, 0.65]} castShadow>
-          <cylinderGeometry args={[0.08, 0.08, 0.05, 8]} />
-          <meshLambertMaterial color="#4caf50" />
+        
+        {/* Support Legs */}
+        <mesh position={[-3, -0.4, 0.6]} castShadow>
+          <boxGeometry args={[0.1, 0.8, 0.1]} />
+          <meshLambertMaterial color="#333333" />
         </mesh>
-      ))}
-      
-      {/* Emergency Stop */}
-      <mesh position={[0, -1, 0.65]} castShadow>
-        <cylinderGeometry args={[0.12, 0.12, 0.08, 8]} />
-        <meshLambertMaterial color="#f44336" />
-      </mesh>
-      
-      {/* Cable Connections */}
-      <mesh position={[0, -1.3, -0.3]} castShadow>
-        <cylinderGeometry args={[0.05, 0.05, 0.4, 8]} />
-        <meshLambertMaterial color="#333333" />
-      </mesh>
-      
-      {/* Ventilation Grilles */}
-      <mesh position={[-0.7, 1, 0.3]} castShadow>
-        <boxGeometry args={[0.4, 0.6, 0.05]} />
-        <meshLambertMaterial color="#666666" />
-      </mesh>
-      
-      <mesh position={[0.7, 1, 0.3]} castShadow>
-        <boxGeometry args={[0.4, 0.6, 0.05]} />
-        <meshLambertMaterial color="#666666" />
-      </mesh>
+        <mesh position={[-3, -0.4, -0.6]} castShadow>
+          <boxGeometry args={[0.1, 0.8, 0.1]} />
+          <meshLambertMaterial color="#333333" />
+        </mesh>
+        <mesh position={[0, -0.4, 0.6]} castShadow>
+          <boxGeometry args={[0.1, 0.8, 0.1]} />
+          <meshLambertMaterial color="#333333" />
+        </mesh>
+        <mesh position={[0, -0.4, -0.6]} castShadow>
+          <boxGeometry args={[0.1, 0.8, 0.1]} />
+          <meshLambertMaterial color="#333333" />
+        </mesh>
+        <mesh position={[3, -0.4, 0.6]} castShadow>
+          <boxGeometry args={[0.1, 0.8, 0.1]} />
+          <meshLambertMaterial color="#333333" />
+        </mesh>
+        <mesh position={[3, -0.4, -0.6]} castShadow>
+          <boxGeometry args={[0.1, 0.8, 0.1]} />
+          <meshLambertMaterial color="#333333" />
+        </mesh>
+        
+        {/* Cross-braces between legs */}
+        <mesh position={[-3, -0.8, 0]} castShadow>
+          <boxGeometry args={[0.05, 0.05, 1.2]} />
+          <meshLambertMaterial color="#444444" />
+        </mesh>
+        <mesh position={[0, -0.8, 0]} castShadow>
+          <boxGeometry args={[0.05, 0.05, 1.2]} />
+          <meshLambertMaterial color="#444444" />
+        </mesh>
+        <mesh position={[3, -0.8, 0]} castShadow>
+          <boxGeometry args={[0.05, 0.05, 1.2]} />
+          <meshLambertMaterial color="#444444" />
+        </mesh>
+        
+        {/* Longitudinal support beams */}
+        <mesh position={[0, -0.8, 0.6]} castShadow>
+          <boxGeometry args={[6, 0.05, 0.05]} />
+          <meshLambertMaterial color="#444444" />
+        </mesh>
+        <mesh position={[0, -0.8, -0.6]} castShadow>
+          <boxGeometry args={[6, 0.05, 0.05]} />
+          <meshLambertMaterial color="#444444" />
+        </mesh>
+        
+        {/* Conveyor Belt Surface with animated texture */}
+        <mesh position={[0, 0.35, 0]} castShadow receiveShadow>
+          <boxGeometry args={[7.0, 0.05, 1.2]} />
+          <meshLambertMaterial 
+            map={createConveyorTexture()} 
+            ref={beltMaterialRef}
+          />
+        </mesh>
+        
+        {/* Side Rails */}
+        <mesh position={[0, 0.5, 0.7]} castShadow>
+          <boxGeometry args={[7.0, 0.1, 0.05]} />
+          <meshLambertMaterial color="#666666" />
+        </mesh>
+        <mesh position={[0, 0.5, -0.7]} castShadow>
+          <boxGeometry args={[7.0, 0.1, 0.05]} />
+          <meshLambertMaterial color="#666666" />
+        </mesh>
+        
+        {/* Motor Housing - smaller and better positioned */}
+        <mesh position={[3.2, 0.6, -0.8]} castShadow>
+          <boxGeometry args={[0.4, 0.4, 0.4]} />
+          <meshLambertMaterial color="#1B5E20" />
+        </mesh>
+        
+        {/* Electrical Connection Box */}
+        <mesh position={[0, 0.6, -0.9]} castShadow>
+          <boxGeometry args={[0.3, 0.2, 0.2]} />
+          <meshLambertMaterial color="#37474F" />
+        </mesh>
+      </group>
       
       {/* Connection Ports */}
       {connectionPorts.map((port) => {
@@ -296,14 +383,25 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
             
             {/* Port Type Indicator */}
             <mesh position={[0, 0.3, 0]} scale={[scale, scale, scale]}>
-              {port.type === 'electric' && <octahedronGeometry args={[0.08]} />}
-              {port.type === 'liquid' && <sphereGeometry args={[0.08, 8, 8]} />}
-              {port.type === 'gas' && <coneGeometry args={[0.08, 0.12, 6]} />}
+              <octahedronGeometry args={[0.08]} />
               <meshLambertMaterial 
                 color={getPortColor(port)}
                 emissive={getPortColor(port)}
                 emissiveIntensity={0.5}
               />
+            </mesh>
+            
+            {/* Port Direction Indicator */}
+            <mesh 
+              position={[port.direction[0] * 0.4, port.direction[1] * 0.4, port.direction[2] * 0.4]}
+              rotation={[
+                port.direction[0] !== 0 ? Math.PI / 2 : 0,
+                port.direction[2] !== 0 ? Math.PI / 2 : 0,
+                0
+              ]}
+            >
+              <coneGeometry args={[0.05, 0.2, 4]} />
+              <meshBasicMaterial color={getPortColor(port)} transparent opacity={0.7} />
             </mesh>
             
             {/* Port Label (when hovered) */}
@@ -320,14 +418,13 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
       {/* Selection indicator when selected and draggable */}
       {isSelected && isDraggable && (
         <>
-          <mesh position={[0, 2, 0]}>
+          <mesh position={[0, 2.0, 0]}>
             <cylinderGeometry args={[0.1, 0.1, 0.3, 6]} />
             <meshLambertMaterial color="#ffeb3b" emissive="#ffeb3b" emissiveIntensity={0.3} />
           </mesh>
           
-          {/* Grid position indicator */}
-          <mesh position={[0, -1.8, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.5, 0.7, 16]} />
+          <mesh position={[0, -1.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[1.5, 2.0, 16]} />
             <meshBasicMaterial color="#2196F3" transparent opacity={0.5} />
           </mesh>
         </>
@@ -357,15 +454,15 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
 };
 
 // Export the component with its connection port definitions
-ControlUnit.connectionPorts = [
+ConveyorBelt.connectionPorts = [
   {
-    id: 'electric_power',
+    id: 'electric_in',
     type: 'electric',
     label: 'Power Input',
-    offset: [0, -1.3, -0.6],
-    direction: [0, -1, 0],
+    offset: [3.2, 0.6, -1.2],
+    direction: [0, 0, -1],
     required: true
   }
 ];
 
-export default ControlUnit; 
+export default ConveyorBelt; 

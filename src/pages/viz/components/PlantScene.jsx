@@ -6,6 +6,8 @@ import ControlUnit from './objects/ControlUnit';
 import Valve from './objects/Valve';
 import Sensor from './objects/Sensor';
 import Pump from './objects/Pump';
+import ConveyorBelt from './objects/ConveyorBelt';
+import PowerBox from './objects/PowerBox';
 import AutoRoutingConnection from './AutoRoutingConnection';
 
 const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, gridSnap, gridSize, showCoordinates, onManualConnectionStateChange }, ref) => {
@@ -32,7 +34,9 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     pump: 0.8,        // Base plate bottom is 0.8 units below center
     valve: 1.0,       // Valve body base bottom is 1.0 units below center  
     sensor: 0.15,     // Sensor body height 0.3, so bottom is 0.15 below center
-    controlUnit: 1.25 // Main cabinet height 2.5, so bottom is 1.25 below center
+    controlUnit: 1.25, // Main cabinet height 2.5, so bottom is 1.25 below center
+    conveyorBelt: 0.8, // Simple support legs height, so bottom is 0.8 below center
+    powerBox: 0.1 // Base plate extends 0.1 below center, so bottom sits on ground
   };
 
   const getObjectGroundPosition = (basePosition, objectType) => {
@@ -48,6 +52,8 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
       case 'valve': return Valve;
       case 'sensor': return Sensor;
       case 'pump': return Pump;
+      case 'conveyorBelt': return ConveyorBelt;
+      case 'powerBox': return PowerBox;
       default: return null;
     }
   };
@@ -219,6 +225,10 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
         return <Sensor key={obj.id} {...commonProps} />;
       case 'pump':
         return <Pump key={obj.id} {...commonProps} />;
+      case 'conveyorBelt':
+        return <ConveyorBelt key={obj.id} {...commonProps} />;
+      case 'powerBox':
+        return <PowerBox key={obj.id} {...commonProps} />;
       default:
         return null;
     }
