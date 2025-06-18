@@ -1,0 +1,383 @@
+import React, { forwardRef, useImperativeHandle, useState, useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import Boiler from './objects/Boiler';
+import ControlUnit from './objects/ControlUnit';
+import Valve from './objects/Valve';
+import Sensor from './objects/Sensor';
+import Pump from './objects/Pump';
+import AutoRoutingConnection from './AutoRoutingConnection';
+
+const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, gridSnap, gridSize, showCoordinates, onManualConnectionStateChange }, ref) => {
+  const [objects, setObjects] = useState([]);
+  const [connections, setConnections] = useState([]);
+  const [connectionStart, setConnectionStart] = useState(null);
+  const [editingConnection, setEditingConnection] = useState(null);
+  const scene = useThree((state) => state.scene);
+  const objectIdRef = useRef(0);
+  const connectionIdRef = useRef(0);
+  const cameraControlsRef = useRef();
+
+  const snapToGrid = (value) => {
+    if (!gridSnap) return value;
+    return Math.round(value / gridSize) * gridSize;
+  };
+
+  // Constants for consistent ground level
+  const GROUND_LEVEL = 0;
+
+  // Object height offsets to position bottoms on ground level
+  const OBJECT_GROUND_OFFSETS = {
+    boiler: 1.6,      // Bottom cap extends 1.6 units below center
+    pump: 0.8,        // Base plate bottom is 0.8 units below center
+    valve: 1.0,       // Valve body base bottom is 1.0 units below center  
+    sensor: 0.15,     // Sensor body height 0.3, so bottom is 0.15 below center
+    controlUnit: 0.5  // Estimated for control unit electronics box
+  };
+
+  const getObjectGroundPosition = (basePosition, objectType) => {
+    const offset = OBJECT_GROUND_OFFSETS[objectType] || 0;
+    return [basePosition[0], GROUND_LEVEL + offset, basePosition[2]];
+  };
+
+  // Get component class by type for accessing connection ports
+  const getComponentClass = (type) => {
+    switch (type) {
+      case 'boiler': return Boiler;
+      case 'controlUnit': return ControlUnit;
+      case 'valve': return Valve;
+      case 'sensor': return Sensor;
+      case 'pump': return Pump;
+      default: return null;
+    }
+  };
+
+  // Find compatible ports between two objects
+  const findCompatiblePorts = (sourceObj, targetObj) => {
+    const sourceClass = getComponentClass(sourceObj.type);
+    const targetClass = getComponentClass(targetObj.type);
+    
+    const sourcePorts = sourceClass?.connectionPorts || [];
+    const targetPorts = targetClass?.connectionPorts || [];
+    
+    // Find the first compatible port pair
+    for (const sourcePort of sourcePorts) {
+      for (const targetPort of targetPorts) {
+        if (sourcePort.type === targetPort.type) {
+          // Prefer output->input connections
+          if (sourcePort.id.includes('out') || sourcePort.id.includes('discharge') || 
+              targetPort.id.includes('in') || targetPort.id.includes('suction')) {
+            return { sourcePort, targetPort };
+          }
+        }
+      }
+    }
+    
+    // Fallback: any compatible types
+    for (const sourcePort of sourcePorts) {
+      for (const targetPort of targetPorts) {
+        if (sourcePort.type === targetPort.type) {
+          return { sourcePort, targetPort };
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  useImperativeHandle(ref, () => ({
+    addObject: (type) => {
+      const id = objectIdRef.current++;
+      
+      // Generate position with grid snapping
+      const rawX = (Math.random() - 0.5) * 10;
+      const rawZ = (Math.random() - 0.5) * 10;
+      
+      const basePosition = [
+        snapToGrid(rawX),
+        GROUND_LEVEL,
+        snapToGrid(rawZ)
+      ];
+      
+      const position = getObjectGroundPosition(basePosition, type);
+      
+      const newObject = {
+        id,
+        type,
+        position,
+        connections: []
+      };
+      
+      setObjects(prev => [...prev, newObject]);
+    },
+
+    autoLayout: () => {
+      if (objects.length === 0) return;
+      
+      const radius = Math.max(3, objects.length * 0.8);
+      const angleStep = (Math.PI * 2) / objects.length;
+      
+      setObjects(prev => prev.map((obj, index) => {
+        const angle = index * angleStep;
+        const rawX = Math.cos(angle) * radius;
+        const rawZ = Math.sin(angle) * radius;
+        
+        const basePosition = [
+          snapToGrid(rawX),
+          GROUND_LEVEL,
+          snapToGrid(rawZ)
+        ];
+        
+        return {
+          ...obj,
+          position: getObjectGroundPosition(basePosition, obj.type)
+        };
+      }));
+    },
+
+    clearAll: () => {
+      setObjects([]);
+      setConnections([]);
+      setConnectionStart(null);
+      setEditingConnection(null);
+      setSelectedObjects([]);
+      if (onManualConnectionStateChange) {
+        onManualConnectionStateChange(false);
+      }
+    },
+
+    setCameraControlsRef: (controlsRef) => {
+      cameraControlsRef.current = controlsRef;
+    }
+  }));
+
+  const handleObjectClick = (objectId, event) => {
+    event.stopPropagation();
+    
+    const clickedObject = objects.find(obj => obj.id === objectId);
+    if (!clickedObject) return;
+
+    switch (mode) {
+      case 'select':
+        setSelectedObjects([objectId]);
+        setConnectionStart(null);
+        setEditingConnection(null);
+        break;
+        
+      case 'connect':
+        if (!connectionStart) {
+          // First click - select source
+          setConnectionStart(clickedObject);
+          setSelectedObjects([objectId]);
+        } else if (connectionStart.id === objectId) {
+          // Clicked same object - cancel
+          setConnectionStart(null);
+          setSelectedObjects([]);
+        } else {
+          // Second click - create connection
+          const compatiblePorts = findCompatiblePorts(connectionStart, clickedObject);
+          
+          if (compatiblePorts) {
+            const newConnection = {
+              id: connectionIdRef.current++,
+              startObjectId: connectionStart.id,
+              endObjectId: objectId,
+              startPort: compatiblePorts.sourcePort,
+              endPort: compatiblePorts.targetPort,
+              type: compatiblePorts.sourcePort.type,
+              startPosition: connectionStart.position,
+              endPosition: clickedObject.position
+            };
+            
+            setConnections(prev => [...prev, newConnection]);
+          } else {
+            console.warn('No compatible ports found between these objects');
+          }
+          
+          setConnectionStart(null);
+          setSelectedObjects([]);
+        }
+        break;
+        
+      case 'delete':
+        // Remove object and its connections
+        setConnections(prev => prev.filter(conn => 
+          conn.startObjectId !== objectId && conn.endObjectId !== objectId
+        ));
+        setObjects(prev => prev.filter(obj => obj.id !== objectId));
+        setSelectedObjects([]);
+        setConnectionStart(null);
+        setEditingConnection(null);
+        break;
+    }
+  };
+
+  const handleObjectDrag = (objectId, newPosition) => {
+    if (mode === 'select') {
+      const obj = objects.find(o => o.id === objectId);
+      if (!obj) return;
+      
+      // Apply grid snapping to the new position
+      const basePosition = [
+        snapToGrid(newPosition[0]),
+        GROUND_LEVEL,
+        snapToGrid(newPosition[2])
+      ];
+      
+      const snappedPosition = getObjectGroundPosition(basePosition, obj.type);
+      
+      setObjects(prev => prev.map(obj =>
+        obj.id === objectId ? { ...obj, position: snappedPosition } : obj
+      ));
+      
+      // Update connections that involve this object (auto-reroute)
+      setConnections(prev => prev.map(conn => {
+        if (conn.startObjectId === objectId) {
+          return { ...conn, startPosition: snappedPosition };
+        } else if (conn.endObjectId === objectId) {
+          return { ...conn, endPosition: snappedPosition };
+        }
+        return conn;
+      }));
+    }
+  };
+
+  const handleConnectionClick = (connectionId, event) => {
+    event.stopPropagation();
+    
+    if (mode === 'delete') {
+      setConnections(prev => prev.filter(conn => conn.id !== connectionId));
+      setEditingConnection(null);
+    } else if (mode === 'select') {
+      // Enter edit mode for the connection
+      setEditingConnection(connectionId);
+      setSelectedObjects([]);
+    }
+  };
+
+  // Reset states when mode changes
+  React.useEffect(() => {
+    if (mode !== 'connect') {
+      setConnectionStart(null);
+    }
+    if (mode !== 'select') {
+      setEditingConnection(null);
+    }
+  }, [mode]);
+
+  const renderObject = (obj) => {
+    const isConnecting = connectionStart && connectionStart.id === obj.id;
+    
+    const commonProps = {
+      key: obj.id,
+      position: obj.position,
+      onClick: (e) => handleObjectClick(obj.id, e),
+      onDrag: (pos) => handleObjectDrag(obj.id, pos),
+      isSelected: selectedObjects.includes(obj.id) || isConnecting,
+      isDraggable: mode === 'select',
+      gridSnap,
+      gridSize,
+      showCoordinates
+    };
+
+    switch (obj.type) {
+      case 'boiler':
+        return <Boiler {...commonProps} />;
+      case 'controlUnit':
+        return <ControlUnit {...commonProps} />;
+      case 'valve':
+        return <Valve {...commonProps} />;
+      case 'sensor':
+        return <Sensor {...commonProps} />;
+      case 'pump':
+        return <Pump {...commonProps} />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <group>
+      {/* Render all objects */}
+      {objects.map(renderObject)}
+      
+      {/* Render all auto-routing connections */}
+      {connections.map(connection => {
+        return (
+          <AutoRoutingConnection
+            key={connection.id}
+            startPosition={connection.startPosition}
+            endPosition={connection.endPosition}
+            startPort={connection.startPort}
+            endPort={connection.endPort}
+            type={connection.type}
+            objects={objects}
+            isEditing={editingConnection === connection.id}
+            onClick={(e) => handleConnectionClick(connection.id, e)}
+          />
+        );
+      })}
+      
+      {/* Grid position markers for selected objects */}
+      {showCoordinates && objects.filter(obj => selectedObjects.includes(obj.id)).map(obj => (
+        <group key={`coord-${obj.id}`} position={obj.position}>
+          {/* Coordinate display */}
+          <mesh position={[0, 4, 0]}>
+            <sphereGeometry args={[0.05]} />
+            <meshBasicMaterial color="#ffeb3b" />
+          </mesh>
+          
+          {/* Ground projection lines */}
+          <mesh position={[0, 2, 0]}>
+            <cylinderGeometry args={[0.01, 0.01, 4, 4]} />
+            <meshBasicMaterial color="#ffeb3b" transparent opacity={0.3} />
+          </mesh>
+        </group>
+      ))}
+      
+      {/* Connection start indicator */}
+      {connectionStart && (
+        <group position={connectionStart.position}>
+          <mesh position={[0, 3, 0]}>
+            <sphereGeometry args={[0.3]} />
+            <meshLambertMaterial 
+              color="#4CAF50" 
+              emissive="#4CAF50" 
+              emissiveIntensity={0.5}
+              transparent
+              opacity={0.8}
+            />
+          </mesh>
+          
+          {/* Pulsing effect */}
+          <mesh position={[0, 3, 0]}>
+            <sphereGeometry args={[0.5]} />
+            <meshBasicMaterial 
+              color="#4CAF50" 
+              transparent 
+              opacity={0.2}
+            />
+          </mesh>
+          
+          {/* Label */}
+          <mesh position={[0, 3.8, 0]}>
+            <sphereGeometry args={[0.05]} />
+            <meshBasicMaterial color="#FFEB3B" />
+          </mesh>
+        </group>
+      )}
+      
+      {/* Edit connection indicator */}
+      {editingConnection && (
+        <mesh position={[0, 5, 0]}>
+          <sphereGeometry args={[0.1]} />
+          <meshLambertMaterial color="#FF9800" emissive="#FF9800" emissiveIntensity={0.5} />
+        </mesh>
+      )}
+    </group>
+  );
+});
+
+PlantScene.displayName = 'PlantScene';
+
+export default PlantScene; 
