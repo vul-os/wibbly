@@ -11,7 +11,7 @@ import AutoRoutingConnection from './AutoRoutingConnection';
 const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, gridSnap, gridSize, showCoordinates, onManualConnectionStateChange }, ref) => {
   const [objects, setObjects] = useState([]);
   const [connections, setConnections] = useState([]);
-  const [connectionStart, setConnectionStart] = useState(null);
+  const [connectionStart, setConnectionStart] = useState(null); // Will store { object, port }
   const [editingConnection, setEditingConnection] = useState(null);
   const scene = useThree((state) => state.scene);
   const objectIdRef = useRef(0);
@@ -32,7 +32,7 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     pump: 0.8,        // Base plate bottom is 0.8 units below center
     valve: 1.0,       // Valve body base bottom is 1.0 units below center  
     sensor: 0.15,     // Sensor body height 0.3, so bottom is 0.15 below center
-    controlUnit: 0.5  // Estimated for control unit electronics box
+    controlUnit: 1.25 // Main cabinet height 2.5, so bottom is 1.25 below center
   };
 
   const getObjectGroundPosition = (basePosition, objectType) => {
@@ -52,37 +52,176 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     }
   };
 
-  // Find compatible ports between two objects
-  const findCompatiblePorts = (sourceObj, targetObj) => {
-    const sourceClass = getComponentClass(sourceObj.type);
-    const targetClass = getComponentClass(targetObj.type);
+  // Verify if two specific ports can be connected
+  const canPortsConnect = (sourcePortData, targetPortData) => {
+    const { port: sourcePort } = sourcePortData;
+    const { port: targetPort } = targetPortData;
     
-    const sourcePorts = sourceClass?.connectionPorts || [];
-    const targetPorts = targetClass?.connectionPorts || [];
-    
-    // Find the first compatible port pair
-    for (const sourcePort of sourcePorts) {
-      for (const targetPort of targetPorts) {
-        if (sourcePort.type === targetPort.type) {
-          // Prefer output->input connections
-          if (sourcePort.id.includes('out') || sourcePort.id.includes('discharge') || 
-              targetPort.id.includes('in') || targetPort.id.includes('suction')) {
-            return { sourcePort, targetPort };
-          }
-        }
-      }
+    // Must be same type
+    if (sourcePort.type !== targetPort.type) {
+      return false;
     }
     
-    // Fallback: any compatible types
-    for (const sourcePort of sourcePorts) {
-      for (const targetPort of targetPorts) {
-        if (sourcePort.type === targetPort.type) {
-          return { sourcePort, targetPort };
-        }
-      }
+    // Prevent connecting port to itself
+    if (sourcePortData.object.id === targetPortData.object.id && sourcePort.id === targetPort.id) {
+      return false;
     }
     
-    return null;
+    return true;
+  };
+
+  const handlePortClick = (port, objectPosition, objectId, event) => {
+    event.stopPropagation();
+    
+    const clickedObject = objects.find(obj => obj.id === objectId);
+    if (!clickedObject) return;
+    
+    const portData = {
+      object: clickedObject,
+      port: port,
+      position: objectPosition
+    };
+
+    // If we have a connection start, try to connect to this port
+    if (connectionStart) {
+      if (canPortsConnect(connectionStart, portData)) {
+        const newConnection = {
+          id: connectionIdRef.current++,
+          startObjectId: connectionStart.object.id,
+          endObjectId: objectId,
+          startPort: connectionStart.port,
+          endPort: port,
+          type: port.type,
+          startPosition: connectionStart.object.position,
+          endPosition: clickedObject.position
+        };
+        
+        setConnections(prev => [...prev, newConnection]);
+        console.log(`Connected ${connectionStart.port.type} port: ${connectionStart.port.label} -> ${port.label}`);
+      } else {
+        console.warn(`Cannot connect ${connectionStart.port.type} port to ${port.type} port`);
+      }
+      
+      // Clear connection start
+      setConnectionStart(null);
+      setSelectedObjects([]);
+    } else {
+      // Start a new connection from this port
+      setConnectionStart(portData);
+      setSelectedObjects([objectId]);
+      console.log(`Selected ${port.type} port: ${port.label}`);
+    }
+  };
+
+  const handleObjectClick = (objectId, event) => {
+    event?.stopPropagation();
+    
+    const clickedObject = objects.find(obj => obj.id === objectId);
+    if (!clickedObject) return;
+
+    // Handle based on mode
+    if (mode === 'delete') {
+      // Delete object and its connections
+      setConnections(prev => prev.filter(conn => 
+        conn.startObjectId !== objectId && conn.endObjectId !== objectId
+      ));
+      setObjects(prev => prev.filter(obj => obj.id !== objectId));
+      setSelectedObjects([]);
+      setConnectionStart(null);
+    } else {
+      // Select mode - just select the object (connections now happen via port clicks)
+      if (connectionStart && connectionStart.object.id === objectId) {
+        // Clicking same object cancels connection
+        setConnectionStart(null);
+        setSelectedObjects([]);
+      } else {
+        // Just select the object
+        setSelectedObjects([objectId]);
+        // Don't set connectionStart here anymore - only ports do that
+      }
+    }
+  };
+
+  const handleObjectDrag = (objectId, newPosition) => {
+    if (mode === 'select') {
+      const obj = objects.find(o => o.id === objectId);
+      if (!obj) return;
+      
+      // Apply grid snapping to the new position
+      const basePosition = [
+        snapToGrid(newPosition[0]),
+        GROUND_LEVEL,
+        snapToGrid(newPosition[2])
+      ];
+      
+      const snappedPosition = getObjectGroundPosition(basePosition, obj.type);
+      
+      setObjects(prev => prev.map(obj =>
+        obj.id === objectId ? { ...obj, position: snappedPosition } : obj
+      ));
+      
+      // Update connections that involve this object (auto-reroute)
+      setConnections(prev => prev.map(conn => {
+        if (conn.startObjectId === objectId) {
+          return { ...conn, startPosition: snappedPosition };
+        } else if (conn.endObjectId === objectId) {
+          return { ...conn, endPosition: snappedPosition };
+        }
+        return conn;
+      }));
+    }
+  };
+
+  const handleConnectionClick = (connectionId, event) => {
+    event.stopPropagation();
+    
+    if (mode === 'delete') {
+      setConnections(prev => prev.filter(conn => conn.id !== connectionId));
+      setEditingConnection(null);
+    } else if (mode === 'select') {
+      // Enter edit mode for the connection
+      setEditingConnection(connectionId);
+      setSelectedObjects([]);
+    }
+  };
+
+  // Reset states when mode changes
+  React.useEffect(() => {
+    if (mode === 'delete') {
+      setConnectionStart(null);
+      setEditingConnection(null);
+    }
+  }, [mode]);
+
+  const renderObject = (obj) => {
+    const isConnecting = connectionStart && connectionStart.object.id === obj.id;
+    
+    const commonProps = {
+      position: obj.position,
+      onClick: (e) => handleObjectClick(obj.id, e),
+      onDrag: (pos) => handleObjectDrag(obj.id, pos),
+      onPortClick: (port, position, e) => handlePortClick(port, position, obj.id, e),
+      isSelected: selectedObjects.includes(obj.id) || isConnecting,
+      isDraggable: mode === 'select',
+      gridSnap,
+      gridSize,
+      showCoordinates
+    };
+
+    switch (obj.type) {
+      case 'boiler':
+        return <Boiler key={obj.id} {...commonProps} />;
+      case 'controlUnit':
+        return <ControlUnit key={obj.id} {...commonProps} />;
+      case 'valve':
+        return <Valve key={obj.id} {...commonProps} />;
+      case 'sensor':
+        return <Sensor key={obj.id} {...commonProps} />;
+      case 'pump':
+        return <Pump key={obj.id} {...commonProps} />;
+      default:
+        return null;
+    }
   };
 
   useImperativeHandle(ref, () => ({
@@ -151,151 +290,6 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     }
   }));
 
-  const handleObjectClick = (objectId, event) => {
-    event.stopPropagation();
-    
-    const clickedObject = objects.find(obj => obj.id === objectId);
-    if (!clickedObject) return;
-
-    switch (mode) {
-      case 'select':
-        setSelectedObjects([objectId]);
-        setConnectionStart(null);
-        setEditingConnection(null);
-        break;
-        
-      case 'connect':
-        if (!connectionStart) {
-          // First click - select source
-          setConnectionStart(clickedObject);
-          setSelectedObjects([objectId]);
-        } else if (connectionStart.id === objectId) {
-          // Clicked same object - cancel
-          setConnectionStart(null);
-          setSelectedObjects([]);
-        } else {
-          // Second click - create connection
-          const compatiblePorts = findCompatiblePorts(connectionStart, clickedObject);
-          
-          if (compatiblePorts) {
-            const newConnection = {
-              id: connectionIdRef.current++,
-              startObjectId: connectionStart.id,
-              endObjectId: objectId,
-              startPort: compatiblePorts.sourcePort,
-              endPort: compatiblePorts.targetPort,
-              type: compatiblePorts.sourcePort.type,
-              startPosition: connectionStart.position,
-              endPosition: clickedObject.position
-            };
-            
-            setConnections(prev => [...prev, newConnection]);
-          } else {
-            console.warn('No compatible ports found between these objects');
-          }
-          
-          setConnectionStart(null);
-          setSelectedObjects([]);
-        }
-        break;
-        
-      case 'delete':
-        // Remove object and its connections
-        setConnections(prev => prev.filter(conn => 
-          conn.startObjectId !== objectId && conn.endObjectId !== objectId
-        ));
-        setObjects(prev => prev.filter(obj => obj.id !== objectId));
-        setSelectedObjects([]);
-        setConnectionStart(null);
-        setEditingConnection(null);
-        break;
-    }
-  };
-
-  const handleObjectDrag = (objectId, newPosition) => {
-    if (mode === 'select') {
-      const obj = objects.find(o => o.id === objectId);
-      if (!obj) return;
-      
-      // Apply grid snapping to the new position
-      const basePosition = [
-        snapToGrid(newPosition[0]),
-        GROUND_LEVEL,
-        snapToGrid(newPosition[2])
-      ];
-      
-      const snappedPosition = getObjectGroundPosition(basePosition, obj.type);
-      
-      setObjects(prev => prev.map(obj =>
-        obj.id === objectId ? { ...obj, position: snappedPosition } : obj
-      ));
-      
-      // Update connections that involve this object (auto-reroute)
-      setConnections(prev => prev.map(conn => {
-        if (conn.startObjectId === objectId) {
-          return { ...conn, startPosition: snappedPosition };
-        } else if (conn.endObjectId === objectId) {
-          return { ...conn, endPosition: snappedPosition };
-        }
-        return conn;
-      }));
-    }
-  };
-
-  const handleConnectionClick = (connectionId, event) => {
-    event.stopPropagation();
-    
-    if (mode === 'delete') {
-      setConnections(prev => prev.filter(conn => conn.id !== connectionId));
-      setEditingConnection(null);
-    } else if (mode === 'select') {
-      // Enter edit mode for the connection
-      setEditingConnection(connectionId);
-      setSelectedObjects([]);
-    }
-  };
-
-  // Reset states when mode changes
-  React.useEffect(() => {
-    if (mode !== 'connect') {
-      setConnectionStart(null);
-    }
-    if (mode !== 'select') {
-      setEditingConnection(null);
-    }
-  }, [mode]);
-
-  const renderObject = (obj) => {
-    const isConnecting = connectionStart && connectionStart.id === obj.id;
-    
-    const commonProps = {
-      key: obj.id,
-      position: obj.position,
-      onClick: (e) => handleObjectClick(obj.id, e),
-      onDrag: (pos) => handleObjectDrag(obj.id, pos),
-      isSelected: selectedObjects.includes(obj.id) || isConnecting,
-      isDraggable: mode === 'select',
-      gridSnap,
-      gridSize,
-      showCoordinates
-    };
-
-    switch (obj.type) {
-      case 'boiler':
-        return <Boiler {...commonProps} />;
-      case 'controlUnit':
-        return <ControlUnit {...commonProps} />;
-      case 'valve':
-        return <Valve {...commonProps} />;
-      case 'sensor':
-        return <Sensor {...commonProps} />;
-      case 'pump':
-        return <Pump {...commonProps} />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <group>
       {/* Render all objects */}
@@ -337,12 +331,14 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
       
       {/* Connection start indicator */}
       {connectionStart && (
-        <group position={connectionStart.position}>
+        <group position={connectionStart.object.position}>
           <mesh position={[0, 3, 0]}>
             <sphereGeometry args={[0.3]} />
             <meshLambertMaterial 
-              color="#4CAF50" 
-              emissive="#4CAF50" 
+              color={connectionStart.port.type === 'electric' ? '#FF5722' : 
+                     connectionStart.port.type === 'liquid' ? '#2196F3' : '#FFC107'} 
+              emissive={connectionStart.port.type === 'electric' ? '#FF5722' : 
+                        connectionStart.port.type === 'liquid' ? '#2196F3' : '#FFC107'}
               emissiveIntensity={0.5}
               transparent
               opacity={0.8}
@@ -353,15 +349,18 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
           <mesh position={[0, 3, 0]}>
             <sphereGeometry args={[0.5]} />
             <meshBasicMaterial 
-              color="#4CAF50" 
+              color={connectionStart.port.type === 'electric' ? '#FF5722' : 
+                     connectionStart.port.type === 'liquid' ? '#2196F3' : '#FFC107'} 
               transparent 
               opacity={0.2}
             />
           </mesh>
           
-          {/* Label */}
+          {/* Port type indicator */}
           <mesh position={[0, 3.8, 0]}>
-            <sphereGeometry args={[0.05]} />
+            {connectionStart.port.type === 'electric' && <octahedronGeometry args={[0.1]} />}
+            {connectionStart.port.type === 'liquid' && <sphereGeometry args={[0.1, 8, 8]} />}
+            {connectionStart.port.type === 'gas' && <coneGeometry args={[0.1, 0.15, 6]} />}
             <meshBasicMaterial color="#FFEB3B" />
           </mesh>
         </group>

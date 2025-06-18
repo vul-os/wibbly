@@ -3,7 +3,6 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
 import { Button } from '../../components/ui/button';
 import PlantScene from './components/PlantScene';
-import ConnectionManager from './components/ConnectionManager';
 
 const PlantVisualization = () => {
   const [currentMode, setCurrentMode] = useState('select');
@@ -15,8 +14,7 @@ const PlantVisualization = () => {
   const cameraControlsRef = useRef();
 
   const modes = {
-    select: { label: 'Select', color: 'bg-blue-500' },
-    connect: { label: 'Connect', color: 'bg-orange-500' },
+    select: { label: 'Select/Connect', color: 'bg-blue-500' },
     delete: { label: 'Delete', color: 'bg-red-500' }
   };
 
@@ -187,35 +185,22 @@ const PlantVisualization = () => {
       {/* CAD Status Info */}
       <div className="absolute top-4 right-4 z-10 bg-black/80 p-3 rounded-lg text-white text-xs">
         <div className="space-y-1">
-          <div><strong>Grid:</strong> {gridSnap ? `${gridSize}m snap` : 'Free'}</div>
+          <div><strong>Grid:</strong> {gridSnap ? `${gridSize}m snap` : 'Free movement'}</div>
+          <div><strong>Mode:</strong> {modes[currentMode].label}</div>
           <div><strong>Objects:</strong> {selectedObjects.length} selected</div>
-          {showCoordinates && selectedObjects.length > 0 && (
-            <div><strong>Position:</strong> Tracking...</div>
+          {currentMode === 'select' && (
+            <div className="mt-2 pt-2 border-t border-gray-600">
+              <div className="text-green-400">Click specific ports to connect</div>
+              <div>First click selects source port</div>
+              <div>Second click connects to target port</div>
+              <div>Ports must be same type to connect</div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Connection Types Info */}
-      <div className="absolute top-4 right-48 z-10 bg-black/80 p-3 rounded-lg text-white text-xs">
-        <div className="space-y-1">
-          <div className="mb-1"><strong>Auto-Routing Types:</strong></div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-            <span>Liquid (Auto-Routes)</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-            <span>Gas (Auto-Routes)</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span>Electric (Auto-Routes)</span>
-          </div>
-        </div>
-      </div>
-
       {/* Info Panel */}
-      <div className="absolute bottom-4 left-4 z-10 bg-black/60 p-3 rounded text-white text-xs max-w-xs">
+      {/* <div className="absolute bottom-4 left-4 z-10 bg-black/60 p-3 rounded text-white text-xs max-w-xs">
         <div className="space-y-1">
           <div><strong>Select Mode:</strong> Click and drag objects (Grid snap: {gridSnap ? 'ON' : 'OFF'})</div>
           <div><strong>Connect Mode:</strong> Click source → Click destination (auto-routes)</div>
@@ -233,7 +218,7 @@ const PlantVisualization = () => {
             <div>• Professional plumbing appearance</div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* 3D Canvas */}
       <Canvas
@@ -296,13 +281,6 @@ const PlantVisualization = () => {
           />
         </Suspense>
       </Canvas>
-
-      {/* Connection Manager */}
-      <ConnectionManager
-        selectedObjects={selectedObjects}
-        mode={currentMode}
-        sceneRef={sceneRef}
-      />
     </div>
   );
 };

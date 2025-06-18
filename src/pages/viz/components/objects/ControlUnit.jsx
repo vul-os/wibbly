@@ -109,7 +109,7 @@ const ControlUnit = ({ position, onClick, onDrag, isSelected, isDraggable, gridS
   const handlePortClick = (port, event) => {
     event.stopPropagation();
     if (onPortClick) {
-      onPortClick(port, position);
+      onPortClick(port, position, event);
     }
   };
 

@@ -117,7 +117,7 @@ const Sensor = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, 
   const handlePortClick = (port, event) => {
     event.stopPropagation();
     if (onPortClick) {
-      onPortClick(port, position);
+      onPortClick(port, position, event);
     }
   };
 

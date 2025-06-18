@@ -56,244 +56,158 @@ const AutoRoutingConnection = ({
       endPortPos.add(new THREE.Vector3(...endPort.offset));
     }
 
-    // Constants for routing
-    const GROUND_LEVEL = 0;
-    const CLEARANCE_HEIGHT = 2.5; // Height to clear objects
-    const OBJECT_RADIUS = 2.0; // Assumed radius around objects to avoid
-    const OUTWARD_DISTANCE = 1.5; // Distance to move outward from objects
+    // Constants for routing - simplified for predictable behavior
+    const FLOOR_LEVEL = 0.3; // Route near floor level
+    const OUTWARD_DISTANCE = 1.8; // Distance to move outward from objects
+    const CLEARANCE_HEIGHT = 2.8; // Height to clear objects when necessary
     
-    // Helper function to check if a point is too close to any object
-    const isNearObject = (point, excludeObjects = []) => {
-      return objects.some(obj => {
-        if (excludeObjects.includes(obj.id)) return false;
-        const objPos = new THREE.Vector3(...obj.position);
-        const distance = point.clone().setY(objPos.y).distanceTo(objPos);
-        return distance < OBJECT_RADIUS;
-      });
-    };
-    
-    // Helper function to find a safe routing height
-    const getSafeRoutingHeight = (path) => {
-      let maxObjectHeight = GROUND_LEVEL;
+    // Helper function to check if routing path conflicts with objects
+    const getMinClearanceHeight = (pathPoints) => {
+      let minHeight = FLOOR_LEVEL;
       
-      // Check all objects along the path
+      // Check each object to see if we need to route over it
       for (const obj of objects) {
         const objPos = new THREE.Vector3(...obj.position);
         
-        // Check if object is near the routing path
-        for (let i = 0; i < path.length - 1; i++) {
-          const segmentStart = path[i].clone().setY(objPos.y);
-          const segmentEnd = path[i + 1].clone().setY(objPos.y);
+        // Check if any path segment passes near this object
+        for (let i = 0; i < pathPoints.length - 1; i++) {
+          const segStart = pathPoints[i].clone();
+          const segEnd = pathPoints[i + 1].clone();
           
-          // Distance from object to line segment
-          const line = new THREE.Line3(segmentStart, segmentEnd);
-          const closestPoint = line.closestPointToPoint(objPos, true, new THREE.Vector3());
-          const distance = closestPoint.distanceTo(objPos);
+          // Only check horizontal proximity (ignore y)
+          segStart.y = objPos.y;
+          segEnd.y = objPos.y;
           
-          if (distance < OBJECT_RADIUS) {
-            // This object is in the way, need to go over it
-            maxObjectHeight = Math.max(maxObjectHeight, objPos.y + CLEARANCE_HEIGHT);
+          const line = new THREE.Line3(segStart, segEnd);
+          const closest = line.closestPointToPoint(objPos, true, new THREE.Vector3());
+          const distance = closest.distanceTo(objPos);
+          
+          // If path goes too close to object, route higher
+          if (distance < 1.5) {
+            minHeight = Math.max(minHeight, objPos.y + CLEARANCE_HEIGHT);
           }
         }
       }
       
-      return maxObjectHeight;
+      return minHeight;
     };
 
-    // Auto-routing logic for realistic plumbing-style connections
+    // Step-by-step routing: direction-aware smart routing
     const routePoints = [];
     
-    // Start at the port position
+    // 1. Start at source port
     routePoints.push(startPortPos.clone());
     
-    // Step 1: Go outward from start object using port direction
+    // 2. Move outward from source based on port direction and position
     let currentPos = startPortPos.clone();
-    
     if (startPort && startPort.direction) {
-      const outwardDirection = new THREE.Vector3(...startPort.direction).normalize();
-      currentPos.add(outwardDirection.multiplyScalar(OUTWARD_DISTANCE));
+      const portDir = new THREE.Vector3(...startPort.direction).normalize();
+      
+      // Determine routing strategy based on port direction
+      if (portDir.y > 0.5) {
+        // Port points up - go up first (like steam outlet on top of boiler)
+        currentPos.y += 2.0; // Go up significantly
+        routePoints.push(currentPos.clone());
+        
+        // Then move horizontally outward
+        currentPos.x += portDir.x * OUTWARD_DISTANCE;
+        currentPos.z += portDir.z * OUTWARD_DISTANCE;
+        if (Math.abs(portDir.x) > 0.1 || Math.abs(portDir.z) > 0.1) {
+          routePoints.push(currentPos.clone());
+        }
+      } else if (portDir.y < -0.5) {
+        // Port points down - go down first
+        currentPos.y -= 1.0;
+        routePoints.push(currentPos.clone());
+        
+        // Then move horizontally outward
+        currentPos.x += portDir.x * OUTWARD_DISTANCE;
+        currentPos.z += portDir.z * OUTWARD_DISTANCE;
+        if (Math.abs(portDir.x) > 0.1 || Math.abs(portDir.z) > 0.1) {
+          routePoints.push(currentPos.clone());
+        }
+      } else {
+        // Port points horizontally - go outward first
+        currentPos.add(portDir.multiplyScalar(OUTWARD_DISTANCE));
+        routePoints.push(currentPos.clone());
+      }
+    }
+    
+    // 3. Calculate end approach strategy
+    let endApproachPos = endPortPos.clone();
+    if (endPort && endPort.direction) {
+      const endPortDir = new THREE.Vector3(...endPort.direction).normalize();
+      
+      // Determine approach strategy based on end port direction
+      if (endPortDir.y > 0.5) {
+        // End port points up - approach from above
+        endApproachPos.y += 2.0;
+        endApproachPos.x -= endPortDir.x * OUTWARD_DISTANCE;
+        endApproachPos.z -= endPortDir.z * OUTWARD_DISTANCE;
+      } else if (endPortDir.y < -0.5) {
+        // End port points down - approach from below
+        endApproachPos.y -= 1.0;
+        endApproachPos.x -= endPortDir.x * OUTWARD_DISTANCE;
+        endApproachPos.z -= endPortDir.z * OUTWARD_DISTANCE;
+      } else {
+        // End port points horizontally - approach from opposite direction
+        endApproachPos.add(endPortDir.multiplyScalar(-OUTWARD_DISTANCE));
+      }
+    }
+    
+    // 4. Route to floor level for horizontal movement (unless both ports are high)
+    const horizontalPath = [currentPos.clone(), endApproachPos.clone()];
+    let routingHeight = getMinClearanceHeight(horizontalPath);
+    
+    // If both start and end are high up, keep routing high
+    const startIsHigh = currentPos.y > 2.0;
+    const endIsHigh = endApproachPos.y > 2.0;
+    
+    if (startIsHigh && endIsHigh) {
+      routingHeight = Math.max(routingHeight, Math.min(currentPos.y, endApproachPos.y));
+    }
+    
+    // Move to routing height if needed
+    if (Math.abs(currentPos.y - routingHeight) > 0.1) {
+      currentPos.y = routingHeight;
       routePoints.push(currentPos.clone());
     }
     
-    // Step 2: Calculate routing strategy - prefer going down when possible, avoid obstacles
-    const distance = currentPos.distanceTo(endPortPos);
-    const deltaX = endPortPos.x - currentPos.x;
-    const deltaZ = endPortPos.z - currentPos.z;
-    const deltaY = endPortPos.y - currentPos.y;
+    // 5. Route horizontally at routing level
+    const deltaX = endApproachPos.x - currentPos.x;
+    const deltaZ = endApproachPos.z - currentPos.z;
     
-    // Determine if we should go down first (preferred for plumbing)
-    const shouldGoDown = deltaY < -0.5; // If end is significantly lower
-    
-    if (distance > 3) {
-      // Long distance routing with obstacle avoidance
-      let routingHeight;
-      
-      if (shouldGoDown) {
-        // Gravity-fed routing: try to go down first, then horizontal
-        const preferredHeight = Math.max(GROUND_LEVEL + 0.5, endPortPos.y);
-        
-        // Create preliminary horizontal path to check for obstacles
-        const preliminaryPath = [
-          currentPos.clone(),
-          new THREE.Vector3(endPortPos.x, preferredHeight, currentPos.z),
-          new THREE.Vector3(endPortPos.x, preferredHeight, endPortPos.z)
-        ];
-        
-        // Check if this path needs elevation due to obstacles
-        routingHeight = Math.max(preferredHeight, getSafeRoutingHeight(preliminaryPath));
-        
-        // Go down to routing level
-        if (currentPos.y > routingHeight) {
-          routePoints.push(new THREE.Vector3(currentPos.x, routingHeight, currentPos.z));
-          currentPos.set(currentPos.x, routingHeight, currentPos.z);
-        }
-        
-        // Route horizontally at safe level, avoiding obstacles
-        if (Math.abs(deltaX) > Math.abs(deltaZ)) {
-          // X-dominant route
-          const midPoint1 = new THREE.Vector3(endPortPos.x, routingHeight, currentPos.z);
-          const midPoint2 = new THREE.Vector3(endPortPos.x, routingHeight, endPortPos.z);
-          
-          // Check if we need to detour around obstacles
-          if (isNearObject(midPoint1)) {
-            // Add detour points
-            const detourZ = currentPos.z + (endPortPos.z > currentPos.z ? OBJECT_RADIUS + 1 : -OBJECT_RADIUS - 1);
-            routePoints.push(new THREE.Vector3(currentPos.x, routingHeight, detourZ));
-            routePoints.push(new THREE.Vector3(endPortPos.x, routingHeight, detourZ));
-          }
-          
-          routePoints.push(midPoint1);
-          routePoints.push(midPoint2);
-        } else {
-          // Z-dominant route
-          const midPoint1 = new THREE.Vector3(currentPos.x, routingHeight, endPortPos.z);
-          const midPoint2 = new THREE.Vector3(endPortPos.x, routingHeight, endPortPos.z);
-          
-          // Check if we need to detour around obstacles
-          if (isNearObject(midPoint1)) {
-            // Add detour points
-            const detourX = currentPos.x + (endPortPos.x > currentPos.x ? OBJECT_RADIUS + 1 : -OBJECT_RADIUS - 1);
-            routePoints.push(new THREE.Vector3(detourX, routingHeight, currentPos.z));
-            routePoints.push(new THREE.Vector3(detourX, routingHeight, endPortPos.z));
-          }
-          
-          routePoints.push(midPoint1);
-          routePoints.push(midPoint2);
-        }
-        
-        // Go up to end if needed
-        if (routingHeight < endPortPos.y) {
-          routePoints.push(new THREE.Vector3(endPortPos.x, endPortPos.y, endPortPos.z));
-        }
-      } else {
-        // Standard elevated routing for long distances going up
-        const preliminaryPath = [
-          currentPos.clone(),
-          new THREE.Vector3(endPortPos.x, currentPos.y, currentPos.z),
-          new THREE.Vector3(endPortPos.x, currentPos.y, endPortPos.z)
-        ];
-        
-        routingHeight = Math.max(
-          Math.max(currentPos.y, endPortPos.y) + 1.0,
-          getSafeRoutingHeight(preliminaryPath)
-        );
-        
-        // Go up to elevated level
-        if (currentPos.y < routingHeight) {
-          routePoints.push(new THREE.Vector3(currentPos.x, routingHeight, currentPos.z));
-          currentPos.set(currentPos.x, routingHeight, currentPos.z);
-        }
-        
-        // Route horizontally at elevated level
-        if (Math.abs(deltaX) > Math.abs(deltaZ)) {
-          // X-dominant route
-          routePoints.push(new THREE.Vector3(endPortPos.x, routingHeight, currentPos.z));
-          routePoints.push(new THREE.Vector3(endPortPos.x, routingHeight, endPortPos.z));
-        } else {
-          // Z-dominant route
-          routePoints.push(new THREE.Vector3(currentPos.x, routingHeight, endPortPos.z));
-          routePoints.push(new THREE.Vector3(endPortPos.x, routingHeight, endPortPos.z));
-        }
-        
-        // Go down to end
-        if (routingHeight > endPortPos.y) {
-          routePoints.push(new THREE.Vector3(endPortPos.x, endPortPos.y, endPortPos.z));
-        }
-      }
-    } else {
-      // Short distance - simple L-shaped routing with obstacle checking
-      if (Math.abs(deltaX) > Math.abs(deltaZ)) {
-        // Route X first, then Z, then Y if needed
-        const waypoint1 = new THREE.Vector3(endPortPos.x, currentPos.y, currentPos.z);
-        const waypoint2 = new THREE.Vector3(endPortPos.x, currentPos.y, endPortPos.z);
-        
-        // Check for obstacles and adjust height if needed
-        if (isNearObject(waypoint1) || isNearObject(waypoint2)) {
-          const safeHeight = getSafeRoutingHeight([currentPos, waypoint1, waypoint2]);
-          waypoint1.y = safeHeight;
-          waypoint2.y = safeHeight;
-          
-          // Go up first if needed
-          if (currentPos.y < safeHeight) {
-            routePoints.push(new THREE.Vector3(currentPos.x, safeHeight, currentPos.z));
-          }
-        }
-        
-        routePoints.push(waypoint1);
-        if (Math.abs(deltaZ) > 0.01) {
-          routePoints.push(waypoint2);
-        }
-        if (Math.abs(deltaY) > 0.01) {
-          routePoints.push(new THREE.Vector3(endPortPos.x, endPortPos.y, endPortPos.z));
-        }
-      } else {
-        // Route Z first, then X, then Y if needed
-        const waypoint1 = new THREE.Vector3(currentPos.x, currentPos.y, endPortPos.z);
-        const waypoint2 = new THREE.Vector3(endPortPos.x, currentPos.y, endPortPos.z);
-        
-        // Check for obstacles and adjust height if needed
-        if (isNearObject(waypoint1) || isNearObject(waypoint2)) {
-          const safeHeight = getSafeRoutingHeight([currentPos, waypoint1, waypoint2]);
-          waypoint1.y = safeHeight;
-          waypoint2.y = safeHeight;
-          
-          // Go up first if needed
-          if (currentPos.y < safeHeight) {
-            routePoints.push(new THREE.Vector3(currentPos.x, safeHeight, currentPos.z));
-          }
-        }
-        
-        routePoints.push(waypoint1);
-        if (Math.abs(deltaX) > 0.01) {
-          routePoints.push(waypoint2);
-        }
-        if (Math.abs(deltaY) > 0.01) {
-          routePoints.push(new THREE.Vector3(endPortPos.x, endPortPos.y, endPortPos.z));
-        }
-      }
+    // Simple L-shaped horizontal routing
+    if (Math.abs(deltaX) > 0.1) {
+      currentPos.x = endApproachPos.x;
+      routePoints.push(currentPos.clone());
     }
     
-    // Step 3: Approach end object from port direction if available
-    if (endPort && endPort.direction) {
-      const approachDirection = new THREE.Vector3(...endPort.direction).normalize();
-      const approachPoint = endPortPos.clone().sub(approachDirection.multiplyScalar(OUTWARD_DISTANCE));
-      
-      // Add approach point if it's different from last point
-      const lastPoint = routePoints[routePoints.length - 1];
-      if (lastPoint.distanceTo(approachPoint) > 0.1) {
-        routePoints.push(approachPoint);
-      }
+    if (Math.abs(deltaZ) > 0.1) {
+      currentPos.z = endApproachPos.z;
+      routePoints.push(currentPos.clone());
     }
     
-    // End at the port position
+    // 6. Move to approach position height
+    if (Math.abs(endApproachPos.y - currentPos.y) > 0.1) {
+      currentPos.y = endApproachPos.y;
+      routePoints.push(currentPos.clone());
+    }
+    
+    // 7. Approach end port if needed
+    if (endApproachPos.distanceTo(endPortPos) > 0.1) {
+      routePoints.push(endApproachPos.clone());
+    }
+    
+    // 8. End at target port
     routePoints.push(endPortPos.clone());
     
-    // Remove duplicate consecutive points
+    // Clean up duplicate points
     const cleanedPoints = [routePoints[0]];
     for (let i = 1; i < routePoints.length; i++) {
       const current = routePoints[i];
       const previous = routePoints[i - 1];
-      if (current.distanceTo(previous) > 0.01) {
+      if (current.distanceTo(previous) > 0.05) {
         cleanedPoints.push(current);
       }
     }
