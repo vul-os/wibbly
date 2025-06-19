@@ -17,7 +17,8 @@ import {
   RotateCcw,
   X,
   Grid2x2,
-  MapPin
+  MapPin,
+  Flame
 } from 'lucide-react';
 
 const PlantVisualization = () => {
@@ -85,6 +86,13 @@ const PlantVisualization = () => {
       icon: Battery,
       color: '#FF9800', 
       description: '⚡ Electrical Distribution with 4 Outputs' 
+    },
+    { 
+      type: 'heatExchanger', 
+      label: 'Heat Exchanger', 
+      icon: Flame,
+      color: '#FF9800', 
+      description: '🔥 Electric + Water In/Out' 
     }
   ];
 

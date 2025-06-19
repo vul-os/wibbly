@@ -9,6 +9,7 @@ import Pump from './objects/Pump';
 import ConveyorBelt from './objects/ConveyorBelt';
 import PowerBox from './objects/PowerBox';
 import StorageTank from './objects/StorageTank';
+import HeatExchanger from './objects/HeatExchanger';
 import AutoRoutingConnection from './AutoRoutingConnection';
 
 const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, gridSnap, gridSize, showCoordinates, onManualConnectionStateChange }, ref) => {
@@ -38,7 +39,8 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     controlUnit: 1.25, // Main cabinet height 2.5, so bottom is 1.25 below center
     conveyorBelt: 0.8, // Simple support legs height, so bottom is 0.8 below center
     powerBox: 0.1, // Base plate extends 0.1 below center, so bottom sits on ground
-    storageTank: 3.0 // Tank support base plates are 3 units below center
+    storageTank: 3.0, // Tank support base plates are 3 units below center
+    heatExchanger: 1.4 // Mounting feet bottom is 1.4 units below center
   };
 
   const getObjectGroundPosition = (basePosition, objectType) => {
@@ -57,6 +59,7 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
       case 'conveyorBelt': return ConveyorBelt;
       case 'powerBox': return PowerBox;
       case 'storageTank': return StorageTank;
+      case 'heatExchanger': return HeatExchanger;
       default: return null;
     }
   };
@@ -234,6 +237,8 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
         return <PowerBox key={obj.id} {...commonProps} />;
       case 'storageTank':
         return <StorageTank key={obj.id} {...commonProps} />;
+      case 'heatExchanger':
+        return <HeatExchanger key={obj.id} {...commonProps} />;
       default:
         return null;
     }
