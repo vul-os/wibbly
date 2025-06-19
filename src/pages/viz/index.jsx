@@ -3,6 +3,22 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
 import { Button } from '../../components/ui/button';
 import PlantScene from './components/PlantScene';
+import { 
+  Zap, 
+  Cog, 
+  Move, 
+  Eye, 
+  Settings, 
+  Truck, 
+  Battery, 
+  Cylinder,
+  Box,
+  Trash2,
+  RotateCcw,
+  X,
+  Grid2x2,
+  MapPin
+} from 'lucide-react';
 
 const PlantVisualization = () => {
   const [currentMode, setCurrentMode] = useState('select');
@@ -13,19 +29,63 @@ const PlantVisualization = () => {
   const sceneRef = useRef();
   const cameraControlsRef = useRef();
 
-  const modes = {
-    select: { label: 'Select/Connect', color: 'bg-blue-500' },
-    delete: { label: 'Delete', color: 'bg-red-500' }
-  };
-
   const plantObjects = [
-    { type: 'boiler', label: 'Boiler', color: '#4CAF50', description: 'Electric + Liquid I/O' },
-    { type: 'pump', label: 'Pump', color: '#F44336', description: 'Electric + Liquid I/O' },
-    { type: 'valve', label: 'Valve', color: '#FF9800', description: 'Electric Control + Liquid I/O' },
-    { type: 'sensor', label: 'Sensor', color: '#9C27B0', description: 'Signal Output' },
-    { type: 'controlUnit', label: 'Control Unit', color: '#2196F3', description: 'Multi-Connection Hub' },
-    { type: 'conveyorBelt', label: 'Conveyor Belt', color: '#607D8B', description: 'Moving Belt with Electric Power' },
-    { type: 'powerBox', label: 'Power Box', color: '#FF9800', description: '⚡ Electrical Distribution with 4 Outputs' }
+    { 
+      type: 'boiler', 
+      label: 'Boiler', 
+      icon: Cylinder,
+      color: '#4CAF50', 
+      description: 'Electric + Liquid I/O' 
+    },
+    { 
+      type: 'storageTank', 
+      label: 'Storage Tank', 
+      icon: Cylinder,
+      color: '#607D8B', 
+      description: 'Water storage with inlet/outlet' 
+    },
+    { 
+      type: 'pump', 
+      label: 'Pump', 
+      icon: Cog,
+      color: '#F44336', 
+      description: 'Electric + Liquid I/O' 
+    },
+    { 
+      type: 'valve', 
+      label: 'Valve', 
+      icon: Move,
+      color: '#FF9800', 
+      description: 'Electric Control + Liquid I/O' 
+    },
+    { 
+      type: 'sensor', 
+      label: 'Sensor', 
+      icon: Eye,
+      color: '#9C27B0', 
+      description: 'Signal Output' 
+    },
+    { 
+      type: 'controlUnit', 
+      label: 'Control Unit', 
+      icon: Settings,
+      color: '#2196F3', 
+      description: 'Multi-Connection Hub' 
+    },
+    { 
+      type: 'conveyorBelt', 
+      label: 'Conveyor Belt', 
+      icon: Truck,
+      color: '#607D8B', 
+      description: 'Moving Belt with Electric Power' 
+    },
+    { 
+      type: 'powerBox', 
+      label: 'Power Box', 
+      icon: Battery,
+      color: '#FF9800', 
+      description: '⚡ Electrical Distribution with 4 Outputs' 
+    }
   ];
 
   const gridSizes = [
@@ -81,9 +141,12 @@ const PlantVisualization = () => {
             <span className="text-xs">Grid Snap:</span>
             <Button
               onClick={() => setGridSnap(!gridSnap)}
-              className={`text-xs h-6 px-2 ${gridSnap ? 'bg-green-600' : 'bg-gray-600'}`}
+              className={`text-xs h-6 px-2 flex items-center gap-1 ${
+                gridSnap ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-900 hover:bg-gray-800 border border-gray-700'
+              }`}
               variant={gridSnap ? "default" : "outline"}
             >
+              <Grid2x2 size={12} />
               {gridSnap ? 'ON' : 'OFF'}
             </Button>
           </div>
@@ -97,7 +160,7 @@ const PlantVisualization = () => {
                   key={size.value}
                   onClick={() => setGridSize(size.value)}
                   className={`text-xs h-6 ${
-                    gridSize === size.value ? 'bg-blue-600' : 'bg-gray-600'
+                    gridSize === size.value ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-gray-800 border border-gray-700'
                   }`}
                   variant={gridSize === size.value ? "default" : "outline"}
                 >
@@ -112,9 +175,12 @@ const PlantVisualization = () => {
             <span className="text-xs">Coordinates:</span>
             <Button
               onClick={() => setShowCoordinates(!showCoordinates)}
-              className={`text-xs h-6 px-2 ${showCoordinates ? 'bg-green-600' : 'bg-gray-600'}`}
+              className={`text-xs h-6 px-2 flex items-center gap-1 ${
+                showCoordinates ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-900 hover:bg-gray-800 border border-gray-700'
+              }`}
               variant={showCoordinates ? "default" : "outline"}
             >
+              <MapPin size={12} />
               {showCoordinates ? 'ON' : 'OFF'}
             </Button>
           </div>
@@ -124,18 +190,22 @@ const PlantVisualization = () => {
         <div className="mb-4">
           <h4 className="text-sm font-semibold mb-2">Add Components:</h4>
           <div className="space-y-1">
-            {plantObjects.map(obj => (
-              <div key={obj.type} className="flex flex-col">
-                <Button
-                  onClick={() => addObject(obj.type)}
-                  className="text-xs h-8 mb-1"
-                  variant="outline"
-                >
-                  {obj.label}
-                </Button>
-                <span className="text-xs text-gray-400 mb-2">{obj.description}</span>
-              </div>
-            ))}
+            {plantObjects.map(obj => {
+              const IconComponent = obj.icon;
+              return (
+                <div key={obj.type} className="flex flex-col">
+                  <Button
+                    onClick={() => addObject(obj.type)}
+                    className="text-xs h-10 mb-1 bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white flex items-center gap-2 justify-start px-3"
+                    variant="outline"
+                  >
+                    <IconComponent size={16} />
+                    {obj.label}
+                  </Button>
+                  <span className="text-xs text-gray-400 mb-2">{obj.description}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -143,18 +213,26 @@ const PlantVisualization = () => {
         <div className="mb-4">
           <h4 className="text-sm font-semibold mb-2">Interaction Mode:</h4>
           <div className="space-y-1">
-            {Object.entries(modes).map(([mode, config]) => (
-              <Button
-                key={mode}
-                onClick={() => setMode(mode)}
-                className={`w-full text-xs h-8 ${
-                  currentMode === mode ? config.color : 'bg-gray-600'
-                }`}
-                variant={currentMode === mode ? "default" : "outline"}
-              >
-                {config.label}
-              </Button>
-            ))}
+            <Button
+              onClick={() => setMode('select')}
+              className={`w-full text-xs h-8 flex items-center gap-2 ${
+                currentMode === 'select' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-gray-800 border border-gray-700'
+              }`}
+              variant={currentMode === 'select' ? "default" : "outline"}
+            >
+              <Box size={14} />
+              Select/Connect
+            </Button>
+            <Button
+              onClick={() => setMode('delete')}
+              className={`w-full text-xs h-8 flex items-center gap-2 ${
+                currentMode === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-900 hover:bg-gray-800 border border-gray-700'
+              }`}
+              variant={currentMode === 'delete' ? "default" : "outline"}
+            >
+              <Trash2 size={14} />
+              Delete
+            </Button>
           </div>
         </div>
 
@@ -164,23 +242,28 @@ const PlantVisualization = () => {
           <div className="space-y-1">
             <Button 
               onClick={autoLayout} 
-              className="w-full text-xs h-8" 
+              className="w-full text-xs h-8 bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white flex items-center gap-2" 
               variant="outline"
             >
+              <RotateCcw size={14} />
               Auto Layout
             </Button>
             <Button 
               onClick={clearAll} 
-              className="w-full text-xs h-8 bg-red-600 hover:bg-red-700"
+              className="w-full text-xs h-8 bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
             >
+              <X size={14} />
               Clear All
             </Button>
           </div>
         </div>
 
         {/* Current Mode Indicator */}
-        <div className={`p-2 rounded text-center text-xs font-bold ${modes[currentMode].color}`}>
-          Mode: {modes[currentMode].label}
+        <div className={`p-2 rounded text-center text-xs font-bold flex items-center justify-center gap-2 ${
+          currentMode === 'select' ? 'bg-blue-600' : 'bg-red-600'
+        }`}>
+          {currentMode === 'select' ? <Box size={14} /> : <Trash2 size={14} />}
+          Mode: {currentMode === 'select' ? 'Select/Connect' : 'Delete'}
         </div>
       </div>
 
@@ -188,7 +271,7 @@ const PlantVisualization = () => {
       <div className="absolute top-4 right-4 z-10 bg-black/80 p-3 rounded-lg text-white text-xs">
         <div className="space-y-1">
           <div><strong>Grid:</strong> {gridSnap ? `${gridSize}m snap` : 'Free movement'}</div>
-          <div><strong>Mode:</strong> {modes[currentMode].label}</div>
+          <div><strong>Mode:</strong> {currentMode === 'select' ? 'Select/Connect' : 'Delete'}</div>
           <div><strong>Objects:</strong> {selectedObjects.length} selected</div>
           {currentMode === 'select' && (
             <div className="mt-2 pt-2 border-t border-gray-600">
