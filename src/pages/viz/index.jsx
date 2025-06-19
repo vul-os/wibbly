@@ -31,7 +31,8 @@ import {
   Search,
   ArrowLeft,
   Package,
-  Microchip
+  Microchip,
+  Shield
 } from 'lucide-react';
 
 const PlantVisualization = () => {
@@ -75,6 +76,14 @@ const PlantVisualization = () => {
       color: '#F44336', 
         description: 'Liquid pump with motor and I/O ports',
         keywords: ['liquid', 'flow', 'pressure', 'motor', 'fluid']
+      },
+      { 
+        type: 'oilTankControlPanel', 
+        label: 'Oil Tank Control Panel', 
+        icon: Factory,
+        color: '#1565C0', 
+        description: 'Complete oil tank system with integrated control panel',
+        keywords: ['oil', 'tank', 'control', 'panel', 'storage', 'industrial', 'monitoring']
       }
     ],
     'Storage & Transport': [
@@ -119,6 +128,30 @@ const PlantVisualization = () => {
       color: '#9C27B0', 
         description: 'Process monitoring with signal output',
         keywords: ['sensor', 'measurement', 'monitoring', 'signal', 'feedback']
+      },
+      { 
+        type: 'temperatureSwitch', 
+        label: 'Temperature Switch', 
+        icon: Gauge,
+        color: '#E74C3C', 
+        description: 'High/low temperature alarm and shutdown device',
+        keywords: ['temperature', 'switch', 'alarm', 'shutdown', 'safety', 'monitoring', 'thermal']
+      },
+      { 
+        type: 'pressureSensor', 
+        label: 'Pressure Sensor', 
+        icon: Gauge,
+        color: '#3498DB', 
+        description: 'Industrial pressure transmitter with 4-20mA signal and alarms',
+        keywords: ['pressure', 'sensor', 'transmitter', '4-20ma', 'alarm', 'monitoring', 'process']
+      },
+      { 
+        type: 'pressureControlValve', 
+        label: 'Pressure Control Valve', 
+        icon: Move,
+        color: '#8B5CF6', 
+        description: 'Automated pressure control valve with high/low alarms and monitoring',
+        keywords: ['pressure', 'control', 'valve', 'alarm', 'actuator', 'automation', 'regulation', 'monitoring']
       }
     ],
     'Electrical': [
@@ -129,6 +162,22 @@ const PlantVisualization = () => {
       color: '#FF9800', 
         description: 'Electrical distribution with 4 outputs',
         keywords: ['power', 'electrical', 'distribution', 'supply', 'voltage']
+      },
+      { 
+        type: 'motorStarter', 
+        label: 'Motor Starter', 
+        icon: Zap,
+        color: '#7C3AED', 
+        description: 'Motor control and protection with contactors and overload relay',
+        keywords: ['motor', 'starter', 'contactor', 'overload', 'control', 'protection', 'electrical']
+      },
+      { 
+        type: 'circuitBreaker', 
+        label: 'Circuit Breaker', 
+        icon: Shield,
+        color: '#DC2626', 
+        description: 'Electrical protection device with overcurrent and short-circuit protection',
+        keywords: ['circuit', 'breaker', 'protection', 'overcurrent', 'short-circuit', 'electrical', 'safety', 'trip']
       }
     ]
   };

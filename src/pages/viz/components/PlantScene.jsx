@@ -10,6 +10,11 @@ import ConveyorBelt from './objects/ConveyorBelt';
 import PowerBox from './objects/PowerBox';
 import StorageTank from './objects/StorageTank';
 import HeatExchanger from './objects/HeatExchanger';
+import OilTankControlPanel from './objects/OilTankControlPanel';
+import TemperatureSwitch from './objects/TemperatureSwitch';
+import PressureSensor from './objects/PressureSensor';
+import PressureControlValve from './objects/PressureControlValve';
+import MotorStarter from './objects/MotorStarter';
 import AutoRoutingConnection from './AutoRoutingConnection';
 
 const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, gridSnap, gridSize, showCoordinates, onManualConnectionStateChange }, ref) => {
@@ -40,7 +45,12 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     conveyorBelt: 0.8, // Simple support legs height, so bottom is 0.8 below center
     powerBox: 0.1, // Base plate extends 0.1 below center, so bottom sits on ground
     storageTank: 3.0, // Tank support base plates are 3 units below center
-    heatExchanger: 1.4 // Mounting feet bottom is 1.4 units below center
+    heatExchanger: 1.4, // Mounting feet bottom is 1.4 units below center
+    oilTankControlPanel: 4.0, // Base platform and support structure bottom is 4 units below center
+    temperatureSwitch: 1.3, // Mounting bracket and probe bottom is 1.3 units below center
+    pressureSensor: 1.8, // Process connection bottom is 1.8 units below center
+    pressureControlValve: 0.9, // Mounting base bottom is 0.9 units below center
+    motorStarter: 1.8 // Enclosure feet bottom is 1.8 units below center
   };
 
   const getObjectGroundPosition = (basePosition, objectType) => {
@@ -60,6 +70,11 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
       case 'powerBox': return PowerBox;
       case 'storageTank': return StorageTank;
       case 'heatExchanger': return HeatExchanger;
+      case 'oilTankControlPanel': return OilTankControlPanel;
+      case 'temperatureSwitch': return TemperatureSwitch;
+      case 'pressureSensor': return PressureSensor;
+      case 'pressureControlValve': return PressureControlValve;
+      case 'motorStarter': return MotorStarter;
       default: return null;
     }
   };
@@ -239,6 +254,16 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
         return <StorageTank key={obj.id} {...commonProps} />;
       case 'heatExchanger':
         return <HeatExchanger key={obj.id} {...commonProps} />;
+      case 'oilTankControlPanel':
+        return <OilTankControlPanel key={obj.id} {...commonProps} />;
+      case 'temperatureSwitch':
+        return <TemperatureSwitch key={obj.id} {...commonProps} />;
+      case 'pressureSensor':
+        return <PressureSensor key={obj.id} {...commonProps} />;
+      case 'pressureControlValve':
+        return <PressureControlValve key={obj.id} {...commonProps} />;
+      case 'motorStarter':
+        return <MotorStarter key={obj.id} {...commonProps} />;
       default:
         return null;
     }
