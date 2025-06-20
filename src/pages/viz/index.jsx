@@ -37,7 +37,8 @@ import {
   FlaskConical,
   Blend,
   Fan,
-  Wind
+  Wind,
+  Droplets
 } from 'lucide-react';
 
 const PlantVisualization = () => {
@@ -137,6 +138,14 @@ const PlantVisualization = () => {
         color: '#D35400', 
         description: 'Industrial extruder for shaping materials by forcing through dies with screw mechanism, heating zones, and control system',
         keywords: ['extruder', 'extrusion', 'shape', 'forming', 'screw', 'die', 'heating', 'barrel', 'plastic', 'material', 'processing', 'molding']
+      },
+      { 
+        type: 'heatPump', 
+        label: 'Heat Pump', 
+        icon: Flame,
+        color: '#E65100', 
+        description: 'Pool heat pump system with scroll compressor, heat exchanger, and digital temperature control (28°C setpoint) for efficient water heating',
+        keywords: ['heat', 'pump', 'pool', 'heating', 'temperature', 'control', '28c', 'setpoint', 'compressor', 'heat exchanger', 'efficient', 'water']
       }
     ],
     'Storage & Transport': [
@@ -187,6 +196,30 @@ const PlantVisualization = () => {
         color: '#455A64', 
         description: 'Long-distance pipeline transport system for liquids and gases with professional instrumentation, valves, and safety systems',
         keywords: ['pipeline', 'transport', 'long', 'distance', 'liquid', 'gas', 'flow', 'pressure', 'valve', 'instrumentation', 'safety', 'transmission']
+      },
+      { 
+        type: 'waterSupply', 
+        label: 'Water Supply', 
+        icon: Fuel,
+        color: '#2196F3', 
+        description: 'Fresh water supply system with pumps, filtration, and distribution infrastructure for providing clean water input to industrial processes',
+        keywords: ['water', 'supply', 'fresh', 'clean', 'input', 'distribution', 'pumps', 'filtration', 'treatment', 'municipal', 'well', 'source']
+      },
+      { 
+        type: 'waterDrain', 
+        label: 'Water Drain', 
+        icon: Droplets,
+        color: '#1565C0', 
+        description: 'Industrial water drainage system with sump pit, lift pumps, floor drains, and automated level control for removing water when needed',
+        keywords: ['water', 'drain', 'drainage', 'sump', 'removal', 'floor', 'lift', 'pump', 'level', 'control', 'automated', 'waste', 'emergency']
+      },
+      { 
+        type: 'waterPump', 
+        label: 'Water Pump', 
+        icon: Cog,
+        color: '#0277BD', 
+        description: 'Pool water circulation pump with variable speed drive, strainer basket, filtration system, and automated flow control for pool maintenance',
+        keywords: ['water', 'pump', 'pool', 'circulation', 'filtration', 'variable', 'speed', 'strainer', 'basket', 'flow', 'control', 'automated', 'maintenance']
       }
     ],
     'Control Systems': [
@@ -236,15 +269,7 @@ const PlantVisualization = () => {
         icon: Move,
         color: '#8B5CF6', 
         description: 'Automated pressure control valve with high/low alarms and monitoring',
-        keywords: ['pressure', 'control', 'valve', 'alarm', 'actuator', 'automation', 'regulation', 'monitoring']
-      },
-      { 
-        type: 'remoteTerminalUnit', 
-        label: 'Remote Terminal Unit (RTU)', 
-        icon: Microchip,
-        color: '#673AB7', 
-        description: 'Industrial RTU for interfacing field devices with control systems, featuring digital/analog I/O, communication ports, and SCADA connectivity',
-        keywords: ['rtu', 'remote', 'terminal', 'unit', 'scada', 'field', 'devices', 'digital', 'analog', 'io', 'communication', 'control', 'automation', 'interface']
+                keywords: ['pressure', 'control', 'valve', 'alarm', 'actuator', 'automation', 'regulation', 'monitoring']
       }
     ],
     'Electrical': [
@@ -262,23 +287,7 @@ const PlantVisualization = () => {
         icon: Zap,
         color: '#7C3AED', 
         description: 'Motor control and protection with contactors and overload relay',
-        keywords: ['motor', 'starter', 'contactor', 'overload', 'control', 'protection', 'electrical']
-      },
-      { 
-        type: 'emergencyLighting', 
-        label: 'Emergency Lighting', 
-        icon: Zap,
-        color: '#E91E63', 
-        description: 'Emergency LED lighting system with battery backup for maintaining visibility during power outages and evacuations',
-        keywords: ['emergency', 'lighting', 'led', 'battery', 'backup', 'safety', 'evacuation', 'power', 'outage', 'visibility', 'illumination']
-      },
-      { 
-        type: 'groundFaultCircuitInterrupter', 
-        label: 'Ground Fault Circuit Interrupter (GFCI)', 
-        icon: Zap,
-        color: '#9C27B0', 
-        description: 'Advanced GFCI protection device with test/reset functionality to prevent electrical shock by detecting ground faults and interrupting power',
-        keywords: ['gfci', 'ground', 'fault', 'circuit', 'interrupter', 'shock', 'protection', 'safety', 'electrical', 'test', 'reset', 'trip', 'current']
+                keywords: ['motor', 'starter', 'contactor', 'overload', 'control', 'protection', 'electrical']
       }
     ]
   };

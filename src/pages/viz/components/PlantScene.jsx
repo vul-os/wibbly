@@ -25,9 +25,10 @@ import StirredTankReactor from './objects/StirredTankReactor';
 import Extruder from './objects/Extruder';
 import RackSystem from './objects/RackSystem';
 import PipelineSystem from './objects/PipelineSystem';
-import RemoteTerminalUnit from './objects/RemoteTerminalUnit';
-import EmergencyLighting from './objects/EmergencyLighting';
-import GroundFaultCircuitInterrupter from './objects/GroundFaultCircuitInterrupter';
+import WaterSupply from './objects/WaterSupply';
+import WaterDrain from './objects/WaterDrain';
+import WaterPump from './objects/WaterPump';
+import HeatPump from './objects/HeatPump';
 
 import AutoRoutingConnection from './AutoRoutingConnection';
 
@@ -75,9 +76,10 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     extruder: 1.8, // Extruder barrel center is 1.8 units above machine base
     rackSystem: 4.0, // Rack structure center is 4.0 units above foundation
     pipelineSystem: 1.2, // Pipeline center is 1.2 units above support foundations
-    remoteTerminalUnit: 1.6, // Professional RTU cabinet center is 1.6 units above DIN rail mount
-    emergencyLighting: 0.2, // Emergency lighting unit center is 0.2 units above mounting bracket
-    groundFaultCircuitInterrupter: 0.5 // GFCI unit center is 0.5 units above mounting surface
+    waterSupply: 1.2, // Water supply system center is 1.2 units above ground level
+    waterDrain: 0.8, // Water drain system center is 0.8 units above ground level
+    waterPump: 0.6, // Water pump system center is 0.6 units above ground level
+    heatPump: 0.8 // Heat pump system center is 0.8 units above ground level
   };
 
   const getObjectGroundPosition = (basePosition, objectType) => {
@@ -112,9 +114,10 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
       case 'extruder': return Extruder;
       case 'rackSystem': return RackSystem;
       case 'pipelineSystem': return PipelineSystem;
-      case 'remoteTerminalUnit': return RemoteTerminalUnit;
-      case 'emergencyLighting': return EmergencyLighting;
-      case 'groundFaultCircuitInterrupter': return GroundFaultCircuitInterrupter;
+      case 'waterSupply': return WaterSupply;
+      case 'waterDrain': return WaterDrain;
+      case 'waterPump': return WaterPump;
+      case 'heatPump': return HeatPump;
       default: return null;
     }
   };
@@ -324,12 +327,14 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
         return <RackSystem key={obj.id} {...commonProps} />;
       case 'pipelineSystem':
         return <PipelineSystem key={obj.id} {...commonProps} />;
-      case 'remoteTerminalUnit':
-        return <RemoteTerminalUnit key={obj.id} {...commonProps} />;
-      case 'emergencyLighting':
-        return <EmergencyLighting key={obj.id} {...commonProps} />;
-      case 'groundFaultCircuitInterrupter':
-        return <GroundFaultCircuitInterrupter key={obj.id} {...commonProps} />;
+      case 'waterSupply':
+        return <WaterSupply key={obj.id} {...commonProps} />;
+      case 'waterDrain':
+        return <WaterDrain key={obj.id} {...commonProps} />;
+      case 'waterPump':
+        return <WaterPump key={obj.id} {...commonProps} />;
+      case 'heatPump':
+        return <HeatPump key={obj.id} {...commonProps} />;
       default:
         return null;
     }

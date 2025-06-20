@@ -6,7 +6,7 @@ const StirredTankReactor = ({ position, onClick, onDrag, isSelected, isDraggable
   const groupRef = useRef();
   const meshRef = useRef();
   const agitatorRef = useRef();
-  const { gl } = useThree();
+  const { gl, camera } = useThree();
   
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState([0, 0, 0]);
@@ -104,45 +104,43 @@ const StirredTankReactor = ({ position, onClick, onDrag, isSelected, isDraggable
 
   const handlePointerDown = (event) => {
     if (!isDraggable) {
-      // If not draggable, handle as click for deletion
-      if (onClick) {
-        onClick(event);
-      }
+      onClick?.(event);
       return;
     }
     
     event.stopPropagation();
-    setIsDragging(true);
-    setDragStartPos([event.clientX, event.clientY]);
+    let hasMovedMouse = false;
+    setDragStartPos(position);
     gl.domElement.style.cursor = 'grabbing';
     
-    let hasMovedMouse = false;
-    
     const handlePointerMove = (moveEvent) => {
-      if (!isDragging) return;
+      if (!onDrag) return;
       
-      // Check if mouse has moved significantly (more than 5 pixels)
-      const deltaX = Math.abs(moveEvent.clientX - dragStartPos[0]);
-      const deltaY = Math.abs(moveEvent.clientY - dragStartPos[1]);
-      if (deltaX > 5 || deltaY > 5) {
+      // Only set dragging to true when we actually move
+      if (!hasMovedMouse) {
         hasMovedMouse = true;
+        setIsDragging(true);
       }
       
-      const rect = gl.domElement.getBoundingClientRect();
-      const x = (moveEvent.clientX - rect.left) / rect.width * 2 - 1;
-      const y = -(moveEvent.clientY - rect.top) / rect.height * 2 + 1;
+      // Get intersection with ground plane
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
       
-      const vector = new THREE.Vector3(x, y, 0.5);
-      vector.unproject(gl.camera);
-      const dir = vector.sub(gl.camera.position).normalize();
-      const distance = -gl.camera.position.y / dir.y;
-      const pos = gl.camera.position.clone().add(dir.multiplyScalar(distance));
+      mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
+      mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
       
-      const newX = snapToGrid(pos.x + dragOffset[0]);
-      const newZ = snapToGrid(pos.z + dragOffset[2]);
+      raycaster.setFromCamera(mouse, camera);
       
-      if (onDrag) {
-        onDrag([newX, position[1], newZ]);
+      // Intersect with ground plane at y=0
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+      const intersection = new THREE.Vector3();
+      
+      if (raycaster.ray.intersectPlane(plane, intersection)) {
+        // Snap to grid for CAD-like behavior
+        const snappedX = snapToGrid(intersection.x);
+        const snappedZ = snapToGrid(intersection.z);
+        const newPosition = [snappedX, position[1], snappedZ];
+        onDrag(newPosition);
       }
     };
 
@@ -154,31 +152,34 @@ const StirredTankReactor = ({ position, onClick, onDrag, isSelected, isDraggable
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
         
         // Remove event listeners
-        document.removeEventListener('pointermove', handlePointerMove);
-        document.removeEventListener('pointerup', handlePointerUp);
+        document.removeEventListener('mousemove', handlePointerMove);
+        document.removeEventListener('mouseup', handlePointerUp);
         document.removeEventListener('touchmove', handlePointerMove);
         document.removeEventListener('touchend', handlePointerUp);
         
         // Trigger click handler
-        if (onClick) {
-          onClick(event);
-        }
+        onClick?.(event);
         return;
       }
       
       setIsDragging(false);
       setDragStartPos(null);
-      gl.domElement.style.cursor = 'auto';
-      document.removeEventListener('pointermove', handlePointerMove);
-      document.removeEventListener('pointerup', handlePointerUp);
+      gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
+      
+      document.removeEventListener('mousemove', handlePointerMove);
+      document.removeEventListener('mouseup', handlePointerUp);
       document.removeEventListener('touchmove', handlePointerMove);
       document.removeEventListener('touchend', handlePointerUp);
     };
 
-    document.addEventListener('pointermove', handlePointerMove);
-    document.addEventListener('pointerup', handlePointerUp);
+    // Add global event listeners for better drag experience
+    document.addEventListener('mousemove', handlePointerMove);
+    document.addEventListener('mouseup', handlePointerUp);
     document.addEventListener('touchmove', handlePointerMove);
     document.addEventListener('touchend', handlePointerUp);
+    
+    // Prevent default to avoid text selection
+    event.preventDefault?.();
   };
 
 
