@@ -32,7 +32,12 @@ import {
   ArrowLeft,
   Package,
   Microchip,
-  Shield
+  Container,
+  Fuel,
+  FlaskConical,
+  Blend,
+  Fan,
+  Wind
 } from 'lucide-react';
 
 const PlantVisualization = () => {
@@ -84,6 +89,54 @@ const PlantVisualization = () => {
         color: '#1565C0', 
         description: 'Complete oil tank system with integrated control panel',
         keywords: ['oil', 'tank', 'control', 'panel', 'storage', 'industrial', 'monitoring']
+      },
+      { 
+        type: 'distillationColumn', 
+        label: 'Distillation Column', 
+        icon: FlaskConical,
+        color: '#9C27B0', 
+        description: 'Tall separation tower for separating mixtures by boiling point with reboiler and condenser',
+        keywords: ['distillation', 'separation', 'boiling', 'point', 'column', 'tower', 'reboiler', 'condenser', 'processing']
+      },
+      { 
+        type: 'mixerAgitator', 
+        label: 'Mixer/Agitator', 
+        icon: Blend,
+        color: '#00BCD4', 
+        description: 'Industrial fluid mixing tank with rotating agitator blades for homogeneous mixing',
+        keywords: ['mixer', 'agitator', 'mixing', 'blending', 'stirring', 'homogeneous', 'fluid', 'tank', 'rotating', 'blades']
+      },
+      { 
+        type: 'centrifugalCompressor', 
+        label: 'Centrifugal Compressor', 
+        icon: Fan,
+        color: '#607D8B', 
+        description: 'High-performance centrifugal compressor with motor drive, intercoolers, and anti-surge control',
+        keywords: ['compressor', 'centrifugal', 'gas', 'air', 'pressure', 'motor', 'impeller', 'intercooler', 'antisurge', 'industrial']
+      },
+      { 
+        type: 'coolingTower', 
+        label: 'Cooling Tower', 
+        icon: Wind,
+        color: '#17A2B8', 
+        description: 'Mechanical draft cooling tower with fan system, fill material, and water distribution for heat removal',
+        keywords: ['cooling', 'tower', 'heat', 'removal', 'fan', 'water', 'air', 'thermal', 'draft', 'evaporation', 'industrial']
+      },
+      { 
+        type: 'stirredTankReactor', 
+        label: 'Stirred Tank Reactor', 
+        icon: Factory,
+        color: '#8E44AD', 
+        description: 'Chemical reactor with multi-level agitation system, heating/cooling jacket, and instrumentation for controlled reactions',
+        keywords: ['reactor', 'stirred', 'tank', 'chemical', 'reaction', 'agitator', 'mixing', 'heating', 'cooling', 'jacket', 'catalyst', 'process']
+      },
+      { 
+        type: 'extruder', 
+        label: 'Extruder', 
+        icon: Package,
+        color: '#D35400', 
+        description: 'Industrial extruder for shaping materials by forcing through dies with screw mechanism, heating zones, and control system',
+        keywords: ['extruder', 'extrusion', 'shape', 'forming', 'screw', 'die', 'heating', 'barrel', 'plastic', 'material', 'processing', 'molding']
       }
     ],
     'Storage & Transport': [
@@ -102,6 +155,38 @@ const PlantVisualization = () => {
         color: '#607D8B', 
         description: 'Material transport with electric power',
         keywords: ['conveyor', 'transport', 'material', 'belt', 'moving']
+      },
+      { 
+        type: 'pressureVessel', 
+        label: 'Pressure Vessel', 
+        icon: Container,
+        color: '#455A64', 
+        description: 'Pressurized containment vessel with safety valves and monitoring',
+        keywords: ['pressure', 'vessel', 'containment', 'tank', 'pressurized', 'safety', 'industrial']
+      },
+      { 
+        type: 'dayTank', 
+        label: 'Day Tank', 
+        icon: Fuel,
+        color: '#6D4C41', 
+        description: 'Daily supply storage tank with level monitoring and dispensing',
+        keywords: ['day', 'tank', 'daily', 'supply', 'storage', 'fuel', 'dispensing', 'level', 'monitoring']
+      },
+      { 
+        type: 'rackSystem', 
+        label: 'Rack System', 
+        icon: Container,
+        color: '#546E7A', 
+        description: 'Multi-level industrial storage rack for organizing and storing packaged goods vertically with forklift access',
+        keywords: ['rack', 'storage', 'shelving', 'warehouse', 'vertical', 'organize', 'pallet', 'forklift', 'industrial', 'goods', 'inventory']
+      },
+      { 
+        type: 'pipelineSystem', 
+        label: 'Pipeline System', 
+        icon: Truck,
+        color: '#455A64', 
+        description: 'Long-distance pipeline transport system for liquids and gases with professional instrumentation, valves, and safety systems',
+        keywords: ['pipeline', 'transport', 'long', 'distance', 'liquid', 'gas', 'flow', 'pressure', 'valve', 'instrumentation', 'safety', 'transmission']
       }
     ],
     'Control Systems': [
@@ -152,6 +237,14 @@ const PlantVisualization = () => {
         color: '#8B5CF6', 
         description: 'Automated pressure control valve with high/low alarms and monitoring',
         keywords: ['pressure', 'control', 'valve', 'alarm', 'actuator', 'automation', 'regulation', 'monitoring']
+      },
+      { 
+        type: 'remoteTerminalUnit', 
+        label: 'Remote Terminal Unit (RTU)', 
+        icon: Microchip,
+        color: '#673AB7', 
+        description: 'Industrial RTU for interfacing field devices with control systems, featuring digital/analog I/O, communication ports, and SCADA connectivity',
+        keywords: ['rtu', 'remote', 'terminal', 'unit', 'scada', 'field', 'devices', 'digital', 'analog', 'io', 'communication', 'control', 'automation', 'interface']
       }
     ],
     'Electrical': [
@@ -172,12 +265,20 @@ const PlantVisualization = () => {
         keywords: ['motor', 'starter', 'contactor', 'overload', 'control', 'protection', 'electrical']
       },
       { 
-        type: 'circuitBreaker', 
-        label: 'Circuit Breaker', 
-        icon: Shield,
-        color: '#DC2626', 
-        description: 'Electrical protection device with overcurrent and short-circuit protection',
-        keywords: ['circuit', 'breaker', 'protection', 'overcurrent', 'short-circuit', 'electrical', 'safety', 'trip']
+        type: 'emergencyLighting', 
+        label: 'Emergency Lighting', 
+        icon: Zap,
+        color: '#E91E63', 
+        description: 'Emergency LED lighting system with battery backup for maintaining visibility during power outages and evacuations',
+        keywords: ['emergency', 'lighting', 'led', 'battery', 'backup', 'safety', 'evacuation', 'power', 'outage', 'visibility', 'illumination']
+      },
+      { 
+        type: 'groundFaultCircuitInterrupter', 
+        label: 'Ground Fault Circuit Interrupter (GFCI)', 
+        icon: Zap,
+        color: '#9C27B0', 
+        description: 'Advanced GFCI protection device with test/reset functionality to prevent electrical shock by detecting ground faults and interrupting power',
+        keywords: ['gfci', 'ground', 'fault', 'circuit', 'interrupter', 'shock', 'protection', 'safety', 'electrical', 'test', 'reset', 'trip', 'current']
       }
     ]
   };

@@ -15,6 +15,20 @@ import TemperatureSwitch from './objects/TemperatureSwitch';
 import PressureSensor from './objects/PressureSensor';
 import PressureControlValve from './objects/PressureControlValve';
 import MotorStarter from './objects/MotorStarter';
+import PressureVessel from './objects/PressureVessel';
+import DayTank from './objects/DayTank';
+import DistillationColumn from './objects/DistillationColumn';
+import MixerAgitator from './objects/MixerAgitator';
+import CentrifugalCompressor from './objects/CentrifugalCompressor';
+import CoolingTower from './objects/CoolingTower';
+import StirredTankReactor from './objects/StirredTankReactor';
+import Extruder from './objects/Extruder';
+import RackSystem from './objects/RackSystem';
+import PipelineSystem from './objects/PipelineSystem';
+import RemoteTerminalUnit from './objects/RemoteTerminalUnit';
+import EmergencyLighting from './objects/EmergencyLighting';
+import GroundFaultCircuitInterrupter from './objects/GroundFaultCircuitInterrupter';
+
 import AutoRoutingConnection from './AutoRoutingConnection';
 
 const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, gridSnap, gridSize, showCoordinates, onManualConnectionStateChange }, ref) => {
@@ -50,7 +64,20 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     temperatureSwitch: 1.3, // Mounting bracket and probe bottom is 1.3 units below center
     pressureSensor: 1.8, // Process connection bottom is 1.8 units below center
     pressureControlValve: 0.9, // Mounting base bottom is 0.9 units below center
-    motorStarter: 1.8 // Enclosure feet bottom is 1.8 units below center
+    motorStarter: 1.8, // Enclosure feet bottom is 1.8 units below center
+    pressureVessel: 2.5, // Vessel center is 2.5 units above support legs and bottom hemisphere
+    dayTank: 2.2, // Tank center is 2.2 units above support legs and platform base
+    distillationColumn: 4.5, // Column support base is 4.5 units below center with reboiler
+    mixerAgitator: 2.5, // Tank center is 2.5 units above support legs and base
+    centrifugalCompressor: 2.8, // Compressor center is 2.8 units above skid base platform
+    coolingTower: 2.8, // Tower center is 2.8 units above foundation base
+    stirredTankReactor: 2.0, // Reactor vessel center is 2.0 units above foundation base
+    extruder: 1.8, // Extruder barrel center is 1.8 units above machine base
+    rackSystem: 4.0, // Rack structure center is 4.0 units above foundation
+    pipelineSystem: 1.2, // Pipeline center is 1.2 units above support foundations
+    remoteTerminalUnit: 1.6, // Professional RTU cabinet center is 1.6 units above DIN rail mount
+    emergencyLighting: 0.2, // Emergency lighting unit center is 0.2 units above mounting bracket
+    groundFaultCircuitInterrupter: 0.5 // GFCI unit center is 0.5 units above mounting surface
   };
 
   const getObjectGroundPosition = (basePosition, objectType) => {
@@ -75,6 +102,19 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
       case 'pressureSensor': return PressureSensor;
       case 'pressureControlValve': return PressureControlValve;
       case 'motorStarter': return MotorStarter;
+      case 'pressureVessel': return PressureVessel;
+      case 'dayTank': return DayTank;
+      case 'distillationColumn': return DistillationColumn;
+      case 'mixerAgitator': return MixerAgitator;
+      case 'centrifugalCompressor': return CentrifugalCompressor;
+      case 'coolingTower': return CoolingTower;
+      case 'stirredTankReactor': return StirredTankReactor;
+      case 'extruder': return Extruder;
+      case 'rackSystem': return RackSystem;
+      case 'pipelineSystem': return PipelineSystem;
+      case 'remoteTerminalUnit': return RemoteTerminalUnit;
+      case 'emergencyLighting': return EmergencyLighting;
+      case 'groundFaultCircuitInterrupter': return GroundFaultCircuitInterrupter;
       default: return null;
     }
   };
@@ -264,6 +304,32 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
         return <PressureControlValve key={obj.id} {...commonProps} />;
       case 'motorStarter':
         return <MotorStarter key={obj.id} {...commonProps} />;
+      case 'pressureVessel':
+        return <PressureVessel key={obj.id} {...commonProps} />;
+      case 'dayTank':
+        return <DayTank key={obj.id} {...commonProps} />;
+      case 'distillationColumn':
+        return <DistillationColumn key={obj.id} {...commonProps} />;
+      case 'mixerAgitator':
+        return <MixerAgitator key={obj.id} {...commonProps} />;
+      case 'centrifugalCompressor':
+        return <CentrifugalCompressor key={obj.id} {...commonProps} />;
+      case 'coolingTower':
+        return <CoolingTower key={obj.id} {...commonProps} />;
+      case 'stirredTankReactor':
+        return <StirredTankReactor key={obj.id} {...commonProps} />;
+      case 'extruder':
+        return <Extruder key={obj.id} {...commonProps} />;
+      case 'rackSystem':
+        return <RackSystem key={obj.id} {...commonProps} />;
+      case 'pipelineSystem':
+        return <PipelineSystem key={obj.id} {...commonProps} />;
+      case 'remoteTerminalUnit':
+        return <RemoteTerminalUnit key={obj.id} {...commonProps} />;
+      case 'emergencyLighting':
+        return <EmergencyLighting key={obj.id} {...commonProps} />;
+      case 'groundFaultCircuitInterrupter':
+        return <GroundFaultCircuitInterrupter key={obj.id} {...commonProps} />;
       default:
         return null;
     }
