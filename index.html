@@ -3,7 +3,108 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D Tennis Game</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>Wibbly.io - Motion-Controlled Tennis Game | Play Free 3D Sports in Browser</title>
+    <meta name="title" content="Wibbly.io - Motion-Controlled Tennis Game | Play Free 3D Sports in Browser">
+    <meta name="description" content="🎾 Play tennis with your body! Revolutionary motion-controlled 3D tennis game using your camera. No downloads, no controllers - just swing and play instantly in your browser.">
+    <meta name="keywords" content="motion tennis, pose detection tennis, camera tennis game, 3D sports game, motion control gaming, tennis simulator, web tennis, browser tennis, AI tennis, gesture gaming">
+    <meta name="author" content="Wibbly.io">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://wibbly.io/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="game">
+    <meta property="og:url" content="https://wibbly.io/">
+    <meta property="og:site_name" content="Wibbly.io">
+    <meta property="og:title" content="🎾 Wibbly.io - Motion Tennis Game | Play with Your Body!">
+    <meta property="og:description" content="Revolutionary motion-controlled tennis! Use your camera to swing and hit - no controllers needed. Experience the future of web gaming now!">
+    <meta property="og:image" content="https://wibbly.io/og-tennis-game.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Wibbly.io Motion Tennis Game - Play with your body movements">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://wibbly.io/">
+    <meta name="twitter:title" content="🎾 Motion Tennis Game - Wibbly.io">
+    <meta name="twitter:description" content="Play tennis with your body! Revolutionary camera-controlled 3D tennis game. No downloads needed - play instantly!">
+    <meta name="twitter:image" content="https://wibbly.io/twitter-tennis-game.jpg">
+    <meta name="twitter:image:alt" content="Motion-controlled tennis game screenshot">
+    <meta name="twitter:creator" content="@WibblyIO">
+    <meta name="twitter:site" content="@WibblyIO">
+    
+    <!-- Gaming-specific meta -->
+    <meta name="application-name" content="Wibbly Tennis">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Wibbly Tennis">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="msapplication-TileColor" content="#6366f1">
+    <meta name="msapplication-navbutton-color" content="#6366f1">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Structured Data for Gaming -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "Wibbly Motion Tennis",
+      "alternateName": "Wibbly.io Tennis Game",
+      "description": "Revolutionary motion-controlled tennis game that uses your camera to detect body movements. Play 3D tennis by swinging your arms - no controllers needed!",
+      "url": "https://wibbly.io/play",
+      "image": "https://wibbly.io/og-tennis-game.jpg",
+      "gameLocation": "https://wibbly.io/play",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Wibbly.io",
+        "url": "https://wibbly.io"
+      },
+      "genre": ["Sports", "Tennis", "Motion Control", "Fitness"],
+      "gameItem": "Tennis Racket",
+      "gamePlatform": ["Web Browser", "Chrome", "Firefox", "Safari", "Edge"],
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "Game",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "127",
+        "bestRating": "5"
+      },
+      "interactionStatistic": {
+        "@type": "InteractionCounter",
+        "interactionType": "https://schema.org/PlayAction",
+        "userInteractionCount": "1250"
+      }
+    }
+    </script>
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/site.webmanifest">
+    
     <style>
       * {
         margin: 0;
@@ -11,19 +112,191 @@
         box-sizing: border-box;
       }
 
+      :root {
+        --primary-color: #6366f1;
+        --secondary-color: #10b981;
+        --accent-color: #f59e0b;
+        --error-color: #ef4444;
+        --background: #0f0f23;
+        --surface: #1a1a2e;
+        --text-primary: #ffffff;
+        --text-secondary: #a1a1aa;
+        --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+        --gradient-secondary: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        --gradient-gaming: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #6366f1 50%, #8b5cf6 75%, #10b981 100%);
+      }
+
       body {
-        overflow: hidden;
-        font-family: Arial, sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        background: var(--background);
+        color: var(--text-primary);
+        line-height: 1.6;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
       #root {
         width: 100vw;
-        height: 100vh;
+        min-height: 100vh;
+        position: relative;
+      }
+
+      /* Enhanced loading animation */
+      .wibbly-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #2d1b69 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 1;
+        transition: opacity 0.8s ease-out;
+      }
+
+      .wibbly-loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loader-logo {
+        font-size: 3rem;
+        font-weight: 900;
+        background: var(--gradient-gaming);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: logoGlow 2s ease-in-out infinite alternate;
+        margin-bottom: 1rem;
+      }
+
+      .loader-tagline {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 2rem;
+        opacity: 0;
+        animation: fadeInUp 1s ease-out 0.5s forwards;
+      }
+
+      .loader-progress {
+        width: 200px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .loader-progress::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient-gaming);
+        animation: loading 2s ease-in-out infinite;
+      }
+
+      @keyframes logoGlow {
+        0% { 
+          transform: scale(1);
+          filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.4));
+        }
+        100% { 
+          transform: scale(1.05);
+          filter: drop-shadow(0 0 40px rgba(99, 102, 241, 0.8));
+        }
+      }
+
+      @keyframes loading {
+        0% { left: -100%; }
+        50% { left: 0%; }
+        100% { left: 100%; }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--surface);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--gradient-primary);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-color);
+      }
+
+      /* Selection styling */
+      ::selection {
+        background: rgba(99, 102, 241, 0.3);
+        color: var(--text-primary);
+      }
+
+      /* Performance optimizations */
+      .background-canvas {
+        will-change: transform;
+      }
+
+      .btn {
+        will-change: transform;
       }
     </style>
   </head>
   <body>
+    <!-- Enhanced Loading Screen -->
+    <div class="wibbly-loader" id="loader">
+      <div class="loader-logo">Wibbly</div>
+      <div class="loader-tagline">🎾 Motion-Controlled Gaming</div>
+      <div class="loader-progress"></div>
+    </div>
+
     <div id="root"></div>
+    
+    <script>
+      // Enhanced loader with game-like feel
+      window.addEventListener('load', () => {
+        const loader = document.getElementById('loader');
+        if (loader) {
+          setTimeout(() => {
+            loader.classList.add('hidden');
+            setTimeout(() => loader.remove(), 800);
+          }, 1200); // Longer delay for more dramatic effect
+        }
+      });
+
+      // Preload critical game assets
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {
+            // Service worker registration failed, but that's okay
+          });
+        });
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

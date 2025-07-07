@@ -1,0 +1,58 @@
+OCEAN BREEZE COLOR SCHEME
+Wii-Style Game Platform
+===========================
+
+PRIMARY COLORS
+--------------
+Teal Primary:     #4fd1c7
+Green Primary:    #81c784
+Teal Secondary:   #26a69a
+Green Secondary:  #66bb6a
+
+ACCENT COLORS
+-------------
+Light Green:      #a5d6a7
+Mint:             #80cbc4
+Aqua:             #4db6ac
+
+BACKGROUND COLORS
+-----------------
+Light Mint:       #e0f2f1
+Light Green:      #f1f8e9
+Pure White:       #ffffff
+Off White:        #f8f9fa
+
+TEXT COLORS
+-----------
+Dark Teal:        #2e7d6b
+Dark Green:       #388e3c
+Charcoal:         #333333
+Light Gray:       #666666
+
+INTERACTIVE ELEMENTS
+-------------------
+Button Base:      rgba(255,255,255,0.9)
+Button Hover:     #ffffff
+Button Text:      #2e7d6b
+Shadow Light:     rgba(0,0,0,0.1)
+Shadow Medium:    rgba(0,0,0,0.15)
+Shadow Heavy:     rgba(0,0,0,0.2)
+
+GRADIENTS
+---------
+Header Gradient:  linear-gradient(135deg, #4fd1c7 0%, #81c784 100%)
+Background:       linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%)
+Tile 1:           linear-gradient(135deg, #4fd1c7 0%, #26a69a 100%)
+Tile 2:           linear-gradient(135deg, #81c784 0%, #66bb6a 100%)
+Tile 3:           linear-gradient(135deg, #a5d6a7 0%, #81c784 100%)
+Tile 4:           linear-gradient(135deg, #80cbc4 0%, #4db6ac 100%)
+
+USAGE NOTES
+-----------
+- Use #4fd1c7 and #81c784 for primary navigation and headers
+- Use #e0f2f1 and #f1f8e9 for main backgrounds
+- Use #2e7d6b for body text and icons
+- Use rgba(255,255,255,0.9) for button backgrounds
+- Apply gradients to game tiles and interactive elements
+- Use shadows for depth: 0 5px 15px rgba(0,0,0,0.1) for subtle lift
+- Maintain white text on colored backgrounds for contrast
