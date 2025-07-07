@@ -23,15 +23,15 @@ const NotFound = () => {
     // Store references for cleanup
     sceneRef.current = { scene, camera, renderer };
 
-    // Lighting with Wibbly colors
+    // Lighting with ocean breeze colors
     const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0x6366f1, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0x4fd1c7, 0.8);
     directionalLight.position.set(5, 5, 5);
     scene.add(directionalLight);
 
-    const pointLight = new THREE.PointLight(0x10b981, 0.6);
+    const pointLight = new THREE.PointLight(0x81c784, 0.6);
     pointLight.position.set(-5, 5, -5);
     scene.add(pointLight);
 
@@ -43,7 +43,7 @@ const NotFound = () => {
       let geometry, material, mesh;
       
       const shapeType = Math.floor(Math.random() * 4);
-      const colors = [0x6366f1, 0x10b981, 0x8b5cf6, 0xf59e0b];
+      const colors = [0x4fd1c7, 0x81c784, 0x26a69a, 0x66bb6a];
       const color = colors[Math.floor(Math.random() * colors.length)];
       
       material = new THREE.MeshPhongMaterial({ 
@@ -262,10 +262,10 @@ const NotFound = () => {
           position: relative;
           width: 100%;
           height: 100vh;
-          background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+          background: linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%);
           overflow: hidden;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-          color: #fff;
+          color: #2e7d6b;
         }
 
         .background-canvas {
@@ -305,14 +305,14 @@ const NotFound = () => {
         }
 
         .logo-text {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #81c784 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
 
         .logo-suffix {
-          color: #a1a1aa;
+          color: #66bb6a;
         }
 
         .main-content {
@@ -330,7 +330,7 @@ const NotFound = () => {
         .error-code {
           font-size: clamp(6rem, 15vw, 12rem);
           font-weight: 900;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #81c784 50%, #26a69a 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -342,14 +342,14 @@ const NotFound = () => {
         .error-title {
           font-size: clamp(2rem, 5vw, 3rem);
           font-weight: 700;
-          color: #ffffff;
+          color: #2e7d6b;
           margin-bottom: 1.5rem;
           animation: slideInUp 0.8s ease-out 0.2s both;
         }
         
         .error-description {
           font-size: 1.1rem;
-          color: #a1a1aa;
+          color: #388e3c;
           margin-bottom: 3rem;
           max-width: 500px;
           line-height: 1.6;
@@ -380,27 +380,27 @@ const NotFound = () => {
         }
 
         .btn-primary {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #26a69a 100%);
           color: white;
-          box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+          box-shadow: 0 4px 20px rgba(79, 209, 199, 0.3);
         }
 
         .btn-primary:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+          box-shadow: 0 8px 30px rgba(79, 209, 199, 0.4);
         }
 
         .btn-secondary {
-          background: rgba(255, 255, 255, 0.1);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.9);
+          color: #2e7d6b;
+          border: 1px solid rgba(79, 209, 199, 0.2);
           backdrop-filter: blur(10px);
         }
 
         .btn-secondary:hover {
-          background: rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 1);
           transform: translateY(-2px);
-          border-color: rgba(16, 185, 129, 0.3);
+          border-color: rgba(79, 209, 199, 0.5);
         }
 
         .btn-icon {
@@ -410,10 +410,10 @@ const NotFound = () => {
 
         @keyframes glow {
           from {
-            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
+            filter: drop-shadow(0 0 20px rgba(79, 209, 199, 0.3));
           }
           to {
-            filter: drop-shadow(0 0 40px rgba(99, 102, 241, 0.6));
+            filter: drop-shadow(0 0 40px rgba(79, 209, 199, 0.6));
           }
         }
 

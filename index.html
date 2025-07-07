@@ -42,9 +42,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Wibbly Tennis">
-    <meta name="theme-color" content="#6366f1">
-    <meta name="msapplication-TileColor" content="#6366f1">
-    <meta name="msapplication-navbutton-color" content="#6366f1">
+    <meta name="theme-color" content="#4fd1c7">
+    <meta name="msapplication-TileColor" content="#4fd1c7">
+    <meta name="msapplication-navbutton-color" content="#4fd1c7">
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -113,17 +113,17 @@
       }
 
       :root {
-        --primary-color: #6366f1;
-        --secondary-color: #10b981;
-        --accent-color: #f59e0b;
+        --primary-color: #4fd1c7;
+        --secondary-color: #81c784;
+        --accent-color: #66bb6a;
         --error-color: #ef4444;
-        --background: #0f0f23;
-        --surface: #1a1a2e;
-        --text-primary: #ffffff;
-        --text-secondary: #a1a1aa;
-        --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
-        --gradient-secondary: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        --gradient-gaming: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #6366f1 50%, #8b5cf6 75%, #10b981 100%);
+        --background: #e0f2f1;
+        --surface: #f1f8e9;
+        --text-primary: #2e7d6b;
+        --text-secondary: #388e3c;
+        --gradient-primary: linear-gradient(135deg, #4fd1c7 0%, #81c784 100%);
+        --gradient-secondary: linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%);
+        --gradient-gaming: linear-gradient(135deg, #4fd1c7 0%, #81c784 25%, #26a69a 50%, #66bb6a 75%, #a5d6a7 100%);
       }
 
       body {
@@ -149,7 +149,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #2d1b69 100%);
+        background: linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -187,7 +187,7 @@
       .loader-progress {
         width: 200px;
         height: 4px;
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(79, 209, 199, 0.2);
         border-radius: 2px;
         overflow: hidden;
         position: relative;
@@ -207,11 +207,11 @@
       @keyframes logoGlow {
         0% { 
           transform: scale(1);
-          filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.4));
+          filter: drop-shadow(0 0 20px rgba(79, 209, 199, 0.4));
         }
         100% { 
           transform: scale(1.05);
-          filter: drop-shadow(0 0 40px rgba(99, 102, 241, 0.8));
+          filter: drop-shadow(0 0 40px rgba(79, 209, 199, 0.8));
         }
       }
 
@@ -252,7 +252,7 @@
 
       /* Selection styling */
       ::selection {
-        background: rgba(99, 102, 241, 0.3);
+        background: rgba(79, 209, 199, 0.3);
         color: var(--text-primary);
       }
 

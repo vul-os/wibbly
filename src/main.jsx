@@ -2,10 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
+// Import Firebase analytics to initialize it
+import { analytics } from './services/firebase.js';
+
 // Import pages and components
-import Home from './pages/Home.jsx';
-import About from './pages/About.jsx';
-import TennisGamePage from './pages/TennisGamePage.jsx';
+import Home from './pages/home.jsx';
+import About from './pages/about.jsx';
+import TennisGamePage from './pages/game-tennis.jsx';
 import NotFound from './pages/not-found.jsx';
 
 function App() {
@@ -23,7 +26,6 @@ function App() {
         
         {/* Legacy redirects */}
         <Route path="/tennis" element={<TennisGamePage />} />
-        <Route path="/game" element={<TennisGamePage />} />
         
         {/* 404 Not Found - must be last */}
         <Route path="*" element={<NotFound />} />

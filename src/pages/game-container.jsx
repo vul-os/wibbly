@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import GameMenu from './GameMenu.jsx';
-import TennisGame from '../game';
+import TennisGame from '../game/index.js';
 
 const GameContainer = () => {
   const [gameState, setGameState] = useState('menu'); // 'menu' or 'tennis'
@@ -48,7 +48,7 @@ const GameContainer = () => {
             left: 0;
             width: 100%;
             height: 100vh;
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #2d1b69 100%);
+            background: linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -57,6 +57,12 @@ const GameContainer = () => {
 
           .transition-content {
             text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(79, 209, 199, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
           }
 
           .transition-logo {
@@ -67,18 +73,18 @@ const GameContainer = () => {
           }
 
           .logo-text {
-            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #6366f1 50%, #8b5cf6 75%, #10b981 100%);
+            background: linear-gradient(135deg, #4fd1c7 0%, #81c784 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
           }
 
           .logo-suffix {
-            color: #a1a1aa;
+            color: #66bb6a;
           }
 
           .transition-text {
-            color: #a1a1aa;
+            color: #388e3c;
             font-size: 1.1rem;
             margin-bottom: 2rem;
             font-family: 'Inter', sans-serif;
@@ -87,7 +93,7 @@ const GameContainer = () => {
           .transition-loader {
             width: 200px;
             height: 4px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(79, 209, 199, 0.2);
             border-radius: 2px;
             overflow: hidden;
             position: relative;
@@ -96,7 +102,7 @@ const GameContainer = () => {
 
           .loader-bar {
             height: 100%;
-            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #6366f1 50%, #8b5cf6 75%, #10b981 100%);
+            background: linear-gradient(135deg, #4fd1c7 0%, #26a69a 100%);
             border-radius: 2px;
             animation: loading 1s ease-in-out infinite;
           }

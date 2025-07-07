@@ -22,24 +22,31 @@ const About = () => {
 
     sceneRef.current = { scene, camera, renderer };
 
-    // Subtle lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.2);
+    // Updated lighting to match ocean breeze theme
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
     scene.add(ambientLight);
 
-    const pointLight = new THREE.PointLight(0x6366f1, 0.5);
-    pointLight.position.set(10, 10, 10);
-    scene.add(pointLight);
+    const pointLight1 = new THREE.PointLight(0x4fd1c7, 0.8);
+    pointLight1.position.set(10, 10, 10);
+    scene.add(pointLight1);
 
-    // Create minimal geometric shapes
+    const pointLight2 = new THREE.PointLight(0x81c784, 0.6);
+    pointLight2.position.set(-10, -10, 10);
+    scene.add(pointLight2);
+
+    // Create minimal geometric shapes with ocean colors
     const shapes = [];
-    const shapeCount = 15;
+    const shapeCount = 20;
 
     for (let i = 0; i < shapeCount; i++) {
+      const colors = [0x4fd1c7, 0x81c784, 0x26a69a, 0x66bb6a, 0xa5d6a7];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      
       const geometry = new THREE.SphereGeometry(0.1, 8, 8);
       const material = new THREE.MeshPhongMaterial({ 
-        color: 0x6366f1,
+        color: color,
         transparent: true,
-        opacity: 0.3
+        opacity: 0.4
       });
 
       const mesh = new THREE.Mesh(geometry, material);
@@ -221,8 +228,8 @@ const About = () => {
         .about-container {
           position: relative;
           min-height: 100vh;
-          background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
-          color: #ffffff;
+          background: linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%);
+          color: #2e7d6b;
           font-family: 'Inter', sans-serif;
         }
 
@@ -249,7 +256,7 @@ const About = () => {
           justify-content: space-between;
           align-items: center;
           padding: 2rem 0;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          border-bottom: 1px solid rgba(79, 209, 199, 0.2);
         }
 
         .logo {
@@ -264,14 +271,14 @@ const About = () => {
         }
 
         .logo-text {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #81c784 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
 
         .logo-suffix {
-          color: #a1a1aa;
+          color: #66bb6a;
         }
 
         .nav {
@@ -281,18 +288,18 @@ const About = () => {
         }
 
         .nav-link {
-          color: #a1a1aa;
+          color: #388e3c;
           text-decoration: none;
           font-weight: 500;
           transition: color 0.3s ease;
         }
 
         .nav-link:hover {
-          color: #ffffff;
+          color: #2e7d6b;
         }
 
         .nav-btn {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #26a69a 100%);
           color: white !important;
           padding: 0.5rem 1rem;
           border-radius: 8px;
@@ -301,7 +308,7 @@ const About = () => {
 
         .nav-btn:hover {
           transform: translateY(-1px);
-          box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+          box-shadow: 0 4px 20px rgba(79, 209, 199, 0.3);
         }
 
         .main {
@@ -317,7 +324,7 @@ const About = () => {
           font-size: clamp(2.5rem, 5vw, 4rem);
           font-weight: 800;
           margin-bottom: 1rem;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #81c784 50%, #26a69a 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -325,7 +332,7 @@ const About = () => {
 
         .subtitle {
           font-size: 1.25rem;
-          color: #a1a1aa;
+          color: #388e3c;
           max-width: 600px;
           margin: 0 auto;
         }
@@ -337,22 +344,23 @@ const About = () => {
         }
 
         .section {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(79, 209, 199, 0.2);
           border-radius: 16px;
           padding: 2rem;
           backdrop-filter: blur(10px);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .section h2 {
           font-size: 1.5rem;
           font-weight: 700;
           margin-bottom: 1rem;
-          color: #ffffff;
+          color: #2e7d6b;
         }
 
         .section p {
-          color: #a1a1aa;
+          color: #388e3c;
           line-height: 1.6;
           font-size: 1rem;
         }
@@ -365,22 +373,24 @@ const About = () => {
         }
 
         .game-card {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(79, 209, 199, 0.2);
           border-radius: 12px;
           padding: 1.5rem;
           text-align: center;
           transition: all 0.3s ease;
           position: relative;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.1);
         }
 
         .game-card:hover:not(.coming-soon) {
           transform: translateY(-4px);
-          border-color: rgba(99, 102, 241, 0.3);
+          border-color: rgba(79, 209, 199, 0.4);
+          box-shadow: 0 8px 25px rgba(79, 209, 199, 0.2);
         }
 
         .coming-soon {
-          opacity: 0.6;
+          opacity: 0.7;
         }
 
         .game-icon {
@@ -392,17 +402,17 @@ const About = () => {
           font-size: 1.25rem;
           font-weight: 600;
           margin-bottom: 0.5rem;
-          color: #ffffff;
+          color: #2e7d6b;
         }
 
         .game-card p {
-          color: #a1a1aa;
+          color: #388e3c;
           margin-bottom: 1rem;
         }
 
         .game-link {
           display: inline-block;
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #26a69a 100%);
           color: white;
           text-decoration: none;
           padding: 0.5rem 1rem;
@@ -413,12 +423,12 @@ const About = () => {
 
         .game-link:hover {
           transform: translateY(-1px);
-          box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+          box-shadow: 0 4px 20px rgba(79, 209, 199, 0.3);
         }
 
         .coming-soon-badge {
-          background: rgba(245, 158, 11, 0.2);
-          color: #f59e0b;
+          background: rgba(255, 193, 7, 0.2);
+          color: #ff8f00;
           padding: 0.25rem 0.75rem;
           border-radius: 6px;
           font-size: 0.8rem;
@@ -427,22 +437,23 @@ const About = () => {
 
         .cta-section {
           text-align: center;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(79, 209, 199, 0.2);
           border-radius: 16px;
           padding: 3rem 2rem;
           backdrop-filter: blur(10px);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .cta-section h2 {
           font-size: 2rem;
           font-weight: 700;
           margin-bottom: 0.5rem;
-          color: #ffffff;
+          color: #2e7d6b;
         }
 
         .cta-section p {
-          color: #a1a1aa;
+          color: #388e3c;
           margin-bottom: 2rem;
           font-size: 1.1rem;
         }
@@ -469,26 +480,27 @@ const About = () => {
         }
 
         .btn-primary {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #26a69a 100%);
           color: white;
-          box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+          box-shadow: 0 4px 20px rgba(79, 209, 199, 0.3);
         }
 
         .btn-primary:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+          box-shadow: 0 8px 30px rgba(79, 209, 199, 0.4);
         }
 
         .btn-secondary {
-          background: rgba(255, 255, 255, 0.1);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.9);
+          color: #2e7d6b;
+          border: 1px solid rgba(79, 209, 199, 0.3);
           backdrop-filter: blur(10px);
         }
 
         .btn-secondary:hover {
-          background: rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 1);
           transform: translateY(-2px);
+          border-color: rgba(79, 209, 199, 0.5);
         }
 
         @media (max-width: 768px) {

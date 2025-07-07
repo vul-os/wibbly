@@ -17,4 +17,3 @@ Allow: /
 Allow: /about
 Allow: /play
 Allow: /tennis
-Allow: /game 

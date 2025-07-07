@@ -40,7 +40,7 @@ const TennisGamePage = () => {
             left: 0;
             width: 100%;
             height: 100vh;
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            background: linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -49,6 +49,12 @@ const TennisGamePage = () => {
 
           .loading-content {
             text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(79, 209, 199, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
           }
 
           .loading-logo {
@@ -59,18 +65,18 @@ const TennisGamePage = () => {
           }
 
           .logo-text {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #10b981 100%);
+            background: linear-gradient(135deg, #4fd1c7 0%, #81c784 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
           }
 
           .logo-suffix {
-            color: #a1a1aa;
+            color: #66bb6a;
           }
 
           .loading-text {
-            color: #a1a1aa;
+            color: #388e3c;
             font-size: 1.1rem;
             margin-bottom: 2rem;
             font-family: 'Inter', sans-serif;
@@ -79,7 +85,7 @@ const TennisGamePage = () => {
           .loading-bar {
             width: 200px;
             height: 4px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(79, 209, 199, 0.2);
             border-radius: 2px;
             overflow: hidden;
             margin: 0 auto;
@@ -87,7 +93,7 @@ const TennisGamePage = () => {
 
           .loading-progress {
             height: 100%;
-            background: linear-gradient(135deg, #6366f1 0%, #10b981 100%);
+            background: linear-gradient(135deg, #4fd1c7 0%, #26a69a 100%);
             border-radius: 2px;
             animation: loading 1.5s ease-in-out infinite;
           }
@@ -137,23 +143,24 @@ const TennisGamePage = () => {
           align-items: center;
           gap: 0.5rem;
           padding: 0.75rem 1rem;
-          background: rgba(15, 15, 35, 0.9);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.95);
+          border: 1px solid rgba(79, 209, 199, 0.3);
           border-radius: 12px;
-          color: #ffffff;
+          color: #2e7d6b;
           font-family: 'Inter', sans-serif;
           font-size: 0.9rem;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.3s ease;
           backdrop-filter: blur(10px);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .home-btn:hover {
-          background: rgba(15, 15, 35, 0.95);
-          border-color: rgba(99, 102, 241, 0.3);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+          background: rgba(255, 255, 255, 1);
+          border-color: rgba(79, 209, 199, 0.5);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 25px rgba(79, 209, 199, 0.2);
         }
 
         .home-icon {

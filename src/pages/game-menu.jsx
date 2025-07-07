@@ -20,29 +20,29 @@ const GameMenu = ({ onStartTennis }) => {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x0f0f23, 1);
+    renderer.setClearColor(0xe0f2f1, 1);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     canvasRef.current.appendChild(renderer.domElement);
 
     sceneRef.current = { scene, camera, renderer };
 
-    // Enhanced lighting for dramatic court view
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+    // Enhanced lighting for ocean breeze theme
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0x6366f1, 1.2);
+    const directionalLight = new THREE.DirectionalLight(0x4fd1c7, 1.2);
     directionalLight.position.set(10, 20, 10);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;
     scene.add(directionalLight);
 
-    const pointLight1 = new THREE.PointLight(0x10b981, 0.8);
+    const pointLight1 = new THREE.PointLight(0x81c784, 0.8);
     pointLight1.position.set(-10, 15, -10);
     scene.add(pointLight1);
 
-    const pointLight2 = new THREE.PointLight(0xff6b35, 0.6);
+    const pointLight2 = new THREE.PointLight(0x26a69a, 0.6);
     pointLight2.position.set(10, 15, -10);
     scene.add(pointLight2);
 
@@ -348,7 +348,7 @@ const GameMenu = ({ onStartTennis }) => {
           width: 100vw;
           height: 100vh;
           overflow: hidden;
-          background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #2d1b69 100%);
+          background: linear-gradient(135deg, #e0f2f1 0%, #f1f8e9 100%);
         }
 
         .court-background {
@@ -367,7 +367,7 @@ const GameMenu = ({ onStartTennis }) => {
           height: 100vh;
           display: flex;
           flex-direction: column;
-          background: rgba(15, 15, 35, 0.4);
+          background: rgba(224, 242, 241, 0.7);
           backdrop-filter: blur(8px);
           opacity: 0;
           transition: opacity 1s ease-out;
@@ -382,9 +382,10 @@ const GameMenu = ({ onStartTennis }) => {
           justify-content: space-between;
           align-items: center;
           padding: 2rem;
-          background: rgba(0, 0, 0, 0.3);
+          background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(15px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          border-bottom: 1px solid rgba(79, 209, 199, 0.2);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .logo-section {
@@ -400,19 +401,19 @@ const GameMenu = ({ onStartTennis }) => {
         }
 
         .logo-text {
-          background: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #6366f1 50%, #8b5cf6 75%, #10b981 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #81c784 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
 
         .logo-suffix {
-          color: #a1a1aa;
+          color: #66bb6a;
         }
 
         .tagline {
           font-size: 0.9rem;
-          color: #a1a1aa;
+          color: #388e3c;
           text-transform: uppercase;
           letter-spacing: 2px;
         }
@@ -428,29 +429,33 @@ const GameMenu = ({ onStartTennis }) => {
           align-items: center;
           gap: 1rem;
           padding: 0.75rem 1.5rem;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(79, 209, 199, 0.2);
           border-radius: 12px;
-          color: white;
+          color: #2e7d6b;
           cursor: pointer;
           transition: all 0.3s ease;
           backdrop-filter: blur(10px);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .player-btn:hover {
-          background: rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 1);
           transform: translateY(-2px);
+          border-color: rgba(79, 209, 199, 0.4);
+          box-shadow: 0 4px 20px rgba(79, 209, 199, 0.2);
         }
 
         .player-avatar {
           width: 2.5rem;
           height: 2.5rem;
-          background: linear-gradient(135deg, #6366f1 0%, #10b981 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #26a69a 100%);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 1.2rem;
+          color: white;
         }
 
         .player-info {
@@ -460,31 +465,35 @@ const GameMenu = ({ onStartTennis }) => {
         .player-name {
           font-weight: 600;
           font-size: 1rem;
+          color: #2e7d6b;
         }
 
         .player-level {
           font-size: 0.8rem;
-          color: #a1a1aa;
+          color: #388e3c;
         }
 
         .settings-btn {
           width: 3rem;
           height: 3rem;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(79, 209, 199, 0.2);
           border-radius: 50%;
-          color: white;
+          color: #2e7d6b;
           cursor: pointer;
           transition: all 0.3s ease;
           display: flex;
           align-items: center;
           justify-content: center;
           backdrop-filter: blur(10px);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .settings-btn:hover {
-          background: rgba(255, 255, 255, 0.15);
-          transform: rotate(45deg);
+          background: rgba(255, 255, 255, 1);
+          transform: rotate(45deg) translateY(-2px);
+          border-color: rgba(79, 209, 199, 0.4);
+          box-shadow: 0 4px 20px rgba(79, 209, 199, 0.2);
         }
 
         .settings-btn svg {
@@ -509,12 +518,12 @@ const GameMenu = ({ onStartTennis }) => {
         .welcome-title {
           font-size: clamp(2.5rem, 5vw, 4rem);
           font-weight: 900;
-          color: white;
+          color: #2e7d6b;
           margin-bottom: 1rem;
         }
 
         .highlight {
-          background: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #6366f1 50%, #8b5cf6 75%, #10b981 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #81c784 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -522,14 +531,14 @@ const GameMenu = ({ onStartTennis }) => {
 
         .welcome-subtitle {
           font-size: 1.2rem;
-          color: #a1a1aa;
+          color: #388e3c;
           margin-bottom: 3rem;
         }
 
         .section-title {
           font-size: 1.5rem;
           font-weight: 700;
-          color: white;
+          color: #2e7d6b;
           margin-bottom: 2rem;
           text-transform: uppercase;
           letter-spacing: 1px;
@@ -547,29 +556,30 @@ const GameMenu = ({ onStartTennis }) => {
           flex-direction: column;
           align-items: center;
           padding: 2rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 2px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.9);
+          border: 2px solid rgba(79, 209, 199, 0.2);
           border-radius: 20px;
           cursor: pointer;
           transition: all 0.4s ease;
           backdrop-filter: blur(15px);
           position: relative;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .game-card:not(.coming-soon):hover {
           transform: translateY(-8px);
-          border-color: rgba(99, 102, 241, 0.5);
-          box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+          border-color: rgba(79, 209, 199, 0.5);
+          box-shadow: 0 20px 40px rgba(79, 209, 199, 0.2);
         }
 
         .game-card.selected {
-          border-color: #6366f1;
-          background: rgba(99, 102, 241, 0.1);
+          border-color: #4fd1c7;
+          background: rgba(79, 209, 199, 0.1);
           transform: translateY(-4px);
         }
 
         .game-card.coming-soon {
-          opacity: 0.6;
+          opacity: 0.7;
           cursor: not-allowed;
         }
 
@@ -581,12 +591,12 @@ const GameMenu = ({ onStartTennis }) => {
         .game-info h3 {
           font-size: 1.3rem;
           font-weight: 700;
-          color: white;
+          color: #2e7d6b;
           margin-bottom: 0.5rem;
         }
 
         .game-info p {
-          color: #a1a1aa;
+          color: #388e3c;
           margin-bottom: 1rem;
         }
 
@@ -600,13 +610,13 @@ const GameMenu = ({ onStartTennis }) => {
         }
 
         .game-status:not(.coming-soon) {
-          background: rgba(16, 185, 129, 0.2);
-          color: #10b981;
+          background: rgba(129, 199, 132, 0.2);
+          color: #2e7d6b;
         }
 
         .game-status.coming-soon {
-          background: rgba(245, 158, 11, 0.2);
-          color: #f59e0b;
+          background: rgba(255, 193, 7, 0.2);
+          color: #ff8f00;
         }
 
         .game-stats {
@@ -623,12 +633,12 @@ const GameMenu = ({ onStartTennis }) => {
         .stat-value {
           font-size: 1.2rem;
           font-weight: 800;
-          color: #10b981;
+          color: #26a69a;
         }
 
         .stat-label {
           font-size: 0.8rem;
-          color: #a1a1aa;
+          color: #388e3c;
           text-transform: uppercase;
         }
 
@@ -642,7 +652,7 @@ const GameMenu = ({ onStartTennis }) => {
         .play-btn {
           position: relative;
           padding: 1.5rem 3rem;
-          background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #6366f1 100%);
+          background: linear-gradient(135deg, #4fd1c7 0%, #26a69a 100%);
           border: none;
           border-radius: 20px;
           color: white;
@@ -653,12 +663,12 @@ const GameMenu = ({ onStartTennis }) => {
           text-transform: uppercase;
           letter-spacing: 2px;
           overflow: hidden;
-          box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
+          box-shadow: 0 10px 30px rgba(79, 209, 199, 0.4);
         }
 
         .play-btn:not(:disabled):hover {
           transform: translateY(-4px) scale(1.05);
-          box-shadow: 0 15px 40px rgba(255, 107, 53, 0.6);
+          box-shadow: 0 15px 40px rgba(79, 209, 199, 0.6);
         }
 
         .play-btn:disabled {
@@ -684,7 +694,7 @@ const GameMenu = ({ onStartTennis }) => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(135deg, #ffffff 0%, #ff6b35 100%);
+          background: linear-gradient(135degrees, #ffffff 0%, #4fd1c7 100%);
           opacity: 0;
           transition: opacity 0.3s ease;
         }
@@ -697,7 +707,7 @@ const GameMenu = ({ onStartTennis }) => {
           display: flex;
           gap: 2rem;
           font-size: 0.9rem;
-          color: #a1a1aa;
+          color: #388e3c;
         }
 
         .bottom-info {
@@ -705,16 +715,17 @@ const GameMenu = ({ onStartTennis }) => {
           justify-content: center;
           gap: 3rem;
           padding: 2rem;
-          background: rgba(0, 0, 0, 0.3);
+          background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(15px);
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          border-top: 1px solid rgba(79, 209, 199, 0.2);
+          box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         }
 
         .info-item {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          color: #a1a1aa;
+          color: #388e3c;
           font-size: 0.9rem;
         }
 
