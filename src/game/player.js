@@ -205,4 +205,120 @@ export function updatePlayerSwing(player, data, delta, playerIndex) {
             player.userData.rightArm.rotation.set(0, 0, 0);
         }
     }
+}
+
+// New function to align racket with incoming ball
+export function updateRacketAlignment(player, data, ball, gameState, playerIndex) {
+    if (data.swinging || !gameState.ballInPlay) return;
+    
+    const racketGroup = player.userData.racketGroup;
+    const rightArm = player.userData.rightArm;
+    
+    // Calculate ball trajectory and predict where it will be
+    const ballDirection = new THREE.Vector3(
+        gameState.ballVelocity.x,
+        gameState.ballVelocity.y,
+        gameState.ballVelocity.z
+    ).normalize();
+    
+    // Get current racket world position
+    const racketWorldPos = new THREE.Vector3();
+    racketGroup.getWorldPosition(racketWorldPos);
+    
+    // Calculate where ball will be in next 0.5 seconds
+    const futureTime = 0.5;
+    const futureBallPos = new THREE.Vector3(
+        ball.position.x + gameState.ballVelocity.x * futureTime,
+        ball.position.y + gameState.ballVelocity.y * futureTime - 0.5 * 9.8 * futureTime * futureTime, // Include gravity
+        ball.position.z + gameState.ballVelocity.z * futureTime
+    );
+    
+    // Check if ball is coming toward this player
+    const ballComingToPlayer = 
+        (playerIndex === 0 && gameState.ballVelocity.x < 0) || 
+        (playerIndex === 1 && gameState.ballVelocity.x > 0);
+    
+    if (ballComingToPlayer) {
+        // Vector from player to future ball position
+        const toBall = new THREE.Vector3().subVectors(futureBallPos, player.position);
+        
+        // Adjust arm and racket to point toward incoming ball
+        if (playerIndex === 0) { // Player 1
+            // Calculate optimal arm rotation to intercept ball
+            const armRotY = Math.atan2(toBall.z, toBall.x) * 0.5; // Moderate rotation toward ball
+            const armRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.3;
+            
+            // Smoothly adjust arm position
+            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.05);
+            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.05);
+            
+            // Adjust racket angle for better interception
+            const racketRotY = Math.atan2(toBall.z, toBall.x) * 0.3;
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8 + racketRotY, 0.05);
+        } else { // Player 2
+            // Calculate optimal arm rotation to intercept ball (mirrored)
+            const armRotY = Math.atan2(-toBall.z, -toBall.x) * 0.5;
+            const armRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.3;
+            
+            // Smoothly adjust arm position
+            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.05);
+            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.05);
+            
+            // Adjust racket angle for better interception
+            const racketRotY = Math.atan2(-toBall.z, -toBall.x) * 0.3;
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8 + racketRotY, 0.05);
+        }
+    } else {
+        // Reset to neutral position when ball is not coming
+        rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, 0, 0.02);
+        rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, 0, 0.02);
+        
+        if (playerIndex === 0) {
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8, 0.02);
+        } else {
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8, 0.02);
+        }
+    }
+}
+
+// Enhanced function to calculate optimal player position considering racket reach
+export function calculateOptimalPosition(player, ball, gameState, playerIndex) {
+    if (!gameState.ballInPlay) return { x: player.position.x, z: player.position.z };
+    
+    // Check if ball is coming toward this player
+    const ballComingToPlayer = 
+        (playerIndex === 0 && gameState.ballVelocity.x < 0) || 
+        (playerIndex === 1 && gameState.ballVelocity.x > 0);
+    
+    if (!ballComingToPlayer) {
+        return { x: player.position.x, z: player.position.z };
+    }
+    
+    // Predict ball landing position with better physics
+    let targetX = ball.position.x;
+    let targetZ = ball.position.z;
+    
+    // Time for ball to reach player's X coordinate
+    const playerSideX = playerIndex === 0 ? -6 : 6;
+    const timeToReach = Math.abs((playerSideX - ball.position.x) / Math.max(0.1, Math.abs(gameState.ballVelocity.x)));
+    
+    // Predict where ball will be
+    targetX = ball.position.x + gameState.ballVelocity.x * timeToReach;
+    targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
+    
+    // Account for racket reach - position player so racket can intercept
+    const racketReach = 0.6; // Approximate racket reach from player center
+    
+    if (playerIndex === 0) {
+        // Player 1: position to the left of predicted ball position (considering racket reach)
+        targetX = Math.max(-9, Math.min(-3, targetX - racketReach));
+    } else {
+        // Player 2: position to the right of predicted ball position (considering racket reach)
+        targetX = Math.max(3, Math.min(9, targetX + racketReach));
+    }
+    
+    // Clamp to court bounds
+    targetZ = Math.max(-4, Math.min(4, targetZ));
+    
+    return { x: targetX, z: targetZ };
 } 
