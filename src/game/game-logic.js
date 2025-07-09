@@ -72,36 +72,46 @@ export function updatePlayer1AI(players, gameState, playerData, ball) {
             console.log("Player 1 reached home position");
         }
     }
-    // Chase the ball only if not returning to center and ball is coming toward player
-    else if (gameState.ballInPlay && gameState.lastHitBy !== 0 && gameState.ballVelocity.x < 0) {
-        // Predict where ball will land
-        let targetX = -8;
-        let targetZ = 0;
+    // Chase the ball more aggressively
+    else if (gameState.ballInPlay && (gameState.lastHitBy !== 0 || ball.position.x < 0)) {
+        // Improved ball prediction and movement
+        let targetX = ball.position.x;
+        let targetZ = ball.position.z;
         
-        // Ball coming toward player 1
-        const timeToReach = (player1.position.x - ball.position.x) / gameState.ballVelocity.x;
-        if (timeToReach > 0) {
-            // Calculate predicted landing position
+        // If ball is moving toward player 1 side (negative X velocity or already on left side)
+        if (gameState.ballVelocity.x < 0 || ball.position.x < 0) {
+            // Predict ball landing position with better accuracy
+            const timeToReach = Math.abs((player1.position.x - ball.position.x) / Math.max(0.1, Math.abs(gameState.ballVelocity.x)));
+            
+            // Calculate predicted position
+            targetX = ball.position.x + gameState.ballVelocity.x * timeToReach;
             targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
             
-            // Position player to the right of the ball from their perspective
-            // For player 1 (facing +Z), the right side is +Z direction
-            targetZ = targetZ + 1.2; // Position more to the right of the ball
-            
-            // Keep player 1 in his half of the court - but closer to center for better reach
-            targetX = Math.min(-4, Math.max(-9, ball.position.x - 0.8));
+            // Position player slightly in front of predicted ball position
+            targetX = Math.max(-9, Math.min(-2, targetX - 0.5));
         }
         
         // Clamp to court bounds
         targetZ = Math.max(-4, Math.min(4, targetZ));
+        targetX = Math.max(-9, Math.min(-2, targetX));
         
         // Update target
         playerData1.targetX = targetX;
         playerData1.targetZ = targetZ;
         
-        // Add debug logging to track player 1's target when ball approaches
-        if (gameState.debug && ball.position.x < -3 && Math.abs(ball.position.x - player1.position.x) < 5) {
-            console.log(`Player 1 targeting: X=${targetX.toFixed(2)}, Z=${targetZ.toFixed(2)}, Ball at: X=${ball.position.x.toFixed(2)}, Z=${ball.position.z.toFixed(2)}`);
+        // Auto-swing when ball is close enough
+        if (!playerData1.swinging) {
+            const distanceToBall = Math.sqrt(
+                Math.pow(player1.position.x - ball.position.x, 2) +
+                Math.pow(player1.position.z - ball.position.z, 2)
+            );
+            
+            if (distanceToBall < 1.1 && gameState.ballVelocity.x < 0) {
+                playerData1.swinging = true;
+                playerData1.swingTime = 0;
+                handleBallHit(ball, gameState, player1, 0);
+                console.log("Player 1 auto-swing! Distance: " + distanceToBall.toFixed(2));
+            }
         }
     }
 }
@@ -125,64 +135,46 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
             console.log("Player 2 reached home position");
         }
     }
-    // Chase the ball only if not returning to center and ball is coming toward player
-    else if (gameState.ballInPlay && gameState.lastHitBy !== 1) {
-        // Predict where ball will land
-        let targetX = 8;
-        let targetZ = 0;
+    // Chase the ball more aggressively
+    else if (gameState.ballInPlay && (gameState.lastHitBy !== 1 || ball.position.x > 0)) {
+        // Improved ball prediction and movement
+        let targetX = ball.position.x;
+        let targetZ = ball.position.z;
         
-        // Simple prediction - improve accuracy
-        if (gameState.ballVelocity.x > 0) {
-            // Ball coming toward player 2
-            const timeToReach = (player2.position.x - ball.position.x) / gameState.ballVelocity.x;
-            if (timeToReach > 0) {
-                // Calculate predicted landing position
-                targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
-                
-                // Position player to the right of the ball from their perspective
-                // For player 2 (facing -Z), the right side is -Z direction
-                targetZ = targetZ - 1.5; // Position more to the right of the ball
-                
-                // Move closer to ball for better chance of hitting
-                targetX = Math.max(4, Math.min(9, ball.position.x + 0.8));
-            }
+        // If ball is moving toward player 2 side (positive X velocity or already on right side)
+        if (gameState.ballVelocity.x > 0 || ball.position.x > 0) {
+            // Predict ball landing position with better accuracy
+            const timeToReach = Math.abs((ball.position.x - player2.position.x) / Math.max(0.1, Math.abs(gameState.ballVelocity.x)));
+            
+            // Calculate predicted position
+            targetX = ball.position.x + gameState.ballVelocity.x * timeToReach;
+            targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
+            
+            // Position player slightly in front of predicted ball position
+            targetX = Math.max(2, Math.min(9, targetX + 0.5));
         }
         
         // Clamp to court bounds
         targetZ = Math.max(-4, Math.min(4, targetZ));
+        targetX = Math.max(2, Math.min(9, targetX));
         
         // Update target
         playerData2.targetX = targetX;
         playerData2.targetZ = targetZ;
         
-        // Add debug logging to track player 2's target when ball approaches
-        if (gameState.debug && ball.position.x > 3 && Math.abs(ball.position.x - player2.position.x) < 5) {
-            console.log(`Player 2 targeting: X=${targetX.toFixed(2)}, Z=${targetZ.toFixed(2)}, Ball at: X=${ball.position.x.toFixed(2)}, Z=${ball.position.z.toFixed(2)}`);
-        }
-    }
-    
-    // Improve player 2's ability to hit the ball with racket-based detection
-    if (gameState.ballInPlay && !playerData2.swinging) {
-        // Get racket position in world space
-        const rightArm = player2.userData.rightArm;
-        const racketGroup = player2.userData.racketGroup;
-        const racketPos = new THREE.Vector3();
-        
-        // Get racket's world position for more accurate collision
-        racketGroup.getWorldPosition(racketPos);
-        
-        // Calculate racket-to-ball distance instead of player-to-ball
-        const racketToBallDistance = racketPos.distanceTo(ball.position);
-        
-        // More precise hit detection based on racket position
-        if (racketToBallDistance < 1.0 && gameState.ballVelocity.x > 0) {
-            playerData2.swinging = true;
-            playerData2.swingTime = 0;
+        // Auto-swing when ball is close enough
+        if (!playerData2.swinging) {
+            const distanceToBall = Math.sqrt(
+                Math.pow(player2.position.x - ball.position.x, 2) +
+                Math.pow(player2.position.z - ball.position.z, 2)
+            );
             
-            // Hit the ball using the ball module
-            handleBallHit(ball, gameState, player2, 1);
-            
-            console.log("Ball hit by player 2! Racket distance: " + racketToBallDistance.toFixed(2));
+            if (distanceToBall < 1.1 && gameState.ballVelocity.x > 0) {
+                playerData2.swinging = true;
+                playerData2.swingTime = 0;
+                handleBallHit(ball, gameState, player2, 1);
+                console.log("Player 2 auto-swing! Distance: " + distanceToBall.toFixed(2));
+            }
         }
     }
 }
