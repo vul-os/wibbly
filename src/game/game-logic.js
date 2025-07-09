@@ -29,28 +29,29 @@ export function createPlayerData() {
 export function updatePlayerPositions(gameState, playerData, clock) {
     const now = clock.getElapsedTime();
     
-    // Update positions every 3-5 seconds - but only if players are not returning to center
-    // and not actively chasing the ball
-    if (now - gameState.lastMoveTime > 3 + Math.random() * 2 && 
+    // Only update positions when ball is not in play or players are idle
+    // Much less frequent updates when ball is in play to avoid interfering with ball tracking
+    const timeSinceLastMove = now - gameState.lastMoveTime;
+    const shouldUpdatePositions = timeSinceLastMove > 5 + Math.random() * 3; // Increased from 3-5 to 5-8 seconds
+    
+    if (shouldUpdatePositions && 
         !gameState.returnToCenter.player1 && 
         !gameState.returnToCenter.player2 && 
-        (!gameState.ballInPlay || 
-        (gameState.ballVelocity.x > 0 && gameState.lastHitBy === 0) || 
-        (gameState.ballVelocity.x < 0 && gameState.lastHitBy === 1))) {
+        !gameState.ballInPlay) { // Only when ball is NOT in play
         
         gameState.lastMoveTime = now;
         
-        // Player 1 - left side of court (-9 to -4)
+        // Player 1 - left side of court (-9 to -4) - smaller movement range
         const player1Data = playerData[0];
-        player1Data.targetX = -9 + Math.random() * 5; // Stay on left side, further back
-        player1Data.targetZ = -4 + Math.random() * 8; // Full width of court
+        player1Data.targetX = -8 + Math.random() * 2; // Smaller range: -8 to -6
+        player1Data.targetZ = -2 + Math.random() * 4; // Smaller range: -2 to 2
         
-        // Player 2 - right side of court (4 to 9)
+        // Player 2 - right side of court (4 to 9) - smaller movement range
         const player2Data = playerData[1];
-        player2Data.targetX = 4 + Math.random() * 5; // Stay on right side, further back
-        player2Data.targetZ = -4 + Math.random() * 8; // Full width of court
+        player2Data.targetX = 6 + Math.random() * 2; // Smaller range: 6 to 8
+        player2Data.targetZ = -2 + Math.random() * 4; // Smaller range: -2 to 2
         
-        console.log(`Players moving to new positions: P1(${player1Data.targetX.toFixed(1)}, ${player1Data.targetZ.toFixed(1)}), P2(${player2Data.targetX.toFixed(1)}, ${player2Data.targetZ.toFixed(1)})`);
+        console.log(`Players moving to new idle positions: P1(${player1Data.targetX.toFixed(1)}, ${player1Data.targetZ.toFixed(1)}), P2(${player2Data.targetX.toFixed(1)}, ${player2Data.targetZ.toFixed(1)})`);
     }
 }
 
@@ -73,29 +74,40 @@ export function updatePlayer1AI(players, gameState, playerData, ball) {
             console.log("Player 1 reached home position");
         }
     }
-    // Chase the ball more aggressively using optimal positioning
-    else if (gameState.ballInPlay && (gameState.lastHitBy !== 0 || ball.position.x < 0)) {
+    // Always track the ball when it's in play, regardless of who hit it last
+    else if (gameState.ballInPlay) {
         // Use the new optimal positioning function that considers racket reach
         const optimalPos = calculateOptimalPosition(player1, ball, gameState, 0);
         
-        // Update target with optimal position
+        // Update target with optimal position - always track the ball
         playerData1.targetX = optimalPos.x;
         playerData1.targetZ = optimalPos.z;
         
-        // Auto-swing when ball is close enough
+        // Auto-swing when ball is close enough and moving towards player
         if (!playerData1.swinging) {
             const distanceToBall = Math.sqrt(
                 Math.pow(player1.position.x - ball.position.x, 2) +
                 Math.pow(player1.position.z - ball.position.z, 2)
             );
             
-            if (distanceToBall < 1.3 && gameState.ballVelocity.x < 0) {
+            // More aggressive swing conditions
+            const ballMovingToPlayer = gameState.ballVelocity.x < 0; // Ball moving left towards player 1
+            const ballInRange = distanceToBall < 1.8; // Increased range
+            const ballAtGoodHeight = ball.position.y > 0.5 && ball.position.y < 3; // Reasonable height
+            
+            if (ballInRange && ballMovingToPlayer && ballAtGoodHeight) {
                 playerData1.swinging = true;
                 playerData1.swingTime = 0;
                 handleBallHit(ball, gameState, player1, 0);
                 console.log("Player 1 auto-swing! Distance: " + distanceToBall.toFixed(2));
             }
         }
+    }
+    // When ball is not in play, stay in a ready position
+    else {
+        // Move to a good ready position
+        playerData1.targetX = -7; // Slightly forward ready position
+        playerData1.targetZ = 0;   // Center of court
     }
 }
 
@@ -118,29 +130,40 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
             console.log("Player 2 reached home position");
         }
     }
-    // Chase the ball more aggressively using optimal positioning
-    else if (gameState.ballInPlay && (gameState.lastHitBy !== 1 || ball.position.x > 0)) {
+    // Always track the ball when it's in play, regardless of who hit it last
+    else if (gameState.ballInPlay) {
         // Use the new optimal positioning function that considers racket reach
         const optimalPos = calculateOptimalPosition(player2, ball, gameState, 1);
         
-        // Update target with optimal position
+        // Update target with optimal position - always track the ball
         playerData2.targetX = optimalPos.x;
         playerData2.targetZ = optimalPos.z;
         
-        // Auto-swing when ball is close enough
+        // Auto-swing when ball is close enough and moving towards player
         if (!playerData2.swinging) {
             const distanceToBall = Math.sqrt(
                 Math.pow(player2.position.x - ball.position.x, 2) +
                 Math.pow(player2.position.z - ball.position.z, 2)
             );
             
-            if (distanceToBall < 1.3 && gameState.ballVelocity.x > 0) {
+            // More aggressive swing conditions
+            const ballMovingToPlayer = gameState.ballVelocity.x > 0; // Ball moving right towards player 2
+            const ballInRange = distanceToBall < 1.8; // Increased range
+            const ballAtGoodHeight = ball.position.y > 0.5 && ball.position.y < 3; // Reasonable height
+            
+            if (ballInRange && ballMovingToPlayer && ballAtGoodHeight) {
                 playerData2.swinging = true;
                 playerData2.swingTime = 0;
                 handleBallHit(ball, gameState, player2, 1);
                 console.log("Player 2 auto-swing! Distance: " + distanceToBall.toFixed(2));
             }
         }
+    }
+    // When ball is not in play, stay in a ready position
+    else {
+        // Move to a good ready position
+        playerData2.targetX = 7; // Slightly forward ready position
+        playerData2.targetZ = 0;  // Center of court
     }
 }
 

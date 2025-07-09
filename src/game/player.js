@@ -333,24 +333,19 @@ export function updateRacketAlignment(player, data, ball, gameState, playerIndex
 export function calculateOptimalPosition(player, ball, gameState, playerIndex) {
     if (!gameState.ballInPlay) return { x: player.position.x, z: player.position.z };
     
-    // Check if ball is coming toward this player
-    const ballComingToPlayer = 
-        (playerIndex === 0 && gameState.ballVelocity.x < 0) || 
-        (playerIndex === 1 && gameState.ballVelocity.x > 0);
-    
-    if (!ballComingToPlayer) {
-        return { x: player.position.x, z: player.position.z };
-    }
+    // Always track the ball when it's in play, not just when coming toward player
+    const ballVelocity = gameState.ballVelocity;
+    const ballPosition = ball.position;
     
     // Calculate where ball will be when it reaches racket height (1.3)
     const targetHeight = 1.3;
-    const currentBallY = ball.position.y;
-    const ballVelY = gameState.ballVelocity.y;
+    const currentBallY = ballPosition.y;
+    const ballVelY = ballVelocity.y;
     const gravity = -9.8;
     
     // Calculate time for ball to reach racket height using physics
     let timeToReachHeight = 0;
-    if (ballVelY !== 0 || currentBallY !== targetHeight) {
+    if (Math.abs(ballVelY) > 0.1 || Math.abs(currentBallY - targetHeight) > 0.1) {
         // Solve quadratic equation: y = y0 + v0*t + 0.5*g*t²
         const a = 0.5 * gravity;
         const b = ballVelY;
@@ -361,55 +356,77 @@ export function calculateOptimalPosition(player, ball, gameState, playerIndex) {
             const t1 = (-b + Math.sqrt(discriminant)) / (2 * a);
             const t2 = (-b - Math.sqrt(discriminant)) / (2 * a);
             // Choose the positive time that's in the future and reasonable
-            timeToReachHeight = Math.max(0, Math.min(t1 > 0 ? t1 : Infinity, t2 > 0 ? t2 : Infinity));
+            const validTimes = [t1, t2].filter(t => t > 0 && t < 10);
+            if (validTimes.length > 0) {
+                timeToReachHeight = Math.min(...validTimes);
+            }
         }
     }
     
     // If no valid time found, use simple prediction
-    if (timeToReachHeight === 0 || timeToReachHeight > 5) {
-        timeToReachHeight = Math.abs((targetHeight - currentBallY) / Math.max(0.1, Math.abs(ballVelY)));
+    if (timeToReachHeight === 0 || timeToReachHeight > 8) {
+        if (Math.abs(ballVelY) > 0.1) {
+            timeToReachHeight = Math.abs((targetHeight - currentBallY) / ballVelY);
+        } else {
+            timeToReachHeight = 1; // Default prediction time
+        }
     }
     
     // Predict where ball will be at racket height
-    let targetX = ball.position.x + gameState.ballVelocity.x * timeToReachHeight;
-    let targetZ = ball.position.z + gameState.ballVelocity.z * timeToReachHeight;
+    let targetX = ballPosition.x + ballVelocity.x * timeToReachHeight;
+    let targetZ = ballPosition.z + ballVelocity.z * timeToReachHeight;
     
     // Account for racket reach and optimal hitting position
-    const racketReach = 0.8; // Optimal racket reach from player center
-    const optimalHitDistance = 0.6; // Sweet spot distance
+    const optimalHitDistance = 0.7; // Sweet spot distance from player center
+    const anticipationDistance = 0.3; // How far ahead to position
     
+    // Always position player optimally, regardless of ball direction
     if (playerIndex === 0) {
         // Player 1: position so racket's sweet spot will intercept the ball
-        targetX = Math.max(-9, Math.min(-3, targetX - optimalHitDistance));
+        targetX = targetX - optimalHitDistance - anticipationDistance;
+        targetX = Math.max(-9, Math.min(-2, targetX)); // Clamp to left side
         
-        // Adjust Z position to be slightly to the side for better angle
-        const sideOffset = gameState.ballVelocity.z > 0 ? -0.2 : 0.2;
-        targetZ = targetZ + sideOffset;
+        // Adjust Z position based on ball trajectory for better angle
+        if (Math.abs(ballVelocity.z) > 0.1) {
+            const sideOffset = ballVelocity.z > 0 ? -0.3 : 0.3;
+            targetZ = targetZ + sideOffset;
+        }
     } else {
         // Player 2: position so racket's sweet spot will intercept the ball
-        targetX = Math.max(3, Math.min(9, targetX + optimalHitDistance));
+        targetX = targetX + optimalHitDistance + anticipationDistance;
+        targetX = Math.max(2, Math.min(9, targetX)); // Clamp to right side
         
-        // Adjust Z position to be slightly to the side for better angle
-        const sideOffset = gameState.ballVelocity.z > 0 ? 0.2 : -0.2;
-        targetZ = targetZ + sideOffset;
+        // Adjust Z position based on ball trajectory for better angle
+        if (Math.abs(ballVelocity.z) > 0.1) {
+            const sideOffset = ballVelocity.z > 0 ? 0.3 : -0.3;
+            targetZ = targetZ + sideOffset;
+        }
     }
     
     // Clamp to court bounds with some buffer
     targetZ = Math.max(-4.5, Math.min(4.5, targetZ));
     
-    // If ball is very close, move more aggressively
+    // If ball is very close, move more aggressively toward it
     const distanceToBall = Math.sqrt(
-        Math.pow(player.position.x - ball.position.x, 2) +
-        Math.pow(player.position.z - ball.position.z, 2)
+        Math.pow(player.position.x - ballPosition.x, 2) +
+        Math.pow(player.position.z - ballPosition.z, 2)
     );
     
-    if (distanceToBall < 2) {
-        // Move directly toward ball position for close interception
-        const directToBallX = ball.position.x + (playerIndex === 0 ? -0.5 : 0.5);
-        const directToBallZ = ball.position.z;
+    if (distanceToBall < 3) {
+        // Move more directly toward ball position for close interception
+        const directToBallX = ballPosition.x + (playerIndex === 0 ? -0.6 : 0.6);
+        const directToBallZ = ballPosition.z;
         
-        targetX = THREE.MathUtils.lerp(targetX, directToBallX, 0.7);
-        targetZ = THREE.MathUtils.lerp(targetZ, directToBallZ, 0.7);
+        const blendFactor = Math.max(0.3, (3 - distanceToBall) / 3); // Closer = more direct
+        targetX = THREE.MathUtils.lerp(targetX, directToBallX, blendFactor);
+        targetZ = THREE.MathUtils.lerp(targetZ, directToBallZ, blendFactor);
+    }
+    
+    // Always ensure player is in a reasonable position
+    if (playerIndex === 0) {
+        targetX = Math.max(-9, Math.min(-2, targetX));
+    } else {
+        targetX = Math.max(2, Math.min(9, targetX));
     }
     
     return { x: targetX, z: targetZ };
