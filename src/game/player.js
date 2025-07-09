@@ -214,23 +214,45 @@ export function updateRacketAlignment(player, data, ball, gameState, playerIndex
     const racketGroup = player.userData.racketGroup;
     const rightArm = player.userData.rightArm;
     
-    // Calculate ball trajectory and predict where it will be
+    // Calculate ball trajectory and predict where it will be at racket height
     const ballDirection = new THREE.Vector3(
         gameState.ballVelocity.x,
         gameState.ballVelocity.y,
         gameState.ballVelocity.z
-    ).normalize();
+    );
     
     // Get current racket world position
     const racketWorldPos = new THREE.Vector3();
     racketGroup.getWorldPosition(racketWorldPos);
     
-    // Calculate where ball will be in next 0.5 seconds
-    const futureTime = 0.5;
+    // Predict where ball will be when it reaches racket height (1.3)
+    const targetHeight = 1.3;
+    const currentBallY = ball.position.y;
+    const ballVelY = gameState.ballVelocity.y;
+    const gravity = -9.8;
+    
+    // Calculate time for ball to reach racket height using physics
+    let timeToReachHeight = 0;
+    if (ballVelY !== 0) {
+        // Solve quadratic equation: y = y0 + v0*t + 0.5*g*t²
+        const a = 0.5 * gravity;
+        const b = ballVelY;
+        const c = currentBallY - targetHeight;
+        
+        const discriminant = b * b - 4 * a * c;
+        if (discriminant >= 0) {
+            const t1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+            const t2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+            // Choose the positive time that's in the future
+            timeToReachHeight = Math.max(0, Math.min(t1 > 0 ? t1 : Infinity, t2 > 0 ? t2 : Infinity));
+        }
+    }
+    
+    // Calculate where ball will be at racket height
     const futureBallPos = new THREE.Vector3(
-        ball.position.x + gameState.ballVelocity.x * futureTime,
-        ball.position.y + gameState.ballVelocity.y * futureTime - 0.5 * 9.8 * futureTime * futureTime, // Include gravity
-        ball.position.z + gameState.ballVelocity.z * futureTime
+        ball.position.x + gameState.ballVelocity.x * timeToReachHeight,
+        targetHeight,
+        ball.position.z + gameState.ballVelocity.z * timeToReachHeight
     );
     
     // Check if ball is coming toward this player
@@ -238,50 +260,76 @@ export function updateRacketAlignment(player, data, ball, gameState, playerIndex
         (playerIndex === 0 && gameState.ballVelocity.x < 0) || 
         (playerIndex === 1 && gameState.ballVelocity.x > 0);
     
-    if (ballComingToPlayer) {
+    if (ballComingToPlayer && timeToReachHeight > 0 && timeToReachHeight < 2) {
         // Vector from player to future ball position
         const toBall = new THREE.Vector3().subVectors(futureBallPos, player.position);
         
-        // Adjust arm and racket to point toward incoming ball
+        // Calculate optimal body rotation to face the ball
+        const bodyRotationY = Math.atan2(toBall.z, toBall.x);
+        
+        // Smoothly rotate player body to face ball trajectory
+        const targetBodyRotation = playerIndex === 0 ? 
+            Math.PI/2 + bodyRotationY * 0.3 : 
+            -Math.PI/2 + bodyRotationY * 0.3;
+        
+        player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetBodyRotation, 0.08);
+        
+        // Adjust arm and racket to point toward incoming ball more precisely
         if (playerIndex === 0) { // Player 1
             // Calculate optimal arm rotation to intercept ball
-            const armRotY = Math.atan2(toBall.z, toBall.x) * 0.5; // Moderate rotation toward ball
-            const armRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.3;
+            const armRotY = Math.atan2(toBall.z, toBall.x) * 0.7; // More aggressive rotation toward ball
+            const armRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.5;
+            const armRotZ = Math.atan2(toBall.y - 1.3, toBall.x) * 0.3; // Side tilt for better angle
             
             // Smoothly adjust arm position
-            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.05);
-            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.05);
+            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.12);
+            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.12);
+            rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, armRotZ, 0.08);
             
-            // Adjust racket angle for better interception
-            const racketRotY = Math.atan2(toBall.z, toBall.x) * 0.3;
-            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8 + racketRotY, 0.05);
+            // Adjust racket angle for perfect interception
+            const racketRotY = Math.atan2(toBall.z, toBall.x) * 0.5;
+            const racketRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.4;
+            
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8 + racketRotY, 0.15);
+            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, racketRotX, 0.12);
         } else { // Player 2
             // Calculate optimal arm rotation to intercept ball (mirrored)
-            const armRotY = Math.atan2(-toBall.z, -toBall.x) * 0.5;
-            const armRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.3;
+            const armRotY = Math.atan2(-toBall.z, -toBall.x) * 0.7;
+            const armRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.5;
+            const armRotZ = Math.atan2(toBall.y - 1.3, -toBall.x) * 0.3;
             
             // Smoothly adjust arm position
-            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.05);
-            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.05);
+            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.12);
+            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.12);
+            rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, -armRotZ, 0.08);
             
-            // Adjust racket angle for better interception
-            const racketRotY = Math.atan2(-toBall.z, -toBall.x) * 0.3;
-            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8 + racketRotY, 0.05);
+            // Adjust racket angle for perfect interception
+            const racketRotY = Math.atan2(-toBall.z, -toBall.x) * 0.5;
+            const racketRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.4;
+            
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8 + racketRotY, 0.15);
+            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, racketRotX, 0.12);
         }
     } else {
         // Reset to neutral position when ball is not coming
-        rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, 0, 0.02);
-        rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, 0, 0.02);
+        const neutralBodyRotation = playerIndex === 0 ? Math.PI/2 : -Math.PI/2;
+        player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, neutralBodyRotation, 0.04);
+        
+        rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, 0, 0.04);
+        rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, 0, 0.04);
+        rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, 0, 0.04);
         
         if (playerIndex === 0) {
-            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8, 0.02);
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8, 0.04);
+            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, 0, 0.04);
         } else {
-            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8, 0.02);
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8, 0.04);
+            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, 0, 0.04);
         }
     }
 }
 
-// Enhanced function to calculate optimal player position considering racket reach
+// Enhanced function to calculate optimal player position considering racket reach and ball trajectory
 export function calculateOptimalPosition(player, ball, gameState, playerIndex) {
     if (!gameState.ballInPlay) return { x: player.position.x, z: player.position.z };
     
@@ -294,31 +342,75 @@ export function calculateOptimalPosition(player, ball, gameState, playerIndex) {
         return { x: player.position.x, z: player.position.z };
     }
     
-    // Predict ball landing position with better physics
-    let targetX = ball.position.x;
-    let targetZ = ball.position.z;
+    // Calculate where ball will be when it reaches racket height (1.3)
+    const targetHeight = 1.3;
+    const currentBallY = ball.position.y;
+    const ballVelY = gameState.ballVelocity.y;
+    const gravity = -9.8;
     
-    // Time for ball to reach player's X coordinate
-    const playerSideX = playerIndex === 0 ? -6 : 6;
-    const timeToReach = Math.abs((playerSideX - ball.position.x) / Math.max(0.1, Math.abs(gameState.ballVelocity.x)));
-    
-    // Predict where ball will be
-    targetX = ball.position.x + gameState.ballVelocity.x * timeToReach;
-    targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
-    
-    // Account for racket reach - position player so racket can intercept
-    const racketReach = 0.6; // Approximate racket reach from player center
-    
-    if (playerIndex === 0) {
-        // Player 1: position to the left of predicted ball position (considering racket reach)
-        targetX = Math.max(-9, Math.min(-3, targetX - racketReach));
-    } else {
-        // Player 2: position to the right of predicted ball position (considering racket reach)
-        targetX = Math.max(3, Math.min(9, targetX + racketReach));
+    // Calculate time for ball to reach racket height using physics
+    let timeToReachHeight = 0;
+    if (ballVelY !== 0 || currentBallY !== targetHeight) {
+        // Solve quadratic equation: y = y0 + v0*t + 0.5*g*t²
+        const a = 0.5 * gravity;
+        const b = ballVelY;
+        const c = currentBallY - targetHeight;
+        
+        const discriminant = b * b - 4 * a * c;
+        if (discriminant >= 0) {
+            const t1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+            const t2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+            // Choose the positive time that's in the future and reasonable
+            timeToReachHeight = Math.max(0, Math.min(t1 > 0 ? t1 : Infinity, t2 > 0 ? t2 : Infinity));
+        }
     }
     
-    // Clamp to court bounds
-    targetZ = Math.max(-4, Math.min(4, targetZ));
+    // If no valid time found, use simple prediction
+    if (timeToReachHeight === 0 || timeToReachHeight > 5) {
+        timeToReachHeight = Math.abs((targetHeight - currentBallY) / Math.max(0.1, Math.abs(ballVelY)));
+    }
+    
+    // Predict where ball will be at racket height
+    let targetX = ball.position.x + gameState.ballVelocity.x * timeToReachHeight;
+    let targetZ = ball.position.z + gameState.ballVelocity.z * timeToReachHeight;
+    
+    // Account for racket reach and optimal hitting position
+    const racketReach = 0.8; // Optimal racket reach from player center
+    const optimalHitDistance = 0.6; // Sweet spot distance
+    
+    if (playerIndex === 0) {
+        // Player 1: position so racket's sweet spot will intercept the ball
+        targetX = Math.max(-9, Math.min(-3, targetX - optimalHitDistance));
+        
+        // Adjust Z position to be slightly to the side for better angle
+        const sideOffset = gameState.ballVelocity.z > 0 ? -0.2 : 0.2;
+        targetZ = targetZ + sideOffset;
+    } else {
+        // Player 2: position so racket's sweet spot will intercept the ball
+        targetX = Math.max(3, Math.min(9, targetX + optimalHitDistance));
+        
+        // Adjust Z position to be slightly to the side for better angle
+        const sideOffset = gameState.ballVelocity.z > 0 ? 0.2 : -0.2;
+        targetZ = targetZ + sideOffset;
+    }
+    
+    // Clamp to court bounds with some buffer
+    targetZ = Math.max(-4.5, Math.min(4.5, targetZ));
+    
+    // If ball is very close, move more aggressively
+    const distanceToBall = Math.sqrt(
+        Math.pow(player.position.x - ball.position.x, 2) +
+        Math.pow(player.position.z - ball.position.z, 2)
+    );
+    
+    if (distanceToBall < 2) {
+        // Move directly toward ball position for close interception
+        const directToBallX = ball.position.x + (playerIndex === 0 ? -0.5 : 0.5);
+        const directToBallZ = ball.position.z;
+        
+        targetX = THREE.MathUtils.lerp(targetX, directToBallX, 0.7);
+        targetZ = THREE.MathUtils.lerp(targetZ, directToBallZ, 0.7);
+    }
     
     return { x: targetX, z: targetZ };
 } 

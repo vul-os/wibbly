@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { handleBallHit } from './ball.js';
+import { calculateOptimalPosition } from './player.js';
 
 export function createGameState() {
     return {
@@ -72,32 +73,14 @@ export function updatePlayer1AI(players, gameState, playerData, ball) {
             console.log("Player 1 reached home position");
         }
     }
-    // Chase the ball more aggressively
+    // Chase the ball more aggressively using optimal positioning
     else if (gameState.ballInPlay && (gameState.lastHitBy !== 0 || ball.position.x < 0)) {
-        // Improved ball prediction and movement
-        let targetX = ball.position.x;
-        let targetZ = ball.position.z;
+        // Use the new optimal positioning function that considers racket reach
+        const optimalPos = calculateOptimalPosition(player1, ball, gameState, 0);
         
-        // If ball is moving toward player 1 side (negative X velocity or already on left side)
-        if (gameState.ballVelocity.x < 0 || ball.position.x < 0) {
-            // Predict ball landing position with better accuracy
-            const timeToReach = Math.abs((player1.position.x - ball.position.x) / Math.max(0.1, Math.abs(gameState.ballVelocity.x)));
-            
-            // Calculate predicted position
-            targetX = ball.position.x + gameState.ballVelocity.x * timeToReach;
-            targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
-            
-            // Position player slightly in front of predicted ball position
-            targetX = Math.max(-9, Math.min(-2, targetX - 0.5));
-        }
-        
-        // Clamp to court bounds
-        targetZ = Math.max(-4, Math.min(4, targetZ));
-        targetX = Math.max(-9, Math.min(-2, targetX));
-        
-        // Update target
-        playerData1.targetX = targetX;
-        playerData1.targetZ = targetZ;
+        // Update target with optimal position
+        playerData1.targetX = optimalPos.x;
+        playerData1.targetZ = optimalPos.z;
         
         // Auto-swing when ball is close enough
         if (!playerData1.swinging) {
@@ -106,7 +89,7 @@ export function updatePlayer1AI(players, gameState, playerData, ball) {
                 Math.pow(player1.position.z - ball.position.z, 2)
             );
             
-            if (distanceToBall < 1.1 && gameState.ballVelocity.x < 0) {
+            if (distanceToBall < 1.3 && gameState.ballVelocity.x < 0) {
                 playerData1.swinging = true;
                 playerData1.swingTime = 0;
                 handleBallHit(ball, gameState, player1, 0);
@@ -135,32 +118,14 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
             console.log("Player 2 reached home position");
         }
     }
-    // Chase the ball more aggressively
+    // Chase the ball more aggressively using optimal positioning
     else if (gameState.ballInPlay && (gameState.lastHitBy !== 1 || ball.position.x > 0)) {
-        // Improved ball prediction and movement
-        let targetX = ball.position.x;
-        let targetZ = ball.position.z;
+        // Use the new optimal positioning function that considers racket reach
+        const optimalPos = calculateOptimalPosition(player2, ball, gameState, 1);
         
-        // If ball is moving toward player 2 side (positive X velocity or already on right side)
-        if (gameState.ballVelocity.x > 0 || ball.position.x > 0) {
-            // Predict ball landing position with better accuracy
-            const timeToReach = Math.abs((ball.position.x - player2.position.x) / Math.max(0.1, Math.abs(gameState.ballVelocity.x)));
-            
-            // Calculate predicted position
-            targetX = ball.position.x + gameState.ballVelocity.x * timeToReach;
-            targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
-            
-            // Position player slightly in front of predicted ball position
-            targetX = Math.max(2, Math.min(9, targetX + 0.5));
-        }
-        
-        // Clamp to court bounds
-        targetZ = Math.max(-4, Math.min(4, targetZ));
-        targetX = Math.max(2, Math.min(9, targetX));
-        
-        // Update target
-        playerData2.targetX = targetX;
-        playerData2.targetZ = targetZ;
+        // Update target with optimal position
+        playerData2.targetX = optimalPos.x;
+        playerData2.targetZ = optimalPos.z;
         
         // Auto-swing when ball is close enough
         if (!playerData2.swinging) {
@@ -169,7 +134,7 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
                 Math.pow(player2.position.z - ball.position.z, 2)
             );
             
-            if (distanceToBall < 1.1 && gameState.ballVelocity.x > 0) {
+            if (distanceToBall < 1.3 && gameState.ballVelocity.x > 0) {
                 playerData2.swinging = true;
                 playerData2.swingTime = 0;
                 handleBallHit(ball, gameState, player2, 1);

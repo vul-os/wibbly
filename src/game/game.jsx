@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import PoseDetector from '../poseDetection.js';
 
 // Import game modules
-import { createPlayer, updatePlayerMovement, updatePlayerSwing } from './player.js';
+import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment } from './player.js';
 import { loadCourt } from './court.js';
 import { createBall, updateBallPhysics, handleBallHit } from './ball.js';
 import { 
@@ -218,6 +218,9 @@ function TennisGame() {
                 
                 // Update player rotation - always face head-on (along Z axis)
                 player.rotation.y = index === 0 ? Math.PI/2 : -Math.PI/2;
+                
+                // Update racket alignment with ball trajectory
+                updateRacketAlignment(player, data, ball, gameStateRef.current, index);
                 
                 // Update swing animation
                 updatePlayerSwing(player, data, delta, index);
