@@ -76,40 +76,61 @@ export function updatePlayer1AI(players, gameState, playerData, ballGroup) {
         }
     }
     
-    // Always track the ball when it's in play, regardless of who hit it last
+    // Wii Sports style aggressive ball tracking when ball is in play
     else if (gameState.ballInPlay) {
-        // Use the new optimal positioning function that considers racket reach
+        // Use the optimal positioning function that considers racket reach
         const optimalPos = calculateOptimalPosition(player1, ballGroup, gameState, 0);
         
-        // Update target with optimal position - always track the ball
-        playerData1.targetX = optimalPos.x;
-        playerData1.targetZ = optimalPos.z;
+        // More aggressive tracking - move more directly toward the ball
+        const ballPos = ballGroup.position;
+        const distanceToBall = Math.sqrt(
+            Math.pow(player1.position.x - ballPos.x, 2) +
+            Math.pow(player1.position.z - ballPos.z, 2)
+        );
+        
+        // Wii Sports style: Always aggressively track ball position
+        if (distanceToBall > 1.0) {
+            // Move toward ball with more aggressive positioning
+            let trackingX = ballPos.x - 0.8; // Stay slightly behind ball for hitting
+            let trackingZ = ballPos.z;
+            
+            // Constrain to player 1's side of court
+            trackingX = Math.max(-9, Math.min(-2, trackingX));
+            trackingZ = Math.max(-4.5, Math.min(4.5, trackingZ));
+            
+            // Blend optimal position with aggressive tracking
+            const aggressiveFactor = Math.min(1.0, distanceToBall / 3.0);
+            playerData1.targetX = optimalPos.x * (1 - aggressiveFactor) + trackingX * aggressiveFactor;
+            playerData1.targetZ = optimalPos.z * (1 - aggressiveFactor) + trackingZ * aggressiveFactor;
+        } else {
+            // Close to ball, use optimal positioning
+            playerData1.targetX = optimalPos.x;
+            playerData1.targetZ = optimalPos.z;
+        }
         
         // Auto-swing when ball is close enough and moving towards player
         if (!playerData1.swinging) {
-            const distanceToBall = Math.sqrt(
-                Math.pow(player1.position.x - ballGroup.position.x, 2) +
-                Math.pow(player1.position.z - ballGroup.position.z, 2)
-            );
-            
-            // More aggressive swing conditions
+            // More aggressive swing conditions for Wii Sports feel
             const ballMovingToPlayer = gameState.ballVelocity.x < 0; // Ball moving left towards player 1
-            const ballInRange = distanceToBall < 1.8; // Increased range
-            const ballAtGoodHeight = ballGroup.position.y > 0.5 && ballGroup.position.y < 3; // Reasonable height
+            const ballInRange = distanceToBall < 2.2; // Even more aggressive range
+            const ballAtGoodHeight = ballGroup.position.y > 0.3 && ballGroup.position.y < 4; // Wider height range
             
-            if (ballInRange && ballMovingToPlayer && ballAtGoodHeight) {
+            // Also consider if ball is slowing down near player
+            const ballSlowingDown = Math.abs(gameState.ballVelocity.x) < 3;
+            
+            if (ballInRange && (ballMovingToPlayer || ballSlowingDown) && ballAtGoodHeight) {
                 playerData1.swinging = true;
                 playerData1.swingTime = 0;
                 handleBallHit(ballGroup, gameState, player1, 0);
-                console.log("Player 1 auto-swing! Distance: " + distanceToBall.toFixed(2));
+                console.log("Player 1 Wii Sports auto-swing! Distance: " + distanceToBall.toFixed(2));
             }
         }
     }
     // When ball is not in play, stay in a ready position
     else {
-        // Move to a good ready position
-        playerData1.targetX = -7; // Slightly forward ready position
-        playerData1.targetZ = 0;   // Center of court
+        // Move to a good ready position - more centered for Wii Sports feel
+        playerData1.targetX = -6.5; // Closer to center for better court coverage
+        playerData1.targetZ = 0;     // Center of court
     }
 }
 

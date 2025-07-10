@@ -139,8 +139,8 @@ export function updatePlayerMovement(player, data, delta) {
     const dz = data.targetZ - player.position.z;
     const distance = Math.sqrt(dx * dx + dz * dz);
     
-    // Movement speed
-    const speed = 4.5;
+    // Movement speed - increased for Wii Sports style aggressive tracking
+    const speed = 7.5; // Increased from 4.5 for more responsive movement
     const moveSpeed = speed * delta;
     
     // If not at target, move toward it
