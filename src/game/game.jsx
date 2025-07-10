@@ -243,9 +243,14 @@ function TennisGame() {
             }
         }
         
-        // Animation loop
+        // Animation loop with performance monitoring
         const clock = new THREE.Clock();
         let logTimer = 0;
+        
+        // Performance monitoring for deployment debugging
+        let frameCount = 0;
+        let lastFpsTime = performance.now();
+        let currentFps = 60;
         
         function animate() {
             requestAnimationFrame(animate);
@@ -253,9 +258,23 @@ function TennisGame() {
             const delta = Math.min(clock.getDelta(), 0.1);
             logTimer += delta;
             
-            // Debug logging every 5 seconds
+            // Calculate FPS for deployment debugging
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastFpsTime >= 1000) { // Update FPS every second
+                currentFps = Math.round((frameCount * 1000) / (currentTime - lastFpsTime));
+                frameCount = 0;
+                lastFpsTime = currentTime;
+                
+                // Log performance issues if FPS is low
+                if (currentFps < 30 && gameStateRef.current.debug) {
+                    console.warn(`Low FPS detected: ${currentFps} FPS - AI may struggle in deployment`);
+                }
+            }
+            
+            // Debug logging every 5 seconds with performance info
             if (gameStateRef.current.debug && logTimer > 5) {
-                console.log("Animation loop running...");
+                console.log(`Animation loop running... FPS: ${currentFps}, Delta: ${delta.toFixed(3)}s`);
                 logTimer = 0;
             }
             
