@@ -139,22 +139,51 @@ export function updatePlayerMovement(player, data, delta) {
     const dz = data.targetZ - player.position.z;
     const distance = Math.sqrt(dx * dx + dz * dz);
     
-    // Movement speed - increased for Wii Sports style aggressive tracking
-    const speed = 7.5; // Increased from 4.5 for more responsive movement
-    const moveSpeed = speed * delta;
+    // Movement speed - with frame rate compensation (reduced by 30%)
+    const baseSpeed = 5.25; // Base speed for 60 FPS (was 7.5, reduced by 30%)
+    
+    // Compensate for very low frame rates (< 20 FPS) to maintain responsiveness
+    const effectiveDelta = Math.min(delta, 1/20); // Cap at 20 FPS minimum
+    const frameRateMultiplier = Math.max(1.0, 60 * delta); // Boost for low frame rates
+    
+    const speed = baseSpeed * Math.min(frameRateMultiplier, 2.0); // Cap multiplier at 2x
+    
+    // Initialize velocity if it doesn't exist (for momentum)
+    if (!data.velocity) {
+        data.velocity = { x: 0, z: 0 };
+    }
     
     // If not at target, move toward it
-    if (distance > 0.1) {
-        // Movement direction
-        const moveX = (dx / distance) * moveSpeed;
-        const moveZ = (dz / distance) * moveSpeed;
+    if (distance > 0.05) { // Reduced threshold for smoother movement
+        // Smooth easing function for speed adjustment
+        const easeInOutQuad = (t) => {
+            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        };
         
-        // Update position
+        // Smooth distance-based speed multiplier with easing
+        const normalizedDistance = Math.min(distance / 3.0, 1.0); // Normalize to 0-1
+        const easedMultiplier = easeInOutQuad(normalizedDistance);
+        const speedMultiplier = 0.3 + easedMultiplier * 0.7; // Range from 0.3 to 1.0
+        
+        // Calculate target velocity
+        const targetVelX = (dx / distance) * speed * speedMultiplier;
+        const targetVelZ = (dz / distance) * speed * speedMultiplier;
+        
+        // Smooth velocity interpolation for momentum (smoother acceleration/deceleration)
+        const smoothingFactor = Math.min(1.0, effectiveDelta * 8); // Smooth transition
+        data.velocity.x += (targetVelX - data.velocity.x) * smoothingFactor;
+        data.velocity.z += (targetVelZ - data.velocity.z) * smoothingFactor;
+        
+        // Apply velocity with time step
+        const moveX = data.velocity.x * effectiveDelta;
+        const moveZ = data.velocity.z * effectiveDelta;
+        
+        // Update position with smooth movement
         player.position.x += moveX;
         player.position.z += moveZ;
         
-        // Walking animation
-        data.legPhase += delta * 8;
+        // Walking animation - frame rate independent
+        data.legPhase += effectiveDelta * 8;
         
         // Leg movement
         const legRotation = Math.sin(data.legPhase) * 0.4;
@@ -173,24 +202,36 @@ export function updatePlayerMovement(player, data, delta) {
             player.userData.racketGroup.rotation.x = -armRotation * 0.5;
         }
     } else {
+        // Gradually decelerate velocity for smooth stopping
+        const decelerationFactor = Math.max(0, 1 - effectiveDelta * 12); // Smooth deceleration
+        data.velocity.x *= decelerationFactor;
+        data.velocity.z *= decelerationFactor;
+        
+        // Apply remaining velocity
+        player.position.x += data.velocity.x * effectiveDelta;
+        player.position.z += data.velocity.z * effectiveDelta;
+        
         // Reset walking animation when stopped
         if (!data.swinging) {
             player.userData.leftLeg.rotation.x = 0;
             player.userData.rightLeg.rotation.x = 0;
+            player.userData.head.position.y = 1.9;
             player.userData.leftArm.rotation.x = 0;
             player.userData.rightArm.rotation.x = 0;
             player.userData.racketGroup.rotation.x = 0;
         }
-        player.userData.head.position.y = 1.9;
     }
 }
 
 export function updatePlayerSwing(player, data, delta, playerIndex) {
     if (data.swinging) {
-        data.swingTime += delta;
+        // Frame-rate independent swing timing
+        const effectiveDelta = Math.min(delta, 1/20); // Cap at 20 FPS minimum for consistency
+        data.swingTime += effectiveDelta;
         
-        // Swing animation over 0.25 seconds (faster)
-        const swingProgress = Math.min(data.swingTime / 0.25, 1);
+        // Swing animation over 0.25 seconds (faster) - frame rate independent
+        const swingDuration = 0.25;
+        const swingProgress = Math.min(data.swingTime / swingDuration, 1);
         
         // Create a more realistic tennis swing
         if (playerIndex === 0) { // Player 1 (facing +Z)
@@ -213,9 +254,10 @@ export function updatePlayerSwing(player, data, delta, playerIndex) {
             player.userData.rightArm.rotation.x = armRotX;
         }
         
-        // End swing
+        // End swing when duration is complete
         if (swingProgress >= 1) {
             data.swinging = false;
+            data.swingTime = 0; // Reset swing timer
             // Reset arm rotation
             player.userData.rightArm.rotation.set(0, 0, 0);
         }
@@ -287,7 +329,7 @@ export function updateRacketAlignment(player, data, ballGroup, gameState, player
             Math.PI/2 + bodyRotationY * 0.3 : 
             -Math.PI/2 + bodyRotationY * 0.3;
         
-        player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetBodyRotation, 0.08);
+        player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetBodyRotation, 0.12);
         
         // Adjust arm and racket to point toward incoming ball more precisely
         if (playerIndex === 0) { // Player 1
@@ -297,15 +339,15 @@ export function updateRacketAlignment(player, data, ballGroup, gameState, player
             const armRotZ = Math.atan2(toBall.y - 1.3, toBall.x) * 0.3; // Side tilt for better angle
             
             // Smoothly adjust arm position
-            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.12);
-            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.12);
-            rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, armRotZ, 0.08);
+            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.18);
+            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.18);
+            rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, armRotZ, 0.12);
             
             // Adjust racket angle for perfect interception
             const racketRotY = Math.atan2(toBall.z, toBall.x) * 0.5;
             const racketRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.4;
             
-            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8 + racketRotY, 0.15);
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8 + racketRotY, 0.20);
             racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, racketRotX, 0.12);
         } else { // Player 2
             // Calculate optimal arm rotation to intercept ball (mirrored)
@@ -314,32 +356,32 @@ export function updateRacketAlignment(player, data, ballGroup, gameState, player
             const armRotZ = Math.atan2(toBall.y - 1.3, -toBall.x) * 0.3;
             
             // Smoothly adjust arm position
-            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.12);
-            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.12);
-            rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, -armRotZ, 0.08);
+            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.18);
+            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.18);
+            rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, -armRotZ, 0.12);
             
             // Adjust racket angle for perfect interception
             const racketRotY = Math.atan2(-toBall.z, -toBall.x) * 0.5;
             const racketRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.4;
             
-            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8 + racketRotY, 0.15);
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8 + racketRotY, 0.20);
             racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, racketRotX, 0.12);
         }
     } else {
         // Reset to neutral position when ball is not coming
         const neutralBodyRotation = playerIndex === 0 ? Math.PI/2 : -Math.PI/2;
-        player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, neutralBodyRotation, 0.04);
+        player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, neutralBodyRotation, 0.08);
         
-        rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, 0, 0.04);
-        rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, 0, 0.04);
-        rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, 0, 0.04);
+        rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, 0, 0.08);
+        rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, 0, 0.08);
+        rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, 0, 0.08);
         
         if (playerIndex === 0) {
-            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8, 0.04);
-            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, 0, 0.04);
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, -Math.PI/8, 0.08);
+            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, 0, 0.08);
         } else {
-            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8, 0.04);
-            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, 0, 0.04);
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8, 0.08);
+            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, 0, 0.08);
         }
     }
 }

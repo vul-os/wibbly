@@ -15,7 +15,13 @@ export function createGameState() {
             player1: false,
             player2: false
         },
-        usePoseDetection: true // Enable pose detection
+        usePoseDetection: true, // Enable pose detection
+        // Add AI update timing controls
+        lastAIUpdate: 0,
+        aiUpdateInterval: 1000 / 30, // Target 30 FPS for AI updates
+        player1LastSwingCheck: 0,
+        player2LastSwingCheck: 0,
+        swingCheckInterval: 1000 / 60 // Check swing conditions at 60 FPS
     };
 }
 
@@ -58,6 +64,17 @@ export function updatePlayerPositions(gameState, playerData, clock) {
 export function updatePlayer1AI(players, gameState, playerData, ballGroup) {
     const player1 = players[0];
     const playerData1 = playerData[0];
+    const currentTime = performance.now();
+    
+    // Frame-rate independent AI updates
+    if (currentTime - gameState.lastAIUpdate < gameState.aiUpdateInterval) {
+        // Only update swing checking at higher frequency
+        if (currentTime - gameState.player1LastSwingCheck >= gameState.swingCheckInterval) {
+            checkPlayer1Swing(player1, playerData1, ballGroup, gameState);
+            gameState.player1LastSwingCheck = currentTime;
+        }
+        return;
+    }
     
     // Return to center after hitting if flagged
     if (gameState.returnToCenter.player1) {
@@ -88,8 +105,7 @@ export function updatePlayer1AI(players, gameState, playerData, ballGroup) {
             Math.pow(player1.position.z - ballPos.z, 2)
         );
         
-        // Wii Sports style: Always aggressively track ball position
-        if (distanceToBall > 1.0) {
+        if (distanceToBall > 2.5) {
             // Move toward ball with more aggressive positioning
             let trackingX = ballPos.x - 0.8; // Stay slightly behind ball for hitting
             let trackingZ = ballPos.z;
@@ -107,24 +123,6 @@ export function updatePlayer1AI(players, gameState, playerData, ballGroup) {
             playerData1.targetX = optimalPos.x;
             playerData1.targetZ = optimalPos.z;
         }
-        
-        // Auto-swing when ball is close enough and moving towards player
-        if (!playerData1.swinging) {
-            // More aggressive swing conditions for Wii Sports feel
-            const ballMovingToPlayer = gameState.ballVelocity.x < 0; // Ball moving left towards player 1
-            const ballInRange = distanceToBall < 2.2; // Even more aggressive range
-            const ballAtGoodHeight = ballGroup.position.y > 0.3 && ballGroup.position.y < 4; // Wider height range
-            
-            // Also consider if ball is slowing down near player
-            const ballSlowingDown = Math.abs(gameState.ballVelocity.x) < 3;
-            
-            if (ballInRange && (ballMovingToPlayer || ballSlowingDown) && ballAtGoodHeight) {
-                playerData1.swinging = true;
-                playerData1.swingTime = 0;
-                handleBallHit(ballGroup, gameState, player1, 0);
-                console.log("Player 1 Wii Sports auto-swing! Distance: " + distanceToBall.toFixed(2));
-            }
-        }
     }
     // When ball is not in play, stay in a ready position
     else {
@@ -134,9 +132,57 @@ export function updatePlayer1AI(players, gameState, playerData, ballGroup) {
     }
 }
 
+// Separate swing checking function for higher frequency updates
+function checkPlayer1Swing(player1, playerData1, ballGroup, gameState) {
+    if (!playerData1.swinging && gameState.ballInPlay) {
+        const ballPos = ballGroup.position;
+        const distanceToBall = Math.sqrt(
+            Math.pow(player1.position.x - ballPos.x, 2) +
+            Math.pow(player1.position.z - ballPos.z, 2)
+        );
+        
+        // Enhanced swing conditions with better prediction
+        const ballMovingToPlayer = gameState.ballVelocity.x < 0; // Ball moving left towards player 1
+        const ballInRange = distanceToBall < 2.4; // Slightly increased range for deployment
+        const ballAtGoodHeight = ballGroup.position.y > 0.3 && ballGroup.position.y < 4; // Wider height range
+        
+        // Predict ball position in next few frames for better timing
+        const futureX = ballPos.x + gameState.ballVelocity.x * 0.1; // 100ms prediction
+        const futureBallToPlayer = Math.sqrt(
+            Math.pow(player1.position.x - futureX, 2) +
+            Math.pow(player1.position.z - ballPos.z, 2)
+        );
+        
+        // Also consider if ball is slowing down near player or will be close soon
+        const ballSlowingDown = Math.abs(gameState.ballVelocity.x) < 3;
+        const ballWillBeClose = futureBallToPlayer < 2.0;
+        
+        if ((ballInRange || ballWillBeClose) && (ballMovingToPlayer || ballSlowingDown) && ballAtGoodHeight) {
+            playerData1.swinging = true;
+            playerData1.swingTime = 0;
+            handleBallHit(ballGroup, gameState, player1, 0);
+            console.log("Player 1 Wii Sports auto-swing! Distance: " + distanceToBall.toFixed(2));
+        }
+    }
+}
+
 export function updatePlayer2AI(players, gameState, playerData, ballGroup) {
     const player2 = players[1];
     const playerData2 = playerData[1];
+    const currentTime = performance.now();
+    
+    // Frame-rate independent AI updates - use same timer as player 1
+    if (currentTime - gameState.lastAIUpdate < gameState.aiUpdateInterval) {
+        // Only update swing checking at higher frequency
+        if (currentTime - gameState.player2LastSwingCheck >= gameState.swingCheckInterval) {
+            checkPlayer2Swing(player2, playerData2, ballGroup, gameState);
+            gameState.player2LastSwingCheck = currentTime;
+        }
+        return;
+    }
+    
+    // Update the AI timer after both players have been processed
+    gameState.lastAIUpdate = currentTime;
     
     // Return to center after hitting if flagged
     if (gameState.returnToCenter.player2) {
@@ -163,32 +209,46 @@ export function updatePlayer2AI(players, gameState, playerData, ballGroup) {
         // Update target with optimal position - always track the ball
         playerData2.targetX = optimalPos.x;
         playerData2.targetZ = optimalPos.z;
-        
-        // Auto-swing when ball is close enough and moving towards player
-        if (!playerData2.swinging) {
-            const distanceToBall = Math.sqrt(
-                Math.pow(player2.position.x - ballGroup.position.x, 2) +
-                Math.pow(player2.position.z - ballGroup.position.z, 2)
-            );
-            
-            // More aggressive swing conditions
-            const ballMovingToPlayer = gameState.ballVelocity.x > 0; // Ball moving right towards player 2
-            const ballInRange = distanceToBall < 1.8; // Increased range
-            const ballAtGoodHeight = ballGroup.position.y > 0.5 && ballGroup.position.y < 3; // Reasonable height
-            
-            if (ballInRange && ballMovingToPlayer && ballAtGoodHeight) {
-                playerData2.swinging = true;
-                playerData2.swingTime = 0;
-                handleBallHit(ballGroup, gameState, player2, 1);
-                console.log("Player 2 auto-swing! Distance: " + distanceToBall.toFixed(2));
-            }
-        }
     }
     // When ball is not in play, stay in a ready position
     else {
         // Move to a good ready position
         playerData2.targetX = 7; // Slightly forward ready position
         playerData2.targetZ = 0;  // Center of court
+    }
+}
+
+// Separate swing checking function for player 2
+function checkPlayer2Swing(player2, playerData2, ballGroup, gameState) {
+    if (!playerData2.swinging && gameState.ballInPlay) {
+        const ballPos = ballGroup.position;
+        const distanceToBall = Math.sqrt(
+            Math.pow(player2.position.x - ballPos.x, 2) +
+            Math.pow(player2.position.z - ballPos.z, 2)
+        );
+        
+        // Enhanced swing conditions with better prediction
+        const ballMovingToPlayer = gameState.ballVelocity.x > 0; // Ball moving right towards player 2
+        const ballInRange = distanceToBall < 2.4; // Slightly increased range for deployment
+        const ballAtGoodHeight = ballGroup.position.y > 0.3 && ballGroup.position.y < 4; // Wider height range
+        
+        // Predict ball position in next few frames for better timing
+        const futureX = ballPos.x + gameState.ballVelocity.x * 0.1; // 100ms prediction
+        const futureBallToPlayer = Math.sqrt(
+            Math.pow(player2.position.x - futureX, 2) +
+            Math.pow(player2.position.z - ballPos.z, 2)
+        );
+        
+        // Also consider if ball is slowing down near player or will be close soon
+        const ballSlowingDown = Math.abs(gameState.ballVelocity.x) < 3;
+        const ballWillBeClose = futureBallToPlayer < 2.0;
+        
+        if ((ballInRange || ballWillBeClose) && (ballMovingToPlayer || ballSlowingDown) && ballAtGoodHeight) {
+            playerData2.swinging = true;
+            playerData2.swingTime = 0;
+            handleBallHit(ballGroup, gameState, player2, 1);
+            console.log("Player 2 auto-swing! Distance: " + distanceToBall.toFixed(2));
+        }
     }
 }
 
