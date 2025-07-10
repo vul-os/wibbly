@@ -1,17 +1,43 @@
 import * as THREE from 'three';
 
 export function createBall(scene) {
+    // Create a group to hold both the ball and its collision sphere
+    const ballGroup = new THREE.Group();
+    
     const ballGeometry = new THREE.SphereGeometry(0.105, 32, 32); // 25% smaller than 0.14
     const ballMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 }); // Yellow ball
     const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    ball.position.set(-8, 1, 0); // Start position near player 1 at court end
     ball.castShadow = true;
-    scene.add(ball);
-    return ball;
+    ballGroup.add(ball);
+    
+    // CREATE VISUAL COLLISION SPHERE for ball collision detection
+    const collisionSphereGeometry = new THREE.SphereGeometry(0.105, 16, 16); // Same radius as ball
+    const collisionSphereMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xff0000,        // Bright red
+        wireframe: true,        // Wireframe mode
+        transparent: true,      // Make it semi-transparent
+        opacity: 0.6           // Adjust visibility
+    });
+    const collisionSphere = new THREE.Mesh(collisionSphereGeometry, collisionSphereMaterial);
+    
+    // Position the collision sphere exactly at the ball position
+    collisionSphere.position.copy(ball.position);
+    ballGroup.add(collisionSphere);
+    
+    ballGroup.position.set(-8, 1, 0); // Start position near player 1 at court end
+    
+    // Store reference to collision sphere for easy access
+    ballGroup.userData = {
+        ball: ball,
+        collisionSphere: collisionSphere
+    };
+    
+    scene.add(ballGroup);
+    return ballGroup; // Return the group instead of just the ball
 }
 
 // Helper function to position ball correctly for serving
-function positionBallForServing(ball, player1) {
+function positionBallForServing(ballGroup, player1) {
     // Get the racket's world position for accurate serving position
     const racketGroup = player1.userData.racketGroup;
     const racketHead = racketGroup.children[0]; // First child is the racket head
@@ -28,20 +54,20 @@ function positionBallForServing(ball, player1) {
     const rotationMatrix = new THREE.Matrix3().setFromMatrix4(worldMatrix);
     racketForward.applyMatrix3(rotationMatrix);
     
-    // Position ball in front of racket
-    ball.position.copy(worldPosition);
-    ball.position.add(racketForward.multiplyScalar(0.2)); // 0.2 units in front of racket
+    // Position ball group in front of racket
+    ballGroup.position.copy(worldPosition);
+    ballGroup.position.add(racketForward.multiplyScalar(0.2)); // 0.2 units in front of racket
     
     // Debug logs removed for cleaner console output
 }
 
-export function updateBallPhysics(ball, gameState, delta, clock, players) {
+export function updateBallPhysics(ballGroup, gameState, delta, clock, players) {
     // Keep ball with player 1 if waiting to serve
     if (!gameState.ballInPlay && gameState.waitingToServe) {
         const player1 = players[0];
         
         // Use the new positioning function for accurate ball placement
-        positionBallForServing(ball, player1);
+        positionBallForServing(ballGroup, player1);
         return;
     }
     
@@ -51,43 +77,43 @@ export function updateBallPhysics(ball, gameState, delta, clock, players) {
     gameState.ballVelocity.y -= 9.8 * delta;
     
     // Update position
-    ball.position.x += gameState.ballVelocity.x * delta;
-    ball.position.y += gameState.ballVelocity.y * delta;
-    ball.position.z += gameState.ballVelocity.z * delta;
+    ballGroup.position.x += gameState.ballVelocity.x * delta;
+    ballGroup.position.y += gameState.ballVelocity.y * delta;
+    ballGroup.position.z += gameState.ballVelocity.z * delta;
     
     // Prevent ball from going below ground with stronger bounce
-    if (ball.position.y < 0.105) { // Adjusted for 25% smaller ball size
-        ball.position.y = 0.105;
+    if (ballGroup.position.y < 0.105) { // Adjusted for 25% smaller ball size
+        ballGroup.position.y = 0.105;
         // Stronger bounce - increased from 0.7 to 0.85
         gameState.ballVelocity.y = Math.abs(gameState.ballVelocity.y) * 0.85;
         
         // If ball hits ground, check for scoring
-        if (Math.abs(ball.position.x) > 10) {
+        if (Math.abs(ballGroup.position.x) > 10) {
             console.log("Ball out of bounds!");
-            resetBall(ball, gameState, players);
+            resetBall(ballGroup, gameState, players);
         }
     }
     
     // Ball out of bounds check
-    if (Math.abs(ball.position.x) > 12 || Math.abs(ball.position.z) > 7 || ball.position.y > 15) {
+    if (Math.abs(ballGroup.position.x) > 12 || Math.abs(ballGroup.position.z) > 7 || ballGroup.position.y > 15) {
         console.log("Ball out of bounds!");
-        resetBall(ball, gameState, players);
+        resetBall(ballGroup, gameState, players);
     }
     
     // Log ball state every few seconds for debugging
     if (gameState.debug && Math.floor(clock.elapsedTime * 10) % 30 === 0) {
-        console.log(`Ball pos: (${ball.position.x.toFixed(2)}, ${ball.position.y.toFixed(2)}, ${ball.position.z.toFixed(2)})`);
+        console.log(`Ball pos: (${ballGroup.position.x.toFixed(2)}, ${ballGroup.position.y.toFixed(2)}, ${ballGroup.position.z.toFixed(2)})`);
         console.log(`Ball velocity: (${gameState.ballVelocity.x.toFixed(2)}, ${gameState.ballVelocity.y.toFixed(2)}, ${gameState.ballVelocity.z.toFixed(2)})`);
     }
 }
 
-export function resetBall(ball, gameState, players) {
+export function resetBall(ballGroup, gameState, players) {
     gameState.ballInPlay = false;
     gameState.waitingToServe = true;
     
     // Use accurate positioning for ball reset
     const player1 = players[0];
-    positionBallForServing(ball, player1);
+    positionBallForServing(ballGroup, player1);
     gameState.ballVelocity.set(0, 0, 0);
     
     console.log("Ball reset. Press SPACEBAR to serve again.");
@@ -139,7 +165,7 @@ function getRacketHeadTransform(player, playerIndex) {
     };
 }
 
-export function handleBallHit(ball, gameState, player, playerIndex, swingDirection = 'right', playerData = null) {
+export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDirection = 'right', playerData = null) {
     const rightArm = player.userData.rightArm;
     const racketGroup = player.userData.racketGroup;
     
@@ -148,7 +174,7 @@ export function handleBallHit(ball, gameState, player, playerIndex, swingDirecti
     
     // Ball properties
     const ballRadius = 0.105; // Our ball radius (25% smaller)
-    const ballPosition = ball.position.clone();
+    const ballPosition = ballGroup.position.clone(); // Use ballGroup position
     
     // Check collision using oriented bounding box
     const isColliding = sphereIntersectsOBB(
@@ -198,7 +224,7 @@ export function handleBallHit(ball, gameState, player, playerIndex, swingDirecti
         gameState.lastHitBy = playerIndex;
         console.log("Ball served toward player 2 with racket-based direction!");
         return true;
-    } 
+    }
     // If ball is close to racket during play, hit it (adjusted for smaller players)
     else if (racketToBallDistance < 0.75) { 
         // Calculate hit direction based on racket face normal and swing

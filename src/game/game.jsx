@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+// Remove OrbitControls import since we're implementing Wii Sports style camera
 import PoseDetector from '../poseDetection.js';
 
 // Import game modules
-import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment } from './player.js';
+import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment, toggleHitBoxVisibility } from './player.js';
 import { loadCourt } from './court.js';
 import { createBall, updateBallPhysics, handleBallHit } from './ball.js';
 import { 
@@ -39,10 +39,69 @@ function TennisGame() {
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
 
-        // Camera with debug view
+        // Wii Sports style camera - positioned behind player 1
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 30, 20); // Camera farther back with overview of scene
-        camera.lookAt(0, 0, 0);
+        
+        // Wii Sports camera system - smoothly follow behind player 1
+        const cameraTarget = new THREE.Vector3();
+        const cameraPosition = new THREE.Vector3();
+        
+        function updateWiiSportsCamera(player1, ballGroup, gameState) {
+            // Base camera position - lowered height with downward angle
+            const baseOffset = new THREE.Vector3(-4.5, 4.8, 0); // Behind player 1, elevated but lower
+            
+            // Dynamic camera adjustment based on game state
+            let dynamicOffset = baseOffset.clone();
+            
+            if (gameState.ballInPlay) {
+                // During play, adjust camera to follow the action
+                const ballPos = ballGroup.position;
+                const player1Pos = player1.position;
+                
+                // Calculate midpoint between player and ball for better framing
+                const actionCenter = new THREE.Vector3()
+                    .addVectors(player1Pos, ballPos)
+                    .multiplyScalar(0.5);
+                
+                // Adjust camera height based on ball height (but stay elevated)
+                const ballHeight = Math.max(1, ballPos.y);
+                dynamicOffset.y = 4.8 + (ballHeight - 1) * 0.3; // Less height variation to maintain downward angle
+                
+                // Slightly adjust side position based on ball Z position
+                dynamicOffset.z = ballPos.z * 0.15; // Reduced for smoother movement
+                
+                // Move camera back more if ball is far from player
+                const distanceToBall = player1Pos.distanceTo(ballPos);
+                dynamicOffset.x = -4.5 - Math.min(distanceToBall * 0.12, 1.2); // Reduced for smoother movement
+                
+                // Camera target is the action center, but lower for downward angle
+                const desiredTarget = actionCenter.clone();
+                desiredTarget.y += 0.5; // Look down at the action
+                
+                // Smooth target movement as well
+                cameraTarget.lerp(desiredTarget, 0.05);
+            } else {
+                // When not in play, focus on player 1 with downward angle
+                const desiredTarget = player1.position.clone();
+                desiredTarget.y += 1.0; // Look down at player
+                
+                // Smooth target movement
+                cameraTarget.lerp(desiredTarget, 0.05);
+            }
+            
+            // Calculate desired camera position relative to player 1
+            const desiredCameraPos = new THREE.Vector3()
+                .copy(player1.position)
+                .add(dynamicOffset);
+            
+            // Smoother camera movement with slower interpolation
+            const smoothFactor = 0.04; // Reduced from 0.08 for much smoother movement
+            cameraPosition.lerp(desiredCameraPos, smoothFactor);
+            
+            // Update camera with smooth target
+            camera.position.copy(cameraPosition);
+            camera.lookAt(cameraTarget);
+        }
 
         // Renderer
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -51,10 +110,7 @@ function TennisGame() {
         renderer.shadowMap.enabled = true;
         containerRef.current.appendChild(renderer.domElement);
 
-        // Controls
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
+        // No OrbitControls - Wii Sports has fixed camera behavior
         
         // Lights for better visibility
         const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
@@ -69,8 +125,8 @@ function TennisGame() {
         loadCourt(scene);
 
         // Create ball
-        const ball = createBall(scene);
-        ballRef.current = ball;
+        const ballGroup = createBall(scene);
+        ballRef.current = ballGroup;
 
         // Create players
         const playerStartPositions = [
@@ -95,9 +151,13 @@ function TennisGame() {
         
         playersRef.current = players;
 
+        // Initialize camera position - lowered height for better angle
+        cameraPosition.set(-12.5, 4.8, 0); // Start behind and above player 1
+        cameraTarget.set(-8, 1.0, 0); // Look down at player 1
+
         // Function to start the game
         function startGame() {
-            initializeGame(players, ball, gameStateRef.current, playerDataRef.current);
+            initializeGame(players, ballGroup, gameStateRef.current, playerDataRef.current);
         }
         
         // Setup pose detection
@@ -167,7 +227,7 @@ function TennisGame() {
                 console.log("Player 1 swinging racket!");
                 
                 // Try to hit the ball
-                handleBallHit(ball, gameState, player1, 0, swingDirection);
+                handleBallHit(ballGroup, gameState, player1, 0, swingDirection);
             }
         }
         
@@ -177,6 +237,9 @@ function TennisGame() {
             
             if (event.code === 'Space') {
                 handleSwing();
+            } else if (event.code === 'KeyH') {
+                // Toggle hit boxes with 'H' key
+                toggleHitBoxVisibility(players, ballGroup);
             }
         }
         
@@ -196,18 +259,15 @@ function TennisGame() {
                 logTimer = 0;
             }
             
-            // Update controls
-            controls.update();
-            
             // Update player positions occasionally even when ball not in play
             updatePlayerPositions(gameStateRef.current, playerDataRef.current, clock);
             
             // Update ball physics
-            updateBallPhysics(ball, gameStateRef.current, delta, clock, players);
+            updateBallPhysics(ballGroup, gameStateRef.current, delta, clock, players);
             
             // Update player AI behavior
-            updatePlayer1AI(players, gameStateRef.current, playerDataRef.current, ball);
-            updatePlayer2AI(players, gameStateRef.current, playerDataRef.current, ball);
+            updatePlayer1AI(players, gameStateRef.current, playerDataRef.current, ballGroup);
+            updatePlayer2AI(players, gameStateRef.current, playerDataRef.current, ballGroup);
             
             // Move players
             players.forEach((player, index) => {
@@ -220,11 +280,14 @@ function TennisGame() {
                 player.rotation.y = index === 0 ? Math.PI/2 : -Math.PI/2;
                 
                 // Update racket alignment with ball trajectory
-                updateRacketAlignment(player, data, ball, gameStateRef.current, index);
+                updateRacketAlignment(player, data, ballGroup, gameStateRef.current, index);
                 
                 // Update swing animation
                 updatePlayerSwing(player, data, delta, index);
             });
+            
+            // Update Wii Sports style camera
+            updateWiiSportsCamera(players[0], ballGroup, gameStateRef.current);
             
             // Render
             renderer.render(scene, camera);
@@ -307,16 +370,18 @@ function TennisGame() {
                 {/* Instructions Panel */}
                 {showInstructions && (
                     <div className="instructions-panel">
-                        <h3>Tennis Game Controls</h3>
+                        <h3>Wii Sports Tennis Controls</h3>
                         <ul>
-                            <li>Players move automatically</li>
-                            <li><strong>SPACEBAR:</strong> Swing racket at ball</li>
-                            <li>Swing your arm to hit the ball (using webcam)</li>
-                            <li>Press SPACEBAR first to serve the ball</li>
-                            <li>Click anywhere to restart game</li>
+                            <li>🎾 <strong>Wii Sports Style:</strong> Your player automatically tracks the ball!</li>
+                            <li>📹 <strong>Camera:</strong> Follows behind you like Wii Sports</li>
+                            <li><strong>SPACEBAR:</strong> Swing racket (timing is everything!)</li>
+                            <li><strong>H KEY:</strong> Toggle collision hit boxes</li>
+                            <li>🤳 <strong>Webcam:</strong> Swing your arm to hit the ball</li>
+                            <li>🏁 Press SPACEBAR first to serve the ball</li>
+                            <li>🔄 Click anywhere to restart game</li>
                         </ul>
                         <p className="debug-note">
-                            If nothing moves, check browser console for errors
+                            Just like Wii Sports - focus on timing your swings! Your player moves automatically.
                         </p>
                     </div>
                 )}

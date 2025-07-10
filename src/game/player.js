@@ -76,6 +76,20 @@ export function createPlayer(x, z, rotation, scale = 1) {
     const racketHead = new THREE.Mesh(racketHeadGeometry, racketHeadMaterial);
     racketGroup.add(racketHead);
 
+    // CREATE VISUAL HIT BOX for racket collision detection
+    const hitBoxGeometry = new THREE.BoxGeometry(0.7, 0.7, 0.05); // Same size as racket head
+    const hitBoxMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x00ff00,        // Bright green
+        wireframe: true,        // Wireframe mode
+        transparent: true,      // Make it semi-transparent
+        opacity: 0.8           // Adjust visibility
+    });
+    const hitBox = new THREE.Mesh(hitBoxGeometry, hitBoxMaterial);
+    
+    // Position the hit box exactly at the racket head position
+    hitBox.position.copy(racketHead.position);
+    racketGroup.add(hitBox);
+
     // Racket handle - slightly longer
     const handleGeometry = new THREE.BoxGeometry(0.08, 0.6, 0.08); // Increased from 0.5 to 0.6
     const handleMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
@@ -104,7 +118,7 @@ export function createPlayer(x, z, rotation, scale = 1) {
     group.position.set(x, 0, z);
     group.rotation.y = rotation;
 
-    // Store references for animation
+    // Store references for animation (add hitBox reference)
     group.userData = {
         leftArm,
         rightArm,
@@ -112,7 +126,8 @@ export function createPlayer(x, z, rotation, scale = 1) {
         rightLeg,
         racketGroup,
         body,
-        head
+        head,
+        hitBox  // Add reference to the hit box for easy access
     };
 
     return group;
@@ -124,8 +139,8 @@ export function updatePlayerMovement(player, data, delta) {
     const dz = data.targetZ - player.position.z;
     const distance = Math.sqrt(dx * dx + dz * dz);
     
-    // Movement speed
-    const speed = 4.5;
+    // Movement speed - increased for Wii Sports style aggressive tracking
+    const speed = 7.5; // Increased from 4.5 for more responsive movement
     const moveSpeed = speed * delta;
     
     // If not at target, move toward it
@@ -208,7 +223,7 @@ export function updatePlayerSwing(player, data, delta, playerIndex) {
 }
 
 // New function to align racket with incoming ball
-export function updateRacketAlignment(player, data, ball, gameState, playerIndex) {
+export function updateRacketAlignment(player, data, ballGroup, gameState, playerIndex) {
     if (data.swinging || !gameState.ballInPlay) return;
     
     const racketGroup = player.userData.racketGroup;
@@ -227,7 +242,7 @@ export function updateRacketAlignment(player, data, ball, gameState, playerIndex
     
     // Predict where ball will be when it reaches racket height (1.3)
     const targetHeight = 1.3;
-    const currentBallY = ball.position.y;
+    const currentBallY = ballGroup.position.y;
     const ballVelY = gameState.ballVelocity.y;
     const gravity = -9.8;
     
@@ -250,9 +265,9 @@ export function updateRacketAlignment(player, data, ball, gameState, playerIndex
     
     // Calculate where ball will be at racket height
     const futureBallPos = new THREE.Vector3(
-        ball.position.x + gameState.ballVelocity.x * timeToReachHeight,
+        ballGroup.position.x + gameState.ballVelocity.x * timeToReachHeight,
         targetHeight,
-        ball.position.z + gameState.ballVelocity.z * timeToReachHeight
+        ballGroup.position.z + gameState.ballVelocity.z * timeToReachHeight
     );
     
     // Check if ball is coming toward this player
@@ -330,12 +345,12 @@ export function updateRacketAlignment(player, data, ball, gameState, playerIndex
 }
 
 // Enhanced function to calculate optimal player position considering racket reach and ball trajectory
-export function calculateOptimalPosition(player, ball, gameState, playerIndex) {
+export function calculateOptimalPosition(player, ballGroup, gameState, playerIndex) {
     if (!gameState.ballInPlay) return { x: player.position.x, z: player.position.z };
     
     // Always track the ball when it's in play, not just when coming toward player
     const ballVelocity = gameState.ballVelocity;
-    const ballPosition = ball.position;
+    const ballPosition = ballGroup.position;
     
     // Calculate where ball will be when it reaches racket height (1.3)
     const targetHeight = 1.3;
@@ -430,4 +445,29 @@ export function calculateOptimalPosition(player, ball, gameState, playerIndex) {
     }
     
     return { x: targetX, z: targetZ };
+} 
+
+// Function to toggle hit box visibility
+export function toggleHitBoxVisibility(players, ballGroup, visible = null) {
+    // If no specific visibility state provided, toggle current state
+    if (visible === null) {
+        // Check current state from first player's hit box
+        const firstHitBox = players[0].userData.hitBox;
+        visible = !firstHitBox.visible;
+    }
+    
+    // Toggle racket hit boxes for all players
+    players.forEach((player) => {
+        if (player.userData.hitBox) {
+            player.userData.hitBox.visible = visible;
+        }
+    });
+    
+    // Toggle ball collision sphere
+    if (ballGroup && ballGroup.userData.collisionSphere) {
+        ballGroup.userData.collisionSphere.visible = visible;
+    }
+    
+    console.log(`Hit boxes ${visible ? 'shown' : 'hidden'}`);
+    return visible;
 } 
