@@ -55,29 +55,31 @@ export function updatePlayerPositions(gameState, playerData, clock) {
     }
 }
 
-export function updatePlayer1AI(players, gameState, playerData, ball) {
+export function updatePlayer1AI(players, gameState, playerData, ballGroup) {
     const player1 = players[0];
     const playerData1 = playerData[0];
     
-    // Check if player should return to center
+    // Return to center after hitting if flagged
     if (gameState.returnToCenter.player1) {
-        playerData1.targetX = playerData1.homeX; // Return to home X position
-        playerData1.targetZ = playerData1.homeZ; // Return to home Z position
+        // Move to center position
+        playerData1.targetX = -7;
+        playerData1.targetZ = 0;
         
-        // Check if player is close to center position
-        const dx = playerData1.targetX - player1.position.x;
-        const dz = playerData1.targetZ - player1.position.z;
-        const distanceToCenter = Math.sqrt(dx * dx + dz * dz);
+        // Check if close to center, then disable flag
+        const distanceToCenter = Math.sqrt(
+            Math.pow(player1.position.x - (-7), 2) +
+            Math.pow(player1.position.z - 0, 2)
+        );
         
-        if (distanceToCenter < 0.5) {
-            gameState.returnToCenter.player1 = false; // Reset the flag once player reaches center
-            console.log("Player 1 reached home position");
+        if (distanceToCenter < 1) {
+            gameState.returnToCenter.player1 = false;
         }
     }
+    
     // Always track the ball when it's in play, regardless of who hit it last
     else if (gameState.ballInPlay) {
         // Use the new optimal positioning function that considers racket reach
-        const optimalPos = calculateOptimalPosition(player1, ball, gameState, 0);
+        const optimalPos = calculateOptimalPosition(player1, ballGroup, gameState, 0);
         
         // Update target with optimal position - always track the ball
         playerData1.targetX = optimalPos.x;
@@ -86,19 +88,19 @@ export function updatePlayer1AI(players, gameState, playerData, ball) {
         // Auto-swing when ball is close enough and moving towards player
         if (!playerData1.swinging) {
             const distanceToBall = Math.sqrt(
-                Math.pow(player1.position.x - ball.position.x, 2) +
-                Math.pow(player1.position.z - ball.position.z, 2)
+                Math.pow(player1.position.x - ballGroup.position.x, 2) +
+                Math.pow(player1.position.z - ballGroup.position.z, 2)
             );
             
             // More aggressive swing conditions
             const ballMovingToPlayer = gameState.ballVelocity.x < 0; // Ball moving left towards player 1
             const ballInRange = distanceToBall < 1.8; // Increased range
-            const ballAtGoodHeight = ball.position.y > 0.5 && ball.position.y < 3; // Reasonable height
+            const ballAtGoodHeight = ballGroup.position.y > 0.5 && ballGroup.position.y < 3; // Reasonable height
             
             if (ballInRange && ballMovingToPlayer && ballAtGoodHeight) {
                 playerData1.swinging = true;
                 playerData1.swingTime = 0;
-                handleBallHit(ball, gameState, player1, 0);
+                handleBallHit(ballGroup, gameState, player1, 0);
                 console.log("Player 1 auto-swing! Distance: " + distanceToBall.toFixed(2));
             }
         }
@@ -111,29 +113,31 @@ export function updatePlayer1AI(players, gameState, playerData, ball) {
     }
 }
 
-export function updatePlayer2AI(players, gameState, playerData, ball) {
+export function updatePlayer2AI(players, gameState, playerData, ballGroup) {
     const player2 = players[1];
     const playerData2 = playerData[1];
     
-    // Check if player should return to center
+    // Return to center after hitting if flagged
     if (gameState.returnToCenter.player2) {
-        playerData2.targetX = playerData2.homeX; // Return to home X position 
-        playerData2.targetZ = playerData2.homeZ; // Return to home Z position
+        // Move to center position
+        playerData2.targetX = 7;
+        playerData2.targetZ = 0;
         
-        // Check if player is close to center position
-        const dx = playerData2.targetX - player2.position.x;
-        const dz = playerData2.targetZ - player2.position.z;
-        const distanceToCenter = Math.sqrt(dx * dx + dz * dz);
+        // Check if close to center, then disable flag
+        const distanceToCenter = Math.sqrt(
+            Math.pow(player2.position.x - 7, 2) +
+            Math.pow(player2.position.z - 0, 2)
+        );
         
-        if (distanceToCenter < 0.5) {
-            gameState.returnToCenter.player2 = false; // Reset the flag once player reaches center
-            console.log("Player 2 reached home position");
+        if (distanceToCenter < 1) {
+            gameState.returnToCenter.player2 = false;
         }
     }
+    
     // Always track the ball when it's in play, regardless of who hit it last
     else if (gameState.ballInPlay) {
         // Use the new optimal positioning function that considers racket reach
-        const optimalPos = calculateOptimalPosition(player2, ball, gameState, 1);
+        const optimalPos = calculateOptimalPosition(player2, ballGroup, gameState, 1);
         
         // Update target with optimal position - always track the ball
         playerData2.targetX = optimalPos.x;
@@ -142,19 +146,19 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
         // Auto-swing when ball is close enough and moving towards player
         if (!playerData2.swinging) {
             const distanceToBall = Math.sqrt(
-                Math.pow(player2.position.x - ball.position.x, 2) +
-                Math.pow(player2.position.z - ball.position.z, 2)
+                Math.pow(player2.position.x - ballGroup.position.x, 2) +
+                Math.pow(player2.position.z - ballGroup.position.z, 2)
             );
             
             // More aggressive swing conditions
             const ballMovingToPlayer = gameState.ballVelocity.x > 0; // Ball moving right towards player 2
             const ballInRange = distanceToBall < 1.8; // Increased range
-            const ballAtGoodHeight = ball.position.y > 0.5 && ball.position.y < 3; // Reasonable height
+            const ballAtGoodHeight = ballGroup.position.y > 0.5 && ballGroup.position.y < 3; // Reasonable height
             
             if (ballInRange && ballMovingToPlayer && ballAtGoodHeight) {
                 playerData2.swinging = true;
                 playerData2.swingTime = 0;
-                handleBallHit(ball, gameState, player2, 1);
+                handleBallHit(ballGroup, gameState, player2, 1);
                 console.log("Player 2 auto-swing! Distance: " + distanceToBall.toFixed(2));
             }
         }
@@ -167,7 +171,7 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
     }
 }
 
-export function initializeGame(players, ball, gameState, playerData) {
+export function initializeGame(players, ballGroup, gameState, playerData) {
     console.log("Starting game!");
     
     // Reset player positions to court ends
@@ -181,7 +185,7 @@ export function initializeGame(players, ball, gameState, playerData) {
     // Reset ball position to be in front of player 1's racket
     const player1 = players[0];
     // Position ball where the racket can hit it
-    ball.position.set(
+    ballGroup.position.set(
         player1.position.x + 0.6, // Slightly in front
         1.3,                      // Racket height
         player1.position.z + 0.5  // Offset to be hittable by racket

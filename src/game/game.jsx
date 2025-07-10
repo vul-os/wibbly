@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import PoseDetector from '../poseDetection.js';
 
 // Import game modules
-import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment } from './player.js';
+import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment, toggleHitBoxVisibility } from './player.js';
 import { loadCourt } from './court.js';
 import { createBall, updateBallPhysics, handleBallHit } from './ball.js';
 import { 
@@ -69,8 +69,8 @@ function TennisGame() {
         loadCourt(scene);
 
         // Create ball
-        const ball = createBall(scene);
-        ballRef.current = ball;
+        const ballGroup = createBall(scene);
+        ballRef.current = ballGroup;
 
         // Create players
         const playerStartPositions = [
@@ -97,7 +97,7 @@ function TennisGame() {
 
         // Function to start the game
         function startGame() {
-            initializeGame(players, ball, gameStateRef.current, playerDataRef.current);
+            initializeGame(players, ballGroup, gameStateRef.current, playerDataRef.current);
         }
         
         // Setup pose detection
@@ -167,7 +167,7 @@ function TennisGame() {
                 console.log("Player 1 swinging racket!");
                 
                 // Try to hit the ball
-                handleBallHit(ball, gameState, player1, 0, swingDirection);
+                handleBallHit(ballGroup, gameState, player1, 0, swingDirection);
             }
         }
         
@@ -177,6 +177,9 @@ function TennisGame() {
             
             if (event.code === 'Space') {
                 handleSwing();
+            } else if (event.code === 'KeyH') {
+                // Toggle hit boxes with 'H' key
+                toggleHitBoxVisibility(players, ballGroup);
             }
         }
         
@@ -203,11 +206,11 @@ function TennisGame() {
             updatePlayerPositions(gameStateRef.current, playerDataRef.current, clock);
             
             // Update ball physics
-            updateBallPhysics(ball, gameStateRef.current, delta, clock, players);
+            updateBallPhysics(ballGroup, gameStateRef.current, delta, clock, players);
             
             // Update player AI behavior
-            updatePlayer1AI(players, gameStateRef.current, playerDataRef.current, ball);
-            updatePlayer2AI(players, gameStateRef.current, playerDataRef.current, ball);
+            updatePlayer1AI(players, gameStateRef.current, playerDataRef.current, ballGroup);
+            updatePlayer2AI(players, gameStateRef.current, playerDataRef.current, ballGroup);
             
             // Move players
             players.forEach((player, index) => {
@@ -220,7 +223,7 @@ function TennisGame() {
                 player.rotation.y = index === 0 ? Math.PI/2 : -Math.PI/2;
                 
                 // Update racket alignment with ball trajectory
-                updateRacketAlignment(player, data, ball, gameStateRef.current, index);
+                updateRacketAlignment(player, data, ballGroup, gameStateRef.current, index);
                 
                 // Update swing animation
                 updatePlayerSwing(player, data, delta, index);
@@ -311,6 +314,7 @@ function TennisGame() {
                         <ul>
                             <li>Players move automatically</li>
                             <li><strong>SPACEBAR:</strong> Swing racket at ball</li>
+                            <li><strong>H KEY:</strong> Toggle collision hit boxes</li>
                             <li>Swing your arm to hit the ball (using webcam)</li>
                             <li>Press SPACEBAR first to serve the ball</li>
                             <li>Click anywhere to restart game</li>
