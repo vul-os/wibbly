@@ -25,7 +25,7 @@ export function createGameState() {
         // Add swing cooldown controls to prevent rapid swinging
         player1SwingCooldown: 0,
         player2SwingCooldown: 0,
-        swingCooldownDuration: 500, // 500ms cooldown between swings (reduced from 800ms for more responsiveness)
+        swingCooldownDuration: 200, // 200ms cooldown between swings (reduced for quick corrections)
         // Track ball approach to ensure only one swing per approach
         ballApproachId: 0,
         player1LastAttemptedBall: -1,
@@ -199,26 +199,25 @@ function checkPlayer1Swing(player1, playerData1, ballGroup, gameState) {
             return; // Already attempted swing for this ball approach
         }
         
-        // Enhanced swing conditions - very flexible timing
-        const ballInRange = distanceToBall < 4.5; // Increased from 3.5 to 4.5 for very responsive swinging
-        const ballAtGoodHeight = ballGroup.position.y > 0.1 && ballGroup.position.y < 6.0; // Very relaxed height range
+        // Enhanced swing conditions - precise timing for actual hits
+        const ballInRange = distanceToBall < 2.0; // Reduced from 4.5 to 2.0 to match collision range
+        const ballAtGoodHeight = ballGroup.position.y > 0.1 && ballGroup.position.y < 6.0; // Keep relaxed height range
         
         // Predict ball position for optimal timing
-        const futureX = ballPos.x + gameState.ballVelocity.x * 0.2;
+        const futureX = ballPos.x + gameState.ballVelocity.x * 0.15; // Reduced prediction time for more precision
         const futureBallToPlayer = Math.sqrt(
             Math.pow(player1.position.x - futureX, 2) +
             Math.pow(player1.position.z - ballPos.z, 2)
         );
         
-        // Very flexible swing conditions - easy to trigger
-        const ballWillBeClose = futureBallToPlayer < 4.0; // Increased from 3.0 to 4.0
-        const optimalSwingCondition = distanceToBall < 4.0 && ballAtGoodHeight; // Increased from 3.0 to 4.0
-        const emergencySwing = distanceToBall < 3.5; // Increased from 2.2 to 3.5
+        // Precise swing conditions - only swing when ball can actually be hit
+        const ballWillBeClose = futureBallToPlayer < 1.8; // Reduced from 4.0 to 1.8
+        const optimalSwingCondition = distanceToBall < 1.5 && ballAtGoodHeight; // Reduced from 4.0 to 1.5
+        const emergencySwing = distanceToBall < 1.0; // Reduced from 3.5 to 1.0
         
-        // Very lenient swing trigger - swing if ball is anywhere near or moving slowly
-        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 8; // Very lenient direction check
-        const ballIsNearby = distanceToBall < 5.0; // New condition - swing if just nearby
-        const shouldSwing = ballAtGoodHeight && (ballGenerallyTowardsPlayer || ballIsNearby) &&
+        // More precise swing trigger - only swing when ball is genuinely hittable
+        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 3; // More restrictive direction check
+        const shouldSwing = ballAtGoodHeight && ballGenerallyTowardsPlayer &&
                            (optimalSwingCondition || emergencySwing || ballWillBeClose);
         
         if (shouldSwing) {
@@ -354,26 +353,25 @@ function checkPlayer2Swing(player2, playerData2, ballGroup, gameState) {
             return; // Already attempted swing for this ball approach
         }
         
-        // Enhanced swing conditions - very flexible timing
-        const ballInRange = distanceToBall < 4.5; // Increased from 3.5 to 4.5 for very responsive swinging
-        const ballAtGoodHeight = ballGroup.position.y > 0.1 && ballGroup.position.y < 6.0; // Very relaxed height range
+        // Enhanced swing conditions - precise timing for actual hits
+        const ballInRange = distanceToBall < 2.0; // Reduced from 4.5 to 2.0 to match collision range
+        const ballAtGoodHeight = ballGroup.position.y > 0.1 && ballGroup.position.y < 6.0; // Keep relaxed height range
         
         // Predict ball position for optimal timing
-        const futureX = ballPos.x + gameState.ballVelocity.x * 0.2;
+        const futureX = ballPos.x + gameState.ballVelocity.x * 0.15; // Reduced prediction time for more precision
         const futureBallToPlayer = Math.sqrt(
             Math.pow(player2.position.x - futureX, 2) +
             Math.pow(player2.position.z - ballPos.z, 2)
         );
         
-        // Very flexible swing conditions - easy to trigger
-        const ballWillBeClose = futureBallToPlayer < 4.0; // Increased from 3.0 to 4.0
-        const optimalSwingCondition = distanceToBall < 4.0 && ballAtGoodHeight; // Increased from 3.0 to 4.0
-        const emergencySwing = distanceToBall < 3.5; // Increased from 2.2 to 3.5
+        // Precise swing conditions - only swing when ball can actually be hit
+        const ballWillBeClose = futureBallToPlayer < 1.8; // Reduced from 4.0 to 1.8
+        const optimalSwingCondition = distanceToBall < 1.5 && ballAtGoodHeight; // Reduced from 4.0 to 1.5
+        const emergencySwing = distanceToBall < 1.0; // Reduced from 3.5 to 1.0
         
-        // Very lenient swing trigger - swing if ball is anywhere near or moving slowly
-        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 8; // Very lenient direction check
-        const ballIsNearby = distanceToBall < 5.0; // New condition - swing if just nearby
-        const shouldSwing = ballAtGoodHeight && (ballGenerallyTowardsPlayer || ballIsNearby) &&
+        // More precise swing trigger - only swing when ball is genuinely hittable
+        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 3; // More restrictive direction check
+        const shouldSwing = ballAtGoodHeight && ballGenerallyTowardsPlayer &&
                            (optimalSwingCondition || emergencySwing || ballWillBeClose);
         
         if (shouldSwing) {
