@@ -111,6 +111,15 @@ export function resetBall(ballGroup, gameState, players) {
     gameState.ballInPlay = false;
     gameState.waitingToServe = true;
     
+    // Reset ball approach ID for new point - clears all swing attempts
+    gameState.ballApproachId = (gameState.ballApproachId || 0) + 1;
+    gameState.player1LastAttemptedBall = -1;
+    gameState.player2LastAttemptedBall = -1;
+    
+    // Reset swing cooldowns for new point
+    gameState.player1SwingCooldown = 0;
+    gameState.player2SwingCooldown = 0;
+    
     // Use accurate positioning for ball reset
     const player1 = players[0];
     positionBallForServing(ballGroup, player1);
@@ -204,9 +213,9 @@ export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDi
         const racketForward = new THREE.Vector3(0, 0, 1);
         racketForward.applyMatrix3(racketTransform.rotation);
         
-        // Direct the serve toward player 2 with racket-based direction
-        const targetX = 8; // Player 2's position
-        const targetZ = 0; // Center of the court
+        // Direct the serve toward player 2's actual position (diagonal serve)
+        const targetX = 6.5; // Player 2's actual X position
+        const targetZ = 1.8; // Adjusted for opponent's right-side positioning relative to ball
         const dirVec = new THREE.Vector3(targetX - player.position.x, 0, targetZ - player.position.z);
         dirVec.normalize();
         
@@ -222,11 +231,15 @@ export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDi
         );
         
         gameState.lastHitBy = playerIndex;
-        console.log("Ball served toward player 2 with racket-based direction!");
+        
+        // Increment ball approach ID for new ball trajectory - resets swing attempts
+        gameState.ballApproachId = (gameState.ballApproachId || 0) + 1;
+        
+        console.log("Ball served toward player 2's actual position with diagonal trajectory!");
         return true;
     }
     // If ball is close to racket during play, hit it (adjusted for smaller players)
-    else if (racketToBallDistance < 0.75) { 
+    else if (racketToBallDistance < 1.2) { // Increased from 1.0 to 1.2 for very easy hitting
         // Calculate hit direction based on racket face normal and swing
         const racketForward = new THREE.Vector3(0, 0, 1);
         racketForward.applyMatrix3(racketTransform.rotation);
@@ -275,6 +288,9 @@ export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDi
         );
         
         gameState.lastHitBy = playerIndex;
+        
+        // Increment ball approach ID for new ball trajectory - resets swing attempts
+        gameState.ballApproachId = (gameState.ballApproachId || 0) + 1;
         
         // Flag player to return to center
         if (playerIndex === 0) {

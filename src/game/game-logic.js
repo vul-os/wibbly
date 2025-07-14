@@ -21,14 +21,22 @@ export function createGameState() {
         aiUpdateInterval: 1000 / 30, // Target 30 FPS for AI updates
         player1LastSwingCheck: 0,
         player2LastSwingCheck: 0,
-        swingCheckInterval: 1000 / 60 // Check swing conditions at 60 FPS
+        swingCheckInterval: 1000 / 60, // Check swing conditions at 60 FPS
+        // Add swing cooldown controls to prevent rapid swinging
+        player1SwingCooldown: 0,
+        player2SwingCooldown: 0,
+        swingCooldownDuration: 500, // 500ms cooldown between swings (reduced from 800ms for more responsiveness)
+        // Track ball approach to ensure only one swing per approach
+        ballApproachId: 0,
+        player1LastAttemptedBall: -1,
+        player2LastAttemptedBall: -1
     };
 }
 
 export function createPlayerData() {
     return [
-        { targetX: -8, targetZ: 0, isLeftSide: true, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: -8, z: 0, homeX: -8, homeZ: 0 },
-        { targetX: 8, targetZ: 0, isLeftSide: false, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: 8, z: 0, homeX: 8, homeZ: 0 }
+        { targetX: -6.0, targetZ: -1.5, isLeftSide: true, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: -6.0, z: -1.5, homeX: -6.0, homeZ: -1.5 },
+        { targetX: 6.5, targetZ: 1.7, isLeftSide: false, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: 6.5, z: 1.7, homeX: 6.5, homeZ: 1.7 }
     ];
 }
 
@@ -78,62 +86,104 @@ export function updatePlayer1AI(players, gameState, playerData, ballGroup) {
     
     // Return to center after hitting if flagged
     if (gameState.returnToCenter.player1) {
-        // Move to center position
-        playerData1.targetX = -7;
-        playerData1.targetZ = 0;
+        // Move to ready position (left side like real tennis)
+        playerData1.targetX = -6.0; // Updated to match new ready position
+        playerData1.targetZ = -1.5;
         
-        // Check if close to center, then disable flag
-        const distanceToCenter = Math.sqrt(
-            Math.pow(player1.position.x - (-7), 2) +
-            Math.pow(player1.position.z - 0, 2)
+        // Check if close to ready position, then disable flag
+        const distanceToReady = Math.sqrt(
+            Math.pow(player1.position.x - (-6.0), 2) +
+            Math.pow(player1.position.z - (-1.5), 2)
         );
         
-        if (distanceToCenter < 1) {
+        if (distanceToReady < 1) {
             gameState.returnToCenter.player1 = false;
         }
+        
+        // Reset rotation to normal after hitting
+        const neutralRotation = Math.PI/2; // Facing forward (+Z axis)
+        player1.rotation.y = THREE.MathUtils.lerp(player1.rotation.y, neutralRotation, 0.08);
     }
     
-    // Wii Sports style aggressive ball tracking when ball is in play
+    // Realistic tennis positioning when ball is in play
     else if (gameState.ballInPlay) {
-        // Use the optimal positioning function that considers racket reach
-        const optimalPos = calculateOptimalPosition(player1, ballGroup, gameState, 0);
-        
-        // More aggressive tracking - move more directly toward the ball
         const ballPos = ballGroup.position;
-        const distanceToBall = Math.sqrt(
-            Math.pow(player1.position.x - ballPos.x, 2) +
-            Math.pow(player1.position.z - ballPos.z, 2)
-        );
+        const ballVelocity = gameState.ballVelocity;
         
-        if (distanceToBall > 2.5) {
-            // Move toward ball with more aggressive positioning
-            let trackingX = ballPos.x - 0.8; // Stay slightly behind ball for hitting
-            let trackingZ = ballPos.z;
+        // Check if ball is coming toward player 1's side
+        const ballComingToPlayer1 = ballVelocity.x < 0 || (ballPos.x < 1 && Math.abs(ballVelocity.x) < 4); // Improved logic similar to Player 2
+        
+        if (ballComingToPlayer1) {
+            // Only move toward ball if it's actually coming to this side
+            const optimalPos = calculateOptimalPosition(player1, ballGroup, gameState, 0);
             
-            // Constrain to player 1's side of court
-            trackingX = Math.max(-9, Math.min(-2, trackingX));
-            trackingZ = Math.max(-4.5, Math.min(4.5, trackingZ));
+            // Don't be too aggressive - only move if ball is reasonably close
+            const distanceToBall = Math.sqrt(
+                Math.pow(player1.position.x - ballPos.x, 2) +
+                Math.pow(player1.position.z - ballPos.z, 2)
+            );
             
-            // Blend optimal position with aggressive tracking
-            const aggressiveFactor = Math.min(1.0, distanceToBall / 3.0);
-            playerData1.targetX = optimalPos.x * (1 - aggressiveFactor) + trackingX * aggressiveFactor;
-            playerData1.targetZ = optimalPos.z * (1 - aggressiveFactor) + trackingZ * aggressiveFactor;
+            // Debug logging for Player 1
+            if (gameState.debug && Math.floor(Date.now() / 1000) % 4 === 0) {
+                console.log(`Player 1 AI: Ball at (${ballPos.x.toFixed(1)}, ${ballPos.z.toFixed(1)}), Distance: ${distanceToBall.toFixed(1)}, Moving to: (${optimalPos.x.toFixed(1)}, ${optimalPos.z.toFixed(1)})`);
+            }
+            
+            if (distanceToBall < 6) { // Increased from 4 to 6 for better ball tracking
+                // Move to intercept, but not too aggressively
+                playerData1.targetX = optimalPos.x;
+                playerData1.targetZ = optimalPos.z;
+            } else {
+                // Stay in good court position but track ball better
+                playerData1.targetX = Math.max(-8, Math.min(-4, ballPos.x - 0.5)); // Improved tracking (was -1.5, now -0.5)
+                playerData1.targetZ = Math.max(-2, Math.min(2, ballPos.z * 0.5)); // Increased responsiveness from 0.3 to 0.5
+            }
+            
+            // Reset rotation to normal during play
+            const neutralRotation = Math.PI/2; // Facing forward (+Z axis)
+            player1.rotation.y = THREE.MathUtils.lerp(player1.rotation.y, neutralRotation, 0.08);
         } else {
-            // Close to ball, use optimal positioning
-            playerData1.targetX = optimalPos.x;
-            playerData1.targetZ = optimalPos.z;
+            // Ball not coming to player 1 - stay in good court coverage position
+            // Position based on ball location for better court coverage
+            const courtCoverageX = -6.0; // Moved slightly forward from -6.5 for better court coverage
+            const courtCoverageZ = Math.max(-2.5, Math.min(1, -1.5 + ballPos.z * 0.3)); // Increased responsiveness from 0.2 to 0.3
+            
+            playerData1.targetX = courtCoverageX;
+            playerData1.targetZ = courtCoverageZ;
+            
+            // Reset rotation to normal during play
+            const neutralRotation = Math.PI/2; // Facing forward (+Z axis)
+            player1.rotation.y = THREE.MathUtils.lerp(player1.rotation.y, neutralRotation, 0.08);
         }
     }
-    // When ball is not in play, stay in a ready position
+    // When ball is not in play, stay in ready position
     else {
-        // Move to a good ready position - more centered for Wii Sports feel
-        playerData1.targetX = -6.5; // Closer to center for better court coverage
-        playerData1.targetZ = 0;     // Center of court
+        // Good ready position for court coverage (left side like real tennis)
+        playerData1.targetX = -6.0; // Moved forward from -6.5 for better court coverage
+        playerData1.targetZ = -1.5;
+        
+        // If waiting to serve, angle towards opponent
+        if (gameState.waitingToServe) {
+            // Calculate angle to face Player 2 at (6.5, 1.7)
+            const toOpponent = new THREE.Vector3(6.5 - player1.position.x, 0, 1.7 - player1.position.z);
+            const angleToOpponent = Math.atan2(toOpponent.z, toOpponent.x);
+            
+            // Smoothly rotate to face opponent with slight adjustment
+            const targetRotation = angleToOpponent - Math.PI/4; // Slight angle for natural serving stance
+            player1.rotation.y = THREE.MathUtils.lerp(player1.rotation.y, targetRotation, 0.05);
+        }
     }
 }
 
 // Separate swing checking function for higher frequency updates
 function checkPlayer1Swing(player1, playerData1, ballGroup, gameState) {
+    const currentTime = performance.now();
+    
+    // Check cooldown - prevent rapid swinging
+    if (currentTime < gameState.player1SwingCooldown) {
+        return; // Still in cooldown, don't swing
+    }
+    
+    // Only proceed if not already swinging and ball is in play
     if (!playerData1.swinging && gameState.ballInPlay) {
         const ballPos = ballGroup.position;
         const distanceToBall = Math.sqrt(
@@ -141,27 +191,48 @@ function checkPlayer1Swing(player1, playerData1, ballGroup, gameState) {
             Math.pow(player1.position.z - ballPos.z, 2)
         );
         
-        // Enhanced swing conditions with better prediction
-        const ballMovingToPlayer = gameState.ballVelocity.x < 0; // Ball moving left towards player 1
-        const ballInRange = distanceToBall < 2.4; // Slightly increased range for deployment
-        const ballAtGoodHeight = ballGroup.position.y > 0.3 && ballGroup.position.y < 4; // Wider height range
+        // Check if this is a new ball approach (ball changed direction toward player)
+        const ballMovingToPlayer = gameState.ballVelocity.x < 0;
         
-        // Predict ball position in next few frames for better timing
-        const futureX = ballPos.x + gameState.ballVelocity.x * 0.1; // 100ms prediction
+        // Check if we've already attempted to swing at this ball approach
+        if (gameState.player1LastAttemptedBall === gameState.ballApproachId) {
+            return; // Already attempted swing for this ball approach
+        }
+        
+        // Enhanced swing conditions - very flexible timing
+        const ballInRange = distanceToBall < 4.5; // Increased from 3.5 to 4.5 for very responsive swinging
+        const ballAtGoodHeight = ballGroup.position.y > 0.1 && ballGroup.position.y < 6.0; // Very relaxed height range
+        
+        // Predict ball position for optimal timing
+        const futureX = ballPos.x + gameState.ballVelocity.x * 0.2;
         const futureBallToPlayer = Math.sqrt(
             Math.pow(player1.position.x - futureX, 2) +
             Math.pow(player1.position.z - ballPos.z, 2)
         );
         
-        // Also consider if ball is slowing down near player or will be close soon
-        const ballSlowingDown = Math.abs(gameState.ballVelocity.x) < 3;
-        const ballWillBeClose = futureBallToPlayer < 2.0;
+        // Very flexible swing conditions - easy to trigger
+        const ballWillBeClose = futureBallToPlayer < 4.0; // Increased from 3.0 to 4.0
+        const optimalSwingCondition = distanceToBall < 4.0 && ballAtGoodHeight; // Increased from 3.0 to 4.0
+        const emergencySwing = distanceToBall < 3.5; // Increased from 2.2 to 3.5
         
-        if ((ballInRange || ballWillBeClose) && (ballMovingToPlayer || ballSlowingDown) && ballAtGoodHeight) {
+        // Very lenient swing trigger - swing if ball is anywhere near or moving slowly
+        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 8; // Very lenient direction check
+        const ballIsNearby = distanceToBall < 5.0; // New condition - swing if just nearby
+        const shouldSwing = ballAtGoodHeight && (ballGenerallyTowardsPlayer || ballIsNearby) &&
+                           (optimalSwingCondition || emergencySwing || ballWillBeClose);
+        
+        if (shouldSwing) {
+            // Mark this ball approach as attempted
+            gameState.player1LastAttemptedBall = gameState.ballApproachId;
+            
+            // Set cooldown timer
+            gameState.player1SwingCooldown = currentTime + gameState.swingCooldownDuration;
+            
+            // Execute swing
             playerData1.swinging = true;
             playerData1.swingTime = 0;
             handleBallHit(ballGroup, gameState, player1, 0);
-            console.log("Player 1 Wii Sports auto-swing! Distance: " + distanceToBall.toFixed(2));
+            console.log(`Player 1 single swing! Distance: ${distanceToBall.toFixed(2)}, Approach ID: ${gameState.ballApproachId}`);
         }
     }
 }
@@ -186,40 +257,81 @@ export function updatePlayer2AI(players, gameState, playerData, ballGroup) {
     
     // Return to center after hitting if flagged
     if (gameState.returnToCenter.player2) {
-        // Move to center position
-        playerData2.targetX = 7;
-        playerData2.targetZ = 0;
+        // Move to ready position (right side like real tennis)
+        playerData2.targetX = 6.5;
+        playerData2.targetZ = 1.7;
         
-        // Check if close to center, then disable flag
-        const distanceToCenter = Math.sqrt(
-            Math.pow(player2.position.x - 7, 2) +
-            Math.pow(player2.position.z - 0, 2)
+        // Check if close to ready position, then disable flag
+        const distanceToReady = Math.sqrt(
+            Math.pow(player2.position.x - 6.5, 2) +
+            Math.pow(player2.position.z - 1.7, 2)
         );
         
-        if (distanceToCenter < 1) {
+        if (distanceToReady < 1) {
             gameState.returnToCenter.player2 = false;
         }
     }
     
-    // Always track the ball when it's in play, regardless of who hit it last
+    // Realistic tennis positioning when ball is in play
     else if (gameState.ballInPlay) {
-        // Use the new optimal positioning function that considers racket reach
-        const optimalPos = calculateOptimalPosition(player2, ballGroup, gameState, 1);
+        const ballPos = ballGroup.position;
+        const ballVelocity = gameState.ballVelocity;
         
-        // Update target with optimal position - always track the ball
-        playerData2.targetX = optimalPos.x;
-        playerData2.targetZ = optimalPos.z;
+        // Check if ball is coming toward player 2's side (improved logic)
+        const ballComingToPlayer2 = ballVelocity.x > 0 || (ballPos.x > 1 && Math.abs(ballVelocity.x) < 4); // Reduced threshold from x > 2 to x > 1, increased velocity threshold
+        
+        if (ballComingToPlayer2) {
+            // Only move toward ball if it's actually coming to this side
+            const optimalPos = calculateOptimalPosition(player2, ballGroup, gameState, 1);
+            
+            // More aggressive movement - increased distance threshold
+            const distanceToBall = Math.sqrt(
+                Math.pow(player2.position.x - ballPos.x, 2) +
+                Math.pow(player2.position.z - ballPos.z, 2)
+            );
+            
+            // Debug logging for Player 2
+            if (gameState.debug && Math.floor(Date.now() / 1000) % 3 === 0) {
+                console.log(`Player 2 AI: Ball at (${ballPos.x.toFixed(1)}, ${ballPos.z.toFixed(1)}), Distance: ${distanceToBall.toFixed(1)}, Moving to: (${optimalPos.x.toFixed(1)}, ${optimalPos.z.toFixed(1)})`);
+            }
+            
+            if (distanceToBall < 8) { // Increased from 6 to 8 for even more aggressive movement
+                // Move to intercept, but not too aggressively
+                playerData2.targetX = optimalPos.x;
+                playerData2.targetZ = optimalPos.z;
+            } else {
+                // Stay in good court position but track ball more aggressively
+                playerData2.targetX = Math.max(3.5, Math.min(8, ballPos.x + 0.3)); // Reduced offset from 0.5 to 0.3, expanded range
+                playerData2.targetZ = Math.max(-2, Math.min(2, ballPos.z * 0.7)); // Increased responsiveness from 0.5 to 0.7
+            }
+        } else {
+            // Ball not coming to player 2 - stay in good court coverage position
+            // Position based on ball location for better court coverage
+            const courtCoverageX = 6.5; // Good baseline position
+            const courtCoverageZ = Math.max(-1, Math.min(2.5, 1.7 + ballPos.z * 0.2)); // Slight adjustment based on ball, biased towards right
+            
+            playerData2.targetX = courtCoverageX;
+            playerData2.targetZ = courtCoverageZ;
+        }
     }
-    // When ball is not in play, stay in a ready position
+    // When ball is not in play, stay in ready position
     else {
-        // Move to a good ready position
-        playerData2.targetX = 7; // Slightly forward ready position
-        playerData2.targetZ = 0;  // Center of court
+        // Good ready position for court coverage (right side like real tennis)
+        playerData2.targetX = 6.5;
+        playerData2.targetZ = 1.7;
     }
 }
 
 // Separate swing checking function for player 2
 function checkPlayer2Swing(player2, playerData2, ballGroup, gameState) {
+    const currentTime = performance.now();
+    
+    // Check cooldown - prevent rapid swinging
+    if (currentTime < gameState.player2SwingCooldown) {
+        return; // Still in cooldown, don't swing
+    }
+    
+    // Only proceed if not already swinging and ball is in play
     if (!playerData2.swinging && gameState.ballInPlay) {
         const ballPos = ballGroup.position;
         const distanceToBall = Math.sqrt(
@@ -227,27 +339,55 @@ function checkPlayer2Swing(player2, playerData2, ballGroup, gameState) {
             Math.pow(player2.position.z - ballPos.z, 2)
         );
         
-        // Enhanced swing conditions with better prediction
-        const ballMovingToPlayer = gameState.ballVelocity.x > 0; // Ball moving right towards player 2
-        const ballInRange = distanceToBall < 2.4; // Slightly increased range for deployment
-        const ballAtGoodHeight = ballGroup.position.y > 0.3 && ballGroup.position.y < 4; // Wider height range
+        // Check if this is a new ball approach (ball changed direction toward player)
+        const ballMovingToPlayer = gameState.ballVelocity.x > 0;
+        const ballWasMovingAway = !ballMovingToPlayer;
         
-        // Predict ball position in next few frames for better timing
-        const futureX = ballPos.x + gameState.ballVelocity.x * 0.1; // 100ms prediction
+        // Increment ball approach ID when ball direction changes toward player
+        if (ballMovingToPlayer && gameState.player2LastAttemptedBall !== gameState.ballApproachId) {
+            // This is a new ball approach - reset attempt tracking
+            // (ballApproachId will be updated in updatePlayer2AI if needed)
+        }
+        
+        // Check if we've already attempted to swing at this ball approach
+        if (gameState.player2LastAttemptedBall === gameState.ballApproachId) {
+            return; // Already attempted swing for this ball approach
+        }
+        
+        // Enhanced swing conditions - very flexible timing
+        const ballInRange = distanceToBall < 4.5; // Increased from 3.5 to 4.5 for very responsive swinging
+        const ballAtGoodHeight = ballGroup.position.y > 0.1 && ballGroup.position.y < 6.0; // Very relaxed height range
+        
+        // Predict ball position for optimal timing
+        const futureX = ballPos.x + gameState.ballVelocity.x * 0.2;
         const futureBallToPlayer = Math.sqrt(
             Math.pow(player2.position.x - futureX, 2) +
             Math.pow(player2.position.z - ballPos.z, 2)
         );
         
-        // Also consider if ball is slowing down near player or will be close soon
-        const ballSlowingDown = Math.abs(gameState.ballVelocity.x) < 3;
-        const ballWillBeClose = futureBallToPlayer < 2.0;
+        // Very flexible swing conditions - easy to trigger
+        const ballWillBeClose = futureBallToPlayer < 4.0; // Increased from 3.0 to 4.0
+        const optimalSwingCondition = distanceToBall < 4.0 && ballAtGoodHeight; // Increased from 3.0 to 4.0
+        const emergencySwing = distanceToBall < 3.5; // Increased from 2.2 to 3.5
         
-        if ((ballInRange || ballWillBeClose) && (ballMovingToPlayer || ballSlowingDown) && ballAtGoodHeight) {
+        // Very lenient swing trigger - swing if ball is anywhere near or moving slowly
+        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 8; // Very lenient direction check
+        const ballIsNearby = distanceToBall < 5.0; // New condition - swing if just nearby
+        const shouldSwing = ballAtGoodHeight && (ballGenerallyTowardsPlayer || ballIsNearby) &&
+                           (optimalSwingCondition || emergencySwing || ballWillBeClose);
+        
+        if (shouldSwing) {
+            // Mark this ball approach as attempted
+            gameState.player2LastAttemptedBall = gameState.ballApproachId;
+            
+            // Set cooldown timer
+            gameState.player2SwingCooldown = currentTime + gameState.swingCooldownDuration;
+            
+            // Execute swing
             playerData2.swinging = true;
             playerData2.swingTime = 0;
             handleBallHit(ballGroup, gameState, player2, 1);
-            console.log("Player 2 auto-swing! Distance: " + distanceToBall.toFixed(2));
+            console.log(`Player 2 single swing! Distance: ${distanceToBall.toFixed(2)}, Approach ID: ${gameState.ballApproachId}`);
         }
     }
 }
@@ -255,9 +395,9 @@ function checkPlayer2Swing(player2, playerData2, ballGroup, gameState) {
 export function initializeGame(players, ballGroup, gameState, playerData) {
     console.log("Starting game!");
     
-    // Reset player positions to court ends
-    players[0].position.set(-8, 0, 0);
-    players[1].position.set(8, 0, 0);
+    // Reset player positions to realistic tennis ready positions (opposite sides)
+    players[0].position.set(-6.0, 0, -1.5); // Player 1 on left side (moved forward)
+    players[1].position.set(6.5, 0, 1.7);   // Player 2 on right side
     
     // Players face head-on (toward center court Z axis)
     players[0].rotation.y = Math.PI/2; // Facing forward (+Z axis)
@@ -280,11 +420,18 @@ export function initializeGame(players, ballGroup, gameState, playerData) {
     gameState.lastMoveTime = 0;
     gameState.returnToCenter = { player1: false, player2: false };
     
-    // Set players to be at center of their court sides, but further back
-    playerData[0].targetX = -8;
-    playerData[0].targetZ = 0;
-    playerData[1].targetX = 8;
-    playerData[1].targetZ = 0;
+    // Reset swing tracking for clean start
+    gameState.ballApproachId = 0;
+    gameState.player1LastAttemptedBall = -1;
+    gameState.player2LastAttemptedBall = -1;
+    gameState.player1SwingCooldown = 0;
+    gameState.player2SwingCooldown = 0;
+    
+    // Set players to realistic tennis ready positions (opposite sides)
+    playerData[0].targetX = -6.0;
+    playerData[0].targetZ = -1.5; // Player 1 on left side
+    playerData[1].targetX = 6.5;
+    playerData[1].targetZ = 1.7;  // Player 2 on right side
     
     console.log("Game started. Press SPACEBAR to serve the ball.");
 } 

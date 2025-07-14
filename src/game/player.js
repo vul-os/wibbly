@@ -139,8 +139,23 @@ export function updatePlayerMovement(player, data, delta) {
     const dz = data.targetZ - player.position.z;
     const distance = Math.sqrt(dx * dx + dz * dz);
     
-    // Movement speed - with frame rate compensation (reduced by 30%)
-    const baseSpeed = 5.25; // Base speed for 60 FPS (was 7.5, reduced by 30%)
+    // Movement speed - realistic tennis movement (reduced significantly for proper tennis feel)
+    let baseSpeed = 2.5; // Base speed for 60 FPS (was 3.75, reduced for realistic tennis movement)
+    
+    // Give Player 1 a speed boost when actively tracking the ball
+    if (data.isLeftSide === true && distance > 1.0) { // Player 1 and moving to a target
+        baseSpeed = 3.0; // Speed boost for better ball tracking
+    }
+    
+    // Give Player 2 (AI opponent) a slight speed boost when pursuing the ball
+    if (data.isLeftSide === false && distance > 1.0) { // Player 2 and moving to a target
+        baseSpeed = 3.5; // Increased speed boost for AI opponent (was 3.0, now 3.5)
+        
+        // Extra speed boost when very close to the ball (emergency mode)
+        if (distance < 3.0) {
+            baseSpeed = 4.0; // Emergency speed for close ball situations
+        }
+    }
     
     // Compensate for very low frame rates (< 20 FPS) to maintain responsiveness
     const effectiveDelta = Math.min(delta, 1/20); // Cap at 20 FPS minimum
@@ -351,21 +366,24 @@ export function updateRacketAlignment(player, data, ballGroup, gameState, player
             racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, racketRotX, 0.12);
         } else { // Player 2
             // Calculate optimal arm rotation to intercept ball (mirrored)
-            const armRotY = Math.atan2(-toBall.z, -toBall.x) * 0.7;
-            const armRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.5;
-            const armRotZ = Math.atan2(toBall.y - 1.3, -toBall.x) * 0.3;
+            const armRotY = Math.atan2(-toBall.z, -toBall.x) * 0.8; // Increased from 0.7 to 0.8 for better tracking
+            const armRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.6; // Increased from 0.5 to 0.6
+            const armRotZ = Math.atan2(toBall.y - 1.3, -toBall.x) * 0.4; // Increased from 0.3 to 0.4 for better side alignment
             
-            // Smoothly adjust arm position
-            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.18);
-            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.18);
-            rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, -armRotZ, 0.12);
+            // Smoothly adjust arm position with more aggressive tracking
+            rightArm.rotation.y = THREE.MathUtils.lerp(rightArm.rotation.y, armRotY, 0.22); // Increased from 0.18 to 0.22
+            rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, armRotX, 0.22); // Increased from 0.18 to 0.22
+            rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, -armRotZ, 0.16); // Increased from 0.12 to 0.16
             
-            // Adjust racket angle for perfect interception
-            const racketRotY = Math.atan2(-toBall.z, -toBall.x) * 0.5;
-            const racketRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.4;
+            // Adjust racket angle for perfect interception with enhanced tracking
+            const racketRotY = Math.atan2(-toBall.z, -toBall.x) * 0.6; // Increased from 0.5 to 0.6
+            const racketRotX = Math.atan2(toBall.y - 1.3, Math.sqrt(toBall.x * toBall.x + toBall.z * toBall.z)) * 0.5; // Increased from 0.4 to 0.5
             
-            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8 + racketRotY, 0.20);
-            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, racketRotX, 0.12);
+            // Additional horizontal alignment adjustment for Player 2
+            const horizontalOffset = toBall.z * 0.15; // Extra Z-axis tracking for horizontal alignment
+            
+            racketGroup.rotation.y = THREE.MathUtils.lerp(racketGroup.rotation.y, Math.PI/8 + racketRotY + horizontalOffset, 0.25); // Increased from 0.20 to 0.25
+            racketGroup.rotation.x = THREE.MathUtils.lerp(racketGroup.rotation.x, racketRotX, 0.16); // Increased from 0.12 to 0.16
         }
     } else {
         // Reset to neutral position when ball is not coming
@@ -449,14 +467,24 @@ export function calculateOptimalPosition(player, ballGroup, gameState, playerInd
             targetZ = targetZ + sideOffset;
         }
     } else {
-        // Player 2: position so racket's sweet spot will intercept the ball
-        targetX = targetX + optimalHitDistance + anticipationDistance;
+        // Player 2: Account for racket's actual position relative to body
+        // Player 2 faces -Z direction, racket extends outward from their right side (toward negative Z)
+        // So player body needs to be to the RIGHT (negative Z) from Player 1's perspective for racket to reach ball
+        const racketReach = 0.9; // Total racket reach from player center (includes arm + racket length)
+        const racketOffsetZ = 0.9; // Player needs to be this much to the right of ball for racket to hit it
+        
+        // Position player so their racket's sweet spot will intercept the ball
+        targetX = targetX + racketReach + anticipationDistance;
         targetX = Math.max(2, Math.min(9, targetX)); // Clamp to right side
         
-        // Adjust Z position based on ball trajectory for better angle
+        // Position player body to the RIGHT of ball (negative Z) so racket can reach it
         if (Math.abs(ballVelocity.z) > 0.1) {
-            const sideOffset = ballVelocity.z > 0 ? 0.3 : -0.3;
-            targetZ = targetZ + sideOffset;
+            // Position player to right of ball trajectory for proper racket alignment
+            const sideOffset = ballVelocity.z > 0 ? -0.5 : 0.3; // Asymmetric - favor right side positioning
+            targetZ = targetZ + sideOffset - racketOffsetZ; // Subtract racket offset so player is right of ball
+        } else {
+            // For straight shots, position to the right so racket extends to ball
+            targetZ = targetZ - racketOffsetZ; // Player body right of ball (negative Z)
         }
     }
     
@@ -471,12 +499,23 @@ export function calculateOptimalPosition(player, ballGroup, gameState, playerInd
     
     if (distanceToBall < 3) {
         // Move more directly toward ball position for close interception
-        const directToBallX = ballPosition.x + (playerIndex === 0 ? -0.6 : 0.6);
-        const directToBallZ = ballPosition.z;
-        
-        const blendFactor = Math.max(0.3, (3 - distanceToBall) / 3); // Closer = more direct
-        targetX = THREE.MathUtils.lerp(targetX, directToBallX, blendFactor);
-        targetZ = THREE.MathUtils.lerp(targetZ, directToBallZ, blendFactor);
+        if (playerIndex === 0) {
+            const directToBallX = ballPosition.x - 0.6; // Player 1 offset
+            const directToBallZ = ballPosition.z;
+            
+            const blendFactor = Math.max(0.3, (3 - distanceToBall) / 3); // Closer = more direct
+            targetX = THREE.MathUtils.lerp(targetX, directToBallX, blendFactor);
+            targetZ = THREE.MathUtils.lerp(targetZ, directToBallZ, blendFactor);
+        } else {
+            // Player 2: Account for racket's actual reach in close situations
+            // Position body to the RIGHT of ball (negative Z) so right-handed racket can reach it
+            const directToBallX = ballPosition.x + 0.8; // Larger offset for Player 2's racket reach
+            const directToBallZ = ballPosition.z - 0.8; // Position RIGHT of ball (negative Z) for racket contact
+            
+            const blendFactor = Math.max(0.3, (3 - distanceToBall) / 3); // Closer = more direct
+            targetX = THREE.MathUtils.lerp(targetX, directToBallX, blendFactor);
+            targetZ = THREE.MathUtils.lerp(targetZ, directToBallZ, blendFactor);
+        }
     }
     
     // Always ensure player is in a reasonable position
