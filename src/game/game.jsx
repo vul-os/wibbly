@@ -24,31 +24,99 @@ function TennisGame() {
     const gameStateRef = useRef(createGameState());
     const playerDataRef = useRef(createPlayerData());
 
-    // Instructions overlay
-    const [instructions] = useState(
-        <div style={{
-            position: 'absolute',
-            top: '20px',
-            left: '20px',
-            background: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            padding: '20px',
-            borderRadius: '10px',
-            maxWidth: '400px',
-            fontFamily: 'Arial, sans-serif',
-            zIndex: 100
-        }}>
-            <h2 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: 'bold' }}>Tennis Game Controls</h2>
-            <ul style={{ paddingLeft: '20px', margin: '10px 0' }}>
-                <li>Players move automatically</li>
-                <li>SPACEBAR: Swing racket at ball</li>
-                <li>Swing your arm to hit the ball (using webcam)</li>
-                <li>Press SPACEBAR first to serve the ball</li>
-                <li>Click anywhere to restart game</li>
-            </ul>
-            <p style={{ fontSize: '14px', color: '#aaa', margin: '10px 0 0 0' }}>
-                If nothing moves, check browser console for errors
-            </p>
+    // Instructions dropdown state
+    const [showInstructions, setShowInstructions] = useState(false);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showInstructions && !event.target.closest('.instructions-dropdown')) {
+                setShowInstructions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showInstructions]);
+
+    // Instructions dropdown component
+    const instructionsDropdown = (
+        <div 
+            className="instructions-dropdown"
+            style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                zIndex: 100,
+                fontFamily: 'Arial, sans-serif'
+            }}
+        >
+            {/* Info Icon Button */}
+            <button
+                onClick={() => setShowInstructions(!showInstructions)}
+                style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.7)',
+                    border: 'none',
+                    color: 'white',
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                }}
+                onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(0,0,0,0.9)';
+                    e.target.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                    e.target.style.background = 'rgba(0,0,0,0.7)';
+                    e.target.style.transform = 'scale(1)';
+                }}
+                title="Game Controls"
+            >
+                ℹ️
+            </button>
+
+            {/* Dropdown Content */}
+            {showInstructions && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50px',
+                    right: '0',
+                    background: 'rgba(0,0,0,0.9)',
+                    color: 'white',
+                    padding: '20px',
+                    borderRadius: '10px',
+                    maxWidth: '350px',
+                    minWidth: '300px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                    animation: 'fadeIn 0.3s ease'
+                }}>
+                    <h2 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: 'bold' }}>Tennis Game Controls</h2>
+                    <ul style={{ paddingLeft: '20px', margin: '10px 0', lineHeight: '1.6' }}>
+                        <li>Players move automatically</li>
+                        <li>SPACEBAR: Swing racket at ball</li>
+                        <li>Swing your arm to hit the ball (using webcam)</li>
+                        <li>Press SPACEBAR first to serve the ball</li>
+                        <li>Click anywhere to restart game</li>
+                    </ul>
+                    <p style={{ fontSize: '12px', color: '#aaa', margin: '15px 0 0 0' }}>
+                        If nothing moves, check browser console for errors
+                    </p>
+                </div>
+            )}
+
+            <style jsx>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
         </div>
     );
 
@@ -260,7 +328,7 @@ function TennisGame() {
     return (
         <>
             <div ref={containerRef} style={{ width: '100vw', height: '100vh' }} />
-            {instructions}
+            {instructionsDropdown}
         </>
     );
 }
