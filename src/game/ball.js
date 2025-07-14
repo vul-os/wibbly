@@ -239,7 +239,7 @@ export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDi
         return true;
     }
     // If ball is close to racket during play, hit it (adjusted for smaller players)
-    else if (racketToBallDistance < 1.2) { // Increased from 1.0 to 1.2 for very easy hitting
+    else if (racketToBallDistance < 1.6) { // Increased from 1.2 to 1.6 to handle timing gaps
         // Calculate hit direction based on racket face normal and swing
         const racketForward = new THREE.Vector3(0, 0, 1);
         racketForward.applyMatrix3(racketTransform.rotation);

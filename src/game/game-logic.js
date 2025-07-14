@@ -199,26 +199,16 @@ function checkPlayer1Swing(player1, playerData1, ballGroup, gameState) {
             return; // Already attempted swing for this ball approach
         }
         
-        // Enhanced swing conditions - precise timing for actual hits
-        const ballInRange = distanceToBall < 2.0; // Reduced from 4.5 to 2.0 to match collision range
+        // Enhanced swing conditions - conservative timing for guaranteed hits
         const ballAtGoodHeight = ballGroup.position.y > 0.1 && ballGroup.position.y < 6.0; // Keep relaxed height range
         
-        // Predict ball position for optimal timing
-        const futureX = ballPos.x + gameState.ballVelocity.x * 0.15; // Reduced prediction time for more precision
-        const futureBallToPlayer = Math.sqrt(
-            Math.pow(player1.position.x - futureX, 2) +
-            Math.pow(player1.position.z - ballPos.z, 2)
-        );
+        // Only swing when ball is very close - within collision detection range
+        const ballInHittingRange = distanceToBall < 1.5; // Very close to collision range (1.2)
+        const ballVeryClose = distanceToBall < 1.0; // Even closer for optimal hits
         
-        // Precise swing conditions - only swing when ball can actually be hit
-        const ballWillBeClose = futureBallToPlayer < 1.8; // Reduced from 4.0 to 1.8
-        const optimalSwingCondition = distanceToBall < 1.5 && ballAtGoodHeight; // Reduced from 4.0 to 1.5
-        const emergencySwing = distanceToBall < 1.0; // Reduced from 3.5 to 1.0
-        
-        // More precise swing trigger - only swing when ball is genuinely hittable
-        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 3; // More restrictive direction check
-        const shouldSwing = ballAtGoodHeight && ballGenerallyTowardsPlayer &&
-                           (optimalSwingCondition || emergencySwing || ballWillBeClose);
+        // Conservative swing trigger - only swing when ball is definitely hittable
+        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 2; // Very restrictive direction check
+        const shouldSwing = ballAtGoodHeight && ballGenerallyTowardsPlayer && (ballInHittingRange || ballVeryClose);
         
         if (shouldSwing) {
             // Mark this ball approach as attempted
@@ -353,26 +343,16 @@ function checkPlayer2Swing(player2, playerData2, ballGroup, gameState) {
             return; // Already attempted swing for this ball approach
         }
         
-        // Enhanced swing conditions - precise timing for actual hits
-        const ballInRange = distanceToBall < 2.0; // Reduced from 4.5 to 2.0 to match collision range
+        // Enhanced swing conditions - conservative timing for guaranteed hits
         const ballAtGoodHeight = ballGroup.position.y > 0.1 && ballGroup.position.y < 6.0; // Keep relaxed height range
         
-        // Predict ball position for optimal timing
-        const futureX = ballPos.x + gameState.ballVelocity.x * 0.15; // Reduced prediction time for more precision
-        const futureBallToPlayer = Math.sqrt(
-            Math.pow(player2.position.x - futureX, 2) +
-            Math.pow(player2.position.z - ballPos.z, 2)
-        );
+        // Only swing when ball is very close - within collision detection range
+        const ballInHittingRange = distanceToBall < 1.5; // Very close to collision range (1.2)
+        const ballVeryClose = distanceToBall < 1.0; // Even closer for optimal hits
         
-        // Precise swing conditions - only swing when ball can actually be hit
-        const ballWillBeClose = futureBallToPlayer < 1.8; // Reduced from 4.0 to 1.8
-        const optimalSwingCondition = distanceToBall < 1.5 && ballAtGoodHeight; // Reduced from 4.0 to 1.5
-        const emergencySwing = distanceToBall < 1.0; // Reduced from 3.5 to 1.0
-        
-        // More precise swing trigger - only swing when ball is genuinely hittable
-        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 3; // More restrictive direction check
-        const shouldSwing = ballAtGoodHeight && ballGenerallyTowardsPlayer &&
-                           (optimalSwingCondition || emergencySwing || ballWillBeClose);
+        // Conservative swing trigger - only swing when ball is definitely hittable
+        const ballGenerallyTowardsPlayer = ballMovingToPlayer || Math.abs(gameState.ballVelocity.x) < 2; // Very restrictive direction check
+        const shouldSwing = ballAtGoodHeight && ballGenerallyTowardsPlayer && (ballInHittingRange || ballVeryClose);
         
         if (shouldSwing) {
             // Mark this ball approach as attempted
@@ -380,6 +360,9 @@ function checkPlayer2Swing(player2, playerData2, ballGroup, gameState) {
             
             // Set cooldown timer
             gameState.player2SwingCooldown = currentTime + gameState.swingCooldownDuration;
+            
+            // Debug info for swing timing
+            console.log(`🎾 SWING DEBUG - Player 2 at (${player2.position.x.toFixed(1)}, ${player2.position.z.toFixed(1)}), Ball at (${ballPos.x.toFixed(1)}, ${ballPos.z.toFixed(1)}), Distance: ${distanceToBall.toFixed(2)}, Ball velocity: (${gameState.ballVelocity.x.toFixed(1)}, ${gameState.ballVelocity.z.toFixed(1)})`);
             
             // Execute swing
             playerData2.swinging = true;
