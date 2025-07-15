@@ -134,9 +134,22 @@ export function updatePlayerMovement(player, data, delta) {
         const moveX = (dx / distance) * moveSpeed;
         const moveZ = (dz / distance) * moveSpeed;
         
-        // Update position
-        player.position.x += moveX;
-        player.position.z += moveZ;
+        // Calculate new position
+        let newX = player.position.x + moveX;
+        let newZ = player.position.z + moveZ;
+        
+        // Apply court boundary constraints (court is 20x10 units: X: -10 to +10, Z: -5 to +5)
+        // Add small buffer to keep players slightly inside court boundaries
+        const courtBoundaryX = 9.5; // Slightly inside the X boundary of ±10
+        const courtBoundaryZ = 4.5; // Slightly inside the Z boundary of ±5
+        
+        // Clamp player position to court boundaries
+        newX = Math.max(-courtBoundaryX, Math.min(courtBoundaryX, newX));
+        newZ = Math.max(-courtBoundaryZ, Math.min(courtBoundaryZ, newZ));
+        
+        // Update position with boundary constraints
+        player.position.x = newX;
+        player.position.z = newZ;
         
         // Walking animation
         data.legPhase += delta * 8;

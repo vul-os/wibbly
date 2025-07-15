@@ -59,8 +59,8 @@ export function updateBallPhysics(ball, gameState, delta, clock, players) {
         }
     }
     
-    // Ball out of bounds check
-    if (Math.abs(ball.position.x) > 12 || Math.abs(ball.position.z) > 7 || ball.position.y > 15) {
+    // Ball out of bounds check - aligned with court size (20x10 units)
+    if (Math.abs(ball.position.x) > 10.5 || Math.abs(ball.position.z) > 5.5 || ball.position.y > 15) {
         console.log("Ball out of bounds!");
         resetBall(ball, gameState, players);
     }
@@ -106,66 +106,87 @@ export function handleBallHit(ball, gameState, player, playerIndex, swingDirecti
         gameState.ballInPlay = true;
         gameState.waitingToServe = false;
         
-        // Direct the serve clearly toward player 2 with better trajectory
-        const targetX = 8; // Player 2's position
-        const targetZ = 0; // Center of the court
+        // Serve toward a safe zone in Player 2's court area
+        const targetX = 6 + Math.random() * 2; // Target between X: 6-8 (safe zone)
+        const targetZ = (Math.random() - 0.5) * 4; // Target between Z: -2 to 2 (center court)
         
-        // Calculate direction to target
-        const dirVec = new THREE.Vector3(targetX - player.position.x, 6, targetZ - player.position.z);
-        dirVec.normalize();
+        // Calculate direction to safe target zone
+        const direction = new THREE.Vector3(
+            targetX - player.position.x, 
+            0, 
+            targetZ - player.position.z
+        );
+        direction.normalize();
         
-        // Add velocity with slight randomness for variation
+        // Serve with controlled velocity toward the safe target
         gameState.ballVelocity.set(
-            dirVec.x * (12 + Math.random() * 2), // Consistent X direction toward player 2
-            6 + Math.random(),                   // Good arc height
-            dirVec.z * (4 + Math.random() * 2)   // Z direction toward center with slight variation
+            direction.x * (10 + Math.random() * 2), // Consistent speed toward target
+            6 + Math.random(),                      // Good arc height
+            direction.z * (4 + Math.random() * 2)   // Controlled Z direction
         );
         
+        // Ensure Z velocity stays within court bounds
+        gameState.ballVelocity.z = Math.max(-3, Math.min(3, gameState.ballVelocity.z));
+        
         gameState.lastHitBy = playerIndex;
-        console.log("Ball served toward player 2!");
+        console.log(`Ball served toward safe zone at X:${targetX.toFixed(1)}, Z:${targetZ.toFixed(1)}`);
         return true;
     } 
     // If ball is close to racket during play, hit it
     else if (racketToBallDistance < 1.0) { 
-        // Calculate new velocity based on swing direction
+        // Calculate new velocity to keep ball in court
         const baseSpeed = 12 + Math.random() * 3; // Base speed
         const arcHeight = 6 + Math.random() * 2;  // Arc height
         
-        // Determine direction based on player and swing
+        // Determine direction based on player and aim for safe zones in opponent's court
         let xVelocity, zVelocity;
         
-        if (playerIndex === 0) { // Player 1
+        if (playerIndex === 0) { // Player 1 - aim toward Player 2's safe zone
             xVelocity = baseSpeed; // Always going right from player 1
             
-            // Determine Z direction based on swing direction
-            if (swingDirection === 'left') {
-                zVelocity = -4 - Math.random() * 2; // Hit to the left
-            } else if (swingDirection === 'right') {
-                zVelocity = 4 + Math.random() * 2;  // Hit to the right
-            } else {
-                zVelocity = (Math.random() - 0.5) * 4; // Random direction
-            }
-        } else { // Player 2
+            // Aim for safe zones in Player 2's court (X: 4 to 9, Z: -4 to 4)
+            const targetX = 6 + Math.random() * 2; // Target between X: 6-8
+            const targetZ = (Math.random() - 0.5) * 6; // Target between Z: -3 to 3
+            
+            // Calculate direction to target, keeping it in bounds
+            const direction = new THREE.Vector3(
+                targetX - ball.position.x,
+                0,
+                targetZ - ball.position.z
+            );
+            direction.normalize();
+            
+            // Apply the direction while maintaining base speed
+            xVelocity = Math.abs(direction.x) * baseSpeed; // Ensure positive X
+            zVelocity = direction.z * (3 + Math.random() * 2); // Controlled Z velocity
+            
+            // Clamp Z velocity to keep ball in court
+            zVelocity = Math.max(-4, Math.min(4, zVelocity));
+            
+        } else { // Player 2 - aim toward Player 1's safe zone
             xVelocity = -baseSpeed; // Always going left from player 2
             
-            // Apply angle variation for player 2
-            const angleVariation = Math.random() * 0.3 - 0.15; // -15% to +15% angle variation
-            zVelocity = (Math.random() - 0.5) * 4; // More controlled z variation
+            // Aim for safe zones in Player 1's court (X: -9 to -4, Z: -4 to 4)
+            const targetX = -6 - Math.random() * 2; // Target between X: -8 to -6
+            const targetZ = (Math.random() - 0.5) * 6; // Target between Z: -3 to 3
             
-            // Calculate normalized direction vector and then apply angle variation
-            const magnitude = Math.sqrt(xVelocity * xVelocity + zVelocity * zVelocity);
-            const normalizedX = xVelocity / magnitude;
-            const normalizedZ = zVelocity / magnitude;
+            // Calculate direction to target, keeping it in bounds
+            const direction = new THREE.Vector3(
+                targetX - ball.position.x,
+                0,
+                targetZ - ball.position.z
+            );
+            direction.normalize();
             
-            // Apply rotation to the normalized vector
-            const rotatedX = normalizedX * Math.cos(angleVariation) - normalizedZ * Math.sin(angleVariation);
-            const rotatedZ = normalizedX * Math.sin(angleVariation) + normalizedZ * Math.cos(angleVariation);
+            // Apply the direction while maintaining base speed
+            xVelocity = -Math.abs(direction.x) * baseSpeed; // Ensure negative X
+            zVelocity = direction.z * (3 + Math.random() * 2); // Controlled Z velocity
             
-            xVelocity = rotatedX * magnitude;
-            zVelocity = rotatedZ * magnitude;
+            // Clamp Z velocity to keep ball in court
+            zVelocity = Math.max(-4, Math.min(4, zVelocity));
         }
         
-        // Set velocity with the determined direction
+        // Set velocity with the calculated safe direction
         gameState.ballVelocity.set(xVelocity, arcHeight, zVelocity);
         
         gameState.lastHitBy = playerIndex;
@@ -176,7 +197,7 @@ export function handleBallHit(ball, gameState, player, playerIndex, swingDirecti
             gameState.returnToCenter.player2 = true;
         }
         
-        console.log(`Ball hit by player ${playerIndex + 1}! Direction: ${swingDirection}`);
+        console.log(`Ball hit by player ${playerIndex + 1} toward safe zone! Target velocity: X=${xVelocity.toFixed(2)}, Z=${zVelocity.toFixed(2)}`);
         return true;
     } else {
         console.log(`Player ${playerIndex + 1} swing missed - ball too far from racket! Distance: ${racketToBallDistance.toFixed(2)}`);

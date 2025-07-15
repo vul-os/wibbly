@@ -201,8 +201,8 @@ function TennisGame() {
 
         // Create players
         const playerStartPositions = [
-            { x: -8, z: 0, rotation: Math.PI/2 }, // Left player facing forward (+Z axis)
-            { x: 8, z: 0, rotation: -Math.PI/2 }  // Right player facing toward us (-Z axis)
+            { x: -8, z: -3, rotation: Math.PI/2 }, // Left-back corner facing forward (+Z axis)
+            { x: 8, z: 3, rotation: -Math.PI/2 }   // Right-front corner facing toward us (-Z axis)
         ];
 
         const players = playerStartPositions.map((pos, index) => {
@@ -214,8 +214,8 @@ function TennisGame() {
             const playerData = playerDataRef.current[index];
             playerData.x = pos.x;
             playerData.z = pos.z;
-            playerData.homeX = pos.x; // Store home position
-            playerData.homeZ = pos.z; // Store home position
+            playerData.homeX = pos.x; // Store diagonal home position
+            playerData.homeZ = pos.z; // Store diagonal home position
             
             return player;
         });

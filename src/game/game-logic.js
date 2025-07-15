@@ -20,8 +20,8 @@ export function createGameState() {
 
 export function createPlayerData() {
     return [
-        { targetX: -8, targetZ: 0, isLeftSide: true, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: -8, z: 0, homeX: -8, homeZ: 0 },
-        { targetX: 8, targetZ: 0, isLeftSide: false, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: 8, z: 0, homeX: 8, homeZ: 0 }
+        { targetX: -8, targetZ: -3, isLeftSide: true, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: -8, z: -3, homeX: -8, homeZ: -3 },
+        { targetX: 8, targetZ: 3, isLeftSide: false, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: 8, z: 3, homeX: 8, homeZ: 3 }
     ];
 }
 
@@ -39,15 +39,23 @@ export function updatePlayerPositions(gameState, playerData, clock) {
         
         gameState.lastMoveTime = now;
         
-        // Player 1 - left side of court (-9 to -4)
-        const player1Data = playerData[0];
-        player1Data.targetX = -9 + Math.random() * 5; // Stay on left side, further back
-        player1Data.targetZ = -4 + Math.random() * 8; // Full width of court
+        // Court boundaries for positioning (keep players well within court limits)
+        const courtBoundaryX = 9; // Stay within X: -9 to +9
+        const courtBoundaryZ = 4; // Stay within Z: -4 to +4
         
-        // Player 2 - right side of court (4 to 9)
+        // Player 1 - left side of court (diagonal movement pattern)
+        const player1Data = playerData[0];
+        const p1DiagonalX = Math.random() * 5; // 0 to 5
+        const p1DiagonalZ = Math.random() * 4; // 0 to 4
+        player1Data.targetX = Math.max(-courtBoundaryX, -4 - p1DiagonalX); // Move toward left-back diagonal
+        player1Data.targetZ = -courtBoundaryZ + p1DiagonalZ; // Favor back area (negative Z)
+        
+        // Player 2 - right side of court (opposite diagonal movement pattern)
         const player2Data = playerData[1];
-        player2Data.targetX = 4 + Math.random() * 5; // Stay on right side, further back
-        player2Data.targetZ = -4 + Math.random() * 8; // Full width of court
+        const p2DiagonalX = Math.random() * 5; // 0 to 5
+        const p2DiagonalZ = Math.random() * 4; // 0 to 4
+        player2Data.targetX = Math.min(courtBoundaryX, 4 + p2DiagonalX); // Move toward right-front diagonal
+        player2Data.targetZ = p2DiagonalZ; // Favor front area (positive Z)
         
         console.log(`Players moving to new positions: P1(${player1Data.targetX.toFixed(1)}, ${player1Data.targetZ.toFixed(1)}), P2(${player2Data.targetX.toFixed(1)}, ${player2Data.targetZ.toFixed(1)})`);
     }
@@ -84,24 +92,25 @@ export function updatePlayer1AI(players, gameState, playerData, ball) {
             // Calculate predicted landing position
             targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
             
-            // Position player to the right of the ball from their perspective
-            // For player 1 (facing +Z), the right side is +Z direction
-            targetZ = targetZ + 1.2; // Position more to the right of the ball
+            // Position player optimally to hit ball back into court
+            // For player 1, position slightly behind and to the side of predicted ball position
+            targetZ = targetZ + 0.8; // Slight offset for better hitting angle
             
-            // Keep player 1 in his half of the court - but closer to center for better reach
-            targetX = Math.min(-4, Math.max(-9, ball.position.x - 0.8));
+            // Position for optimal court coverage and hitting angle (keep within court)
+            targetX = Math.min(-2, Math.max(-9, ball.position.x - 1.2)); // Keep within court boundaries
         }
         
-        // Clamp to court bounds
-        targetZ = Math.max(-4, Math.min(4, targetZ));
+        // Clamp to court bounds (ensure players stay on court)
+        targetZ = Math.max(-4, Math.min(4, targetZ)); // Keep within court Z boundaries
+        targetX = Math.max(-9, Math.min(-1, targetX)); // Keep Player 1 in left half and on court
         
         // Update target
         playerData1.targetX = targetX;
         playerData1.targetZ = targetZ;
         
         // Add debug logging to track player 1's target when ball approaches
-        if (gameState.debug && ball.position.x < -3 && Math.abs(ball.position.x - player1.position.x) < 5) {
-            console.log(`Player 1 targeting: X=${targetX.toFixed(2)}, Z=${targetZ.toFixed(2)}, Ball at: X=${ball.position.x.toFixed(2)}, Z=${ball.position.z.toFixed(2)}`);
+        if (gameState.debug && ball.position.x < -1 && Math.abs(ball.position.x - player1.position.x) < 7) { // Extended detection range
+            console.log(`Player 1 targeting optimal position: X=${targetX.toFixed(2)}, Z=${targetZ.toFixed(2)}, Ball at: X=${ball.position.x.toFixed(2)}, Z=${ball.position.z.toFixed(2)}`);
         }
     }
 }
@@ -138,32 +147,32 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
             if (timeToReach > 0) {
                 // Calculate predicted landing position
                 targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
+
+                // Position player optimally to hit ball back into court
+                // For player 2, position slightly behind and to the side of predicted ball position
+                targetZ = targetZ - 0.8; // Slight offset for better hitting angle
                 
-                // Position player to the right of the ball from their perspective
-                // For player 2 (facing -Z), the right side is -Z direction
-                targetZ = targetZ - 1.5; // Position more to the right of the ball
-                
-                // Move closer to ball for better chance of hitting
-                targetX = Math.max(4, Math.min(9, ball.position.x + 0.8));
+                // Position for optimal court coverage and hitting angle (keep within court)
+                targetX = Math.max(2, Math.min(9, ball.position.x + 1.2)); // Keep within court boundaries
             }
         }
         
-        // Clamp to court bounds
-        targetZ = Math.max(-4, Math.min(4, targetZ));
+        // Clamp to court bounds (ensure players stay on court)
+        targetZ = Math.max(-4, Math.min(4, targetZ)); // Keep within court Z boundaries
+        targetX = Math.max(1, Math.min(9, targetX)); // Keep Player 2 in right half and on court
         
         // Update target
         playerData2.targetX = targetX;
         playerData2.targetZ = targetZ;
         
         // Add debug logging to track player 2's target when ball approaches
-        if (gameState.debug && ball.position.x > 3 && Math.abs(ball.position.x - player2.position.x) < 5) {
-            console.log(`Player 2 targeting: X=${targetX.toFixed(2)}, Z=${targetZ.toFixed(2)}, Ball at: X=${ball.position.x.toFixed(2)}, Z=${ball.position.z.toFixed(2)}`);
+        if (gameState.debug && ball.position.x > 1 && Math.abs(ball.position.x - player2.position.x) < 7) { // Extended detection range
+            console.log(`Player 2 targeting optimal position: X=${targetX.toFixed(2)}, Z=${targetZ.toFixed(2)}, Ball at: X=${ball.position.x.toFixed(2)}, Z=${ball.position.z.toFixed(2)}`);
         }
     }
     
     // Improve player 2's ability to hit the ball with racket-based detection
     if (gameState.ballInPlay && !playerData2.swinging) {
-        // Get racket position in world space
         const rightArm = player2.userData.rightArm;
         const racketGroup = player2.userData.racketGroup;
         const racketPos = new THREE.Vector3();
@@ -190,9 +199,9 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
 export function initializeGame(players, ball, gameState, playerData) {
     console.log("Starting game!");
     
-    // Reset player positions to court ends
-    players[0].position.set(-8, 0, 0);
-    players[1].position.set(8, 0, 0);
+    // Reset player positions to diagonal opposite corners
+    players[0].position.set(-8, 0, -3); // Player 1: left-back corner
+    players[1].position.set(8, 0, 3);   // Player 2: right-front corner
     
     // Players face head-on (toward center court Z axis)
     players[0].rotation.y = Math.PI/2; // Facing forward (+Z axis)
@@ -215,11 +224,11 @@ export function initializeGame(players, ball, gameState, playerData) {
     gameState.lastMoveTime = 0;
     gameState.returnToCenter = { player1: false, player2: false };
     
-    // Set players to be at center of their court sides, but further back
+    // Set players to their diagonal home positions
     playerData[0].targetX = -8;
-    playerData[0].targetZ = 0;
+    playerData[0].targetZ = -3;
     playerData[1].targetX = 8;
-    playerData[1].targetZ = 0;
+    playerData[1].targetZ = 3;
     
     console.log("Game started. Press SPACEBAR to serve the ball.");
 } 
