@@ -120,17 +120,7 @@ const GameContainer = () => {
   if (gameState === 'tennis') {
     return (
       <div className="tennis-container">
-        {/* Game Navigation Overlay */}
-        <div className="game-nav">
-          <button onClick={handleBackToMenu} className="back-btn">
-            <svg className="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span>Menu</span>
-          </button>
-        </div>
-
-        {/* Tennis Game */}
+        {/* Tennis Game - No navigation overlay */}
         <TennisGame />
 
         <style jsx>{`
@@ -139,59 +129,6 @@ const GameContainer = () => {
             width: 100%;
             height: 100vh;
             overflow: hidden;
-          }
-
-          .game-nav {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            pointer-events: auto;
-          }
-
-          .back-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1rem;
-            background: rgba(15, 15, 35, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: #ffffff;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-          }
-
-          .back-btn:hover {
-            background: rgba(15, 15, 35, 0.95);
-            border-color: rgba(99, 102, 241, 0.3);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-          }
-
-          .back-icon {
-            width: 1rem;
-            height: 1rem;
-          }
-
-          @media (max-width: 768px) {
-            .game-nav {
-              top: 15px;
-              left: 15px;
-            }
-
-            .back-btn {
-              padding: 0.5rem 0.75rem;
-              font-size: 0.8rem;
-            }
-
-            .back-btn span {
-              display: none;
-            }
           }
         `}</style>
       </div>

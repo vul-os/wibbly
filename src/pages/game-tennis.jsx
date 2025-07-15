@@ -109,17 +109,7 @@ const TennisGamePage = () => {
 
   return (
     <div className="tennis-game-page">
-      {/* Game Navigation Overlay */}
-      <div className="game-nav">
-        <button onClick={handleGoHome} className="home-btn">
-          <svg className="home-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-          <span>Home</span>
-        </button>
-      </div>
-
-      {/* Tennis Game */}
+      {/* Tennis Game - No navigation overlay */}
       <TennisGame />
 
       <style jsx>{`
@@ -128,60 +118,6 @@ const TennisGamePage = () => {
           width: 100%;
           height: 100vh;
           overflow: hidden;
-        }
-
-        .game-nav {
-          position: fixed;
-          top: 20px;
-          left: 20px;
-          z-index: 1000;
-          pointer-events: auto;
-        }
-
-        .home-btn {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1rem;
-          background: rgba(255, 255, 255, 0.95);
-          border: 1px solid rgba(79, 209, 199, 0.3);
-          border-radius: 12px;
-          color: #2e7d6b;
-          font-family: 'Inter', sans-serif;
-          font-size: 0.9rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          backdrop-filter: blur(10px);
-          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .home-btn:hover {
-          background: rgba(255, 255, 255, 1);
-          border-color: rgba(79, 209, 199, 0.5);
-          transform: translateY(-2px);
-          box-shadow: 0 6px 25px rgba(79, 209, 199, 0.2);
-        }
-
-        .home-icon {
-          width: 1rem;
-          height: 1rem;
-        }
-
-        @media (max-width: 768px) {
-          .game-nav {
-            top: 15px;
-            left: 15px;
-          }
-
-          .home-btn {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.8rem;
-          }
-
-          .home-btn span {
-            display: none;
-          }
         }
       `}</style>
     </div>
