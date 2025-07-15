@@ -206,8 +206,8 @@ function TennisGame() {
         ];
 
         const players = playerStartPositions.map((pos, index) => {
-            // Make players 70% of their previous size (0.84 = 1.2 * 0.7)
-            const player = createPlayer(pos.x, pos.z, pos.rotation, 0.84);
+            // Make players 15% smaller from their current size (0.84 * 0.85 = 0.714)
+            const player = createPlayer(pos.x, pos.z, pos.rotation, 0.714);
             scene.add(player);
             
             // Store the initial player data

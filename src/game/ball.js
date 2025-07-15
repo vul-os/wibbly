@@ -15,15 +15,24 @@ export function updateBallPhysics(ball, gameState, delta, clock, players) {
     if (!gameState.ballInPlay && gameState.waitingToServe) {
         const player1 = players[0];
         
-        // Position ball in front of player's racket - aligned with bigger racket
-        const rightArm = player1.userData.rightArm;
-        // Convert position from local space to world space
-        const worldPos = new THREE.Vector3();
-        rightArm.getWorldPosition(worldPos);
-        
-        ball.position.x = worldPos.x + 0.4; // Adjusted for bigger racket
-        ball.position.z = worldPos.z + 0.6; // Adjusted for bigger racket
-        ball.position.y = 1.3;              // Racket height
+        // Position ball in front of the racket face
+        const racketGroup = player1.userData.racketGroup;
+        if (racketGroup) {
+            // Get the world position of the racket head center
+            const worldPos = new THREE.Vector3();
+            racketGroup.getWorldPosition(worldPos);
+            
+            // Get the racket's forward direction (considering its rotation)
+            const forwardVector = new THREE.Vector3(0, 0, 1);
+            forwardVector.applyQuaternion(racketGroup.getWorldQuaternion(new THREE.Quaternion()));
+            
+            // Position ball in front of the racket face by the ball radius plus a small offset
+            const ballRadius = 0.14; // Ball radius
+            const offset = ballRadius + 0.05; // Small additional offset to prevent clipping
+            
+            ball.position.copy(worldPos);
+            ball.position.add(forwardVector.multiplyScalar(offset));
+        }
         return;
     }
     
