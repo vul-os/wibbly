@@ -20,36 +20,41 @@ export function createGameState() {
 
 export function createPlayerData() {
     return [
-        { targetX: -8, targetZ: 0, isLeftSide: true, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: -8, z: 0, homeX: -8, homeZ: 0 },
-        { targetX: 8, targetZ: 0, isLeftSide: false, moveTime: 0, swinging: false, swingTime: 0, legPhase: 0, x: 8, z: 0, homeX: 8, homeZ: 0 }
+        { 
+            targetX: -8, targetZ: -1, isLeftSide: true, moveTime: 0, swinging: false, swingTime: 0, 
+            legPhase: 0, x: -8, z: -1, homeX: -8, homeZ: -1 // Player 1 - left baseline, slightly left of center
+        },
+        { 
+            targetX: 8, targetZ: 1, isLeftSide: false, moveTime: 0, swinging: false, swingTime: 0, 
+            legPhase: 0, x: 8, z: 1, homeX: 8, homeZ: 1 // Player 2 - right baseline, slightly right of center
+        }
     ];
 }
 
 export function updatePlayerPositions(gameState, playerData, clock) {
     const now = clock.getElapsedTime();
     
-    // Update positions every 3-5 seconds - but only if players are not returning to center
-    // and not actively chasing the ball
-    if (now - gameState.lastMoveTime > 3 + Math.random() * 2 && 
+    // Only make small positional adjustments when not actively playing
+    // AND not waiting to serve (players should be still during serve)
+    if (now - gameState.lastMoveTime > 4 + Math.random() * 3 && 
         !gameState.returnToCenter.player1 && 
         !gameState.returnToCenter.player2 && 
-        (!gameState.ballInPlay || 
-        (gameState.ballVelocity.x > 0 && gameState.lastHitBy === 0) || 
-        (gameState.ballVelocity.x < 0 && gameState.lastHitBy === 1))) {
+        !gameState.ballInPlay &&
+        !gameState.waitingToServe) { // Added this condition to prevent movement during serve
         
         gameState.lastMoveTime = now;
         
-        // Player 1 - left side of court (-9 to -4)
+        // Player 1 - stay near baseline on left side with small movements
         const player1Data = playerData[0];
-        player1Data.targetX = -9 + Math.random() * 5; // Stay on left side, further back
-        player1Data.targetZ = -4 + Math.random() * 8; // Full width of court
+        player1Data.targetX = -8 + (Math.random() - 0.5) * 2; // Small movement around baseline
+        player1Data.targetZ = (Math.random() - 0.5) * 3; // Small side-to-side movement
         
-        // Player 2 - right side of court (4 to 9)
+        // Player 2 - stay near baseline on right side with small movements  
         const player2Data = playerData[1];
-        player2Data.targetX = 4 + Math.random() * 5; // Stay on right side, further back
-        player2Data.targetZ = -4 + Math.random() * 8; // Full width of court
-        
-        console.log(`Players moving to new positions: P1(${player1Data.targetX.toFixed(1)}, ${player1Data.targetZ.toFixed(1)}), P2(${player2Data.targetX.toFixed(1)}, ${player2Data.targetZ.toFixed(1)})`);
+        player2Data.targetX = 8 + (Math.random() - 0.5) * 2; // Small movement around baseline
+        player2Data.targetZ = (Math.random() - 0.5) * 3; // Small side-to-side movement
+
+        console.log(`Players making small adjustments: P1(${player1Data.targetX.toFixed(1)}, ${player1Data.targetZ.toFixed(1)}), P2(${player2Data.targetX.toFixed(1)}, ${player2Data.targetZ.toFixed(1)})`);
     }
 }
 
@@ -57,10 +62,10 @@ export function updatePlayer1AI(players, gameState, playerData, ball) {
     const player1 = players[0];
     const playerData1 = playerData[0];
     
-    // Check if player should return to center
+    // Check if player should return to center baseline position
     if (gameState.returnToCenter.player1) {
-        playerData1.targetX = playerData1.homeX; // Return to home X position
-        playerData1.targetZ = playerData1.homeZ; // Return to home Z position
+        playerData1.targetX = playerData1.homeX; // Return to baseline
+        playerData1.targetZ = playerData1.homeZ; // Return to center
         
         // Check if player is close to center position
         const dx = playerData1.targetX - player1.position.x;
@@ -68,40 +73,39 @@ export function updatePlayer1AI(players, gameState, playerData, ball) {
         const distanceToCenter = Math.sqrt(dx * dx + dz * dz);
         
         if (distanceToCenter < 0.5) {
-            gameState.returnToCenter.player1 = false; // Reset the flag once player reaches center
-            console.log("Player 1 reached home position");
+            gameState.returnToCenter.player1 = false;
+            console.log("Player 1 reached baseline position");
         }
     }
-    // Chase the ball only if not returning to center and ball is coming toward player
+    // Track ball realistically when it's coming toward player
     else if (gameState.ballInPlay && gameState.lastHitBy !== 0 && gameState.ballVelocity.x < 0) {
-        // Predict where ball will land
-        let targetX = -8;
-        let targetZ = 0;
+        // Move horizontally to align with ball Z position
+        let targetX = -8; // Stay near baseline
+        let targetZ = ball.position.z; // Align horizontally with ball
         
-        // Ball coming toward player 1
-        const timeToReach = (player1.position.x - ball.position.x) / gameState.ballVelocity.x;
-        if (timeToReach > 0) {
-            // Calculate predicted landing position
+        // Predict ball position for better alignment
+        const timeToReach = Math.abs((player1.position.x - ball.position.x) / gameState.ballVelocity.x);
+        if (timeToReach > 0 && timeToReach < 3) {
+            // Calculate where ball will be when it reaches player's X position
             targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
             
-            // Position player to the right of the ball from their perspective
-            // For player 1 (facing +Z), the right side is +Z direction
-            targetZ = targetZ + 1.2; // Position more to the right of the ball
-            
-            // Keep player 1 in his half of the court - but closer to center for better reach
-            targetX = Math.min(-4, Math.max(-9, ball.position.x - 0.8));
+            // Move forward slightly if ball is high (for better hitting position)
+            if (ball.position.y > 1.5) {
+                targetX = -7; // Move forward slightly
+            }
         }
         
-        // Clamp to court bounds
+        // Keep player in bounds and on their side
+        targetX = Math.max(-9, Math.min(-5, targetX));
         targetZ = Math.max(-4, Math.min(4, targetZ));
         
         // Update target
         playerData1.targetX = targetX;
         playerData1.targetZ = targetZ;
         
-        // Add debug logging to track player 1's target when ball approaches
-        if (gameState.debug && ball.position.x < -3 && Math.abs(ball.position.x - player1.position.x) < 5) {
-            console.log(`Player 1 targeting: X=${targetX.toFixed(2)}, Z=${targetZ.toFixed(2)}, Ball at: X=${ball.position.x.toFixed(2)}, Z=${ball.position.z.toFixed(2)}`);
+        // Debug logging for ball tracking
+        if (gameState.debug && ball.position.x < -2 && Math.abs(ball.position.x - player1.position.x) < 6) {
+            console.log(`Player 1 tracking ball: Moving to Z=${targetZ.toFixed(2)}, Ball Z=${ball.position.z.toFixed(2)}`);
         }
     }
 }
@@ -110,10 +114,10 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
     const player2 = players[1];
     const playerData2 = playerData[1];
     
-    // Check if player should return to center
+    // Check if player should return to center baseline position
     if (gameState.returnToCenter.player2) {
-        playerData2.targetX = playerData2.homeX; // Return to home X position 
-        playerData2.targetZ = playerData2.homeZ; // Return to home Z position
+        playerData2.targetX = playerData2.homeX; // Return to baseline
+        playerData2.targetZ = playerData2.homeZ; // Return to center
         
         // Check if player is close to center position
         const dx = playerData2.targetX - player2.position.x;
@@ -121,50 +125,45 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
         const distanceToCenter = Math.sqrt(dx * dx + dz * dz);
         
         if (distanceToCenter < 0.5) {
-            gameState.returnToCenter.player2 = false; // Reset the flag once player reaches center
-            console.log("Player 2 reached home position");
+            gameState.returnToCenter.player2 = false;
+            console.log("Player 2 reached baseline position");
         }
     }
-    // Chase the ball only if not returning to center and ball is coming toward player
-    else if (gameState.ballInPlay && gameState.lastHitBy !== 1) {
-        // Predict where ball will land
-        let targetX = 8;
-        let targetZ = 0;
+    // Track ball realistically when it's coming toward player
+    else if (gameState.ballInPlay && gameState.lastHitBy !== 1 && gameState.ballVelocity.x > 0) {
+        // Move horizontally to align with ball Z position
+        let targetX = 8; // Stay near baseline
+        let targetZ = ball.position.z; // Align horizontally with ball
         
-        // Simple prediction - improve accuracy
-        if (gameState.ballVelocity.x > 0) {
-            // Ball coming toward player 2
-            const timeToReach = (player2.position.x - ball.position.x) / gameState.ballVelocity.x;
-            if (timeToReach > 0) {
-                // Calculate predicted landing position
-                targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
-                
-                // Position player to the right of the ball from their perspective
-                // For player 2 (facing -Z), the right side is -Z direction
-                targetZ = targetZ - 1.5; // Position more to the right of the ball
-                
-                // Move closer to ball for better chance of hitting
-                targetX = Math.max(4, Math.min(9, ball.position.x + 0.8));
+        // Predict ball position for better alignment
+        const timeToReach = Math.abs((ball.position.x - player2.position.x) / gameState.ballVelocity.x);
+        if (timeToReach > 0 && timeToReach < 3) {
+            // Calculate where ball will be when it reaches player's X position
+            targetZ = ball.position.z + gameState.ballVelocity.z * timeToReach;
+            
+            // Move forward slightly if ball is high (for better hitting position)
+            if (ball.position.y > 1.5) {
+                targetX = 7; // Move forward slightly
             }
         }
         
-        // Clamp to court bounds
+        // Keep player in bounds and on their side
+        targetX = Math.max(5, Math.min(9, targetX));
         targetZ = Math.max(-4, Math.min(4, targetZ));
         
         // Update target
         playerData2.targetX = targetX;
         playerData2.targetZ = targetZ;
         
-        // Add debug logging to track player 2's target when ball approaches
-        if (gameState.debug && ball.position.x > 3 && Math.abs(ball.position.x - player2.position.x) < 5) {
-            console.log(`Player 2 targeting: X=${targetX.toFixed(2)}, Z=${targetZ.toFixed(2)}, Ball at: X=${ball.position.x.toFixed(2)}, Z=${ball.position.z.toFixed(2)}`);
+        // Debug logging for ball tracking
+        if (gameState.debug && ball.position.x > 2 && Math.abs(ball.position.x - player2.position.x) < 6) {
+            console.log(`Player 2 tracking ball: Moving to Z=${targetZ.toFixed(2)}, Ball Z=${ball.position.z.toFixed(2)}`);
         }
     }
     
     // Improve player 2's ability to hit the ball with racket-based detection
     if (gameState.ballInPlay && !playerData2.swinging) {
-        // Get racket position in world space
-        const rightArm = player2.userData.rightArm;
+        // Get racket position in world space - removed incorrect rightArm reference
         const racketGroup = player2.userData.racketGroup;
         const racketPos = new THREE.Vector3();
         
@@ -190,21 +189,25 @@ export function updatePlayer2AI(players, gameState, playerData, ball) {
 export function initializeGame(players, ball, gameState, playerData) {
     console.log("Starting game!");
     
-    // Reset player positions to court ends
-    players[0].position.set(-8, 0, 0);
-    players[1].position.set(8, 0, 0);
+    // Reset player positions to proper tennis baseline positions
+    players[0].position.set(-8, 0, -1); // Player 1: left baseline, slightly left of center
+    players[1].position.set(8, 0, 1);   // Player 2: right baseline, slightly right of center
     
     // Players face head-on (toward center court Z axis)
     players[0].rotation.y = Math.PI/2; // Facing forward (+Z axis)
     players[1].rotation.y = -Math.PI/2; // Facing toward us (-Z axis)
     
-    // Reset ball position to be in front of player 1's racket
+    // Reset ball position to be in front of player 1's racket for serve
     const player1 = players[0];
-    // Position ball where the racket can hit it
+    // Position ball in front of the racket
+    const racketGroup = player1.userData.racketGroup;
+    const racketPos = new THREE.Vector3();
+    racketGroup.getWorldPosition(racketPos);
+    
     ball.position.set(
-        player1.position.x + 0.6, // Slightly in front
-        1.3,                      // Racket height
-        player1.position.z + 0.5  // Offset to be hittable by racket
+        racketPos.x + 0.5, // In front of racket toward opponent
+        racketPos.y + 0.2, // Slightly above racket
+        racketPos.z // Same Z as racket
     );
     
     // Initial state
@@ -215,11 +218,17 @@ export function initializeGame(players, ball, gameState, playerData) {
     gameState.lastMoveTime = 0;
     gameState.returnToCenter = { player1: false, player2: false };
     
-    // Set players to be at center of their court sides, but further back
-    playerData[0].targetX = -8;
-    playerData[0].targetZ = 0;
-    playerData[1].targetX = 8;
-    playerData[1].targetZ = 0;
+    // Set players to proper tennis baseline positions
+    playerData[0].targetX = -8; // Player 1 baseline (left side)
+    playerData[0].targetZ = -1; // Slightly left of center
+    playerData[0].homeX = -8;   // Home baseline position
+    playerData[0].homeZ = -1;   // Home position slightly left of center
+    
+    playerData[1].targetX = 8;  // Player 2 baseline (right side) 
+    playerData[1].targetZ = 1;  // Slightly right of center
+    playerData[1].homeX = 8;    // Home baseline position
+    playerData[1].homeZ = 1;    // Home position slightly right of center
     
     console.log("Game started. Press SPACEBAR to serve the ball.");
+    console.log(`Player positions: P1(-8, -1) P2(8, 1) - Properly spaced for tennis!`);
 } 

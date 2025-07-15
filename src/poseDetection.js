@@ -17,7 +17,21 @@ class PoseDetector {
     this.debugMode = true;
     this.lastFrameTime = 0;
     this.frameInterval = 1000 / 15; // Target 15 FPS instead of 30
-    this.skipFrames = 2; // Process every 3rd frame
+    this.skipFrames = 1; // Process every 3rd frame
+    
+    // Store references to created DOM elements for cleanup
+    this.container = null;
+    this.toggleButton = null;
+    
+    // Store current pose data for external access
+    this.currentPose = null;
+    this.currentKeypoints = {};
+    
+    // FPS tracking
+    this.fpsCounter = 0;
+    this.fpsStartTime = performance.now();
+    this.currentFps = 0;
+    this.fpsUpdateInterval = 1000; // Update FPS display every second
     
     // Connection pairs for visualization
     this.POSE_CONNECTIONS = [
@@ -39,13 +53,80 @@ class PoseDetector {
     ];
   }
 
+  // Check if WebGL is available in the current browser
+  checkWebGLAvailability() {
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      return !!gl;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Show warning when WebGL is not available
+  showWebGLWarning() {
+    const warning = document.createElement('div');
+    warning.style.position = 'fixed';
+    warning.style.top = '20px';
+    warning.style.right = '20px';
+    warning.style.backgroundColor = '#ff6b6b';
+    warning.style.color = 'white';
+    warning.style.padding = '15px';
+    warning.style.borderRadius = '5px';
+    warning.style.zIndex = '1000';
+    warning.style.maxWidth = '300px';
+    warning.style.fontSize = '14px';
+    warning.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
+    
+    warning.innerHTML = `
+      <strong>⚠️ WebGL Not Available</strong><br>
+      Pose detection will run slower.<br>
+      <small>To enable WebGL:</small><br>
+      <small>• Update your browser</small><br>
+      <small>• Check hardware acceleration in settings</small><br>
+      <small>• Try a different browser</small>
+      <br><button onclick="this.parentElement.remove()" style="margin-top:10px; padding:5px; border:none; background:white; color:#ff6b6b; border-radius:3px; cursor:pointer;">Dismiss</button>
+    `;
+    
+    document.body.appendChild(warning);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+      if (warning.parentElement) {
+        warning.remove();
+      }
+    }, 10000);
+  }
+
   async setup() {
     if (this.isSetup) return;
     
     try {
+      // Check WebGL availability first
+      const hasWebGL = this.checkWebGLAvailability();
+      console.log('WebGL available:', hasWebGL);
+      
+      if (hasWebGL) {
+        try {
+          // Try to force WebGL backend for better performance
+          await tf.setBackend('webgl');
+          console.log('Successfully set WebGL backend');
+        } catch (webglError) {
+          console.warn('Failed to set WebGL backend:', webglError);
+          console.log('Falling back to automatic backend selection');
+        }
+      } else {
+        console.warn('WebGL not available - performance may be reduced');
+        // You could show a user notification here
+        this.showWebGLWarning();
+      }
+      
       // Load TF.js backend
       await tf.ready();
       console.log('TensorFlow.js is ready');
+      console.log('TensorFlow.js backend:', tf.getBackend());
+      console.log('Available backends:', tf.engine().registryFactory);
       
       // Create pose detector with optimized settings
       const model = poseDetection.SupportedModels.MoveNet;
@@ -72,6 +153,7 @@ class PoseDetector {
       container.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
       container.style.backgroundColor = '#000';
       document.body.appendChild(container);
+      this.container = container; // Store reference for cleanup
       
       // Setup webcam with lower resolution
       this.video = document.createElement('video');
@@ -110,6 +192,7 @@ class PoseDetector {
       toggleButton.style.cursor = 'pointer';
       toggleButton.style.zIndex = '101';
       document.body.appendChild(toggleButton);
+      this.toggleButton = toggleButton; // Store reference for cleanup
       
       toggleButton.addEventListener('click', () => {
         if (container.style.display === 'none') {
@@ -156,6 +239,11 @@ class PoseDetector {
     this.swingCallback = callback;
   }
   
+  // Get current pose detection FPS
+  getPoseFPS() {
+    return this.currentFps;
+  }
+  
   // Start continuous pose detection with frame skipping
   startDetection() {
     if (!this.isSetup) return;
@@ -196,6 +284,14 @@ class PoseDetector {
           this.processPoses(poses);
           
           this.lastFrameTime = currentTime;
+          
+          // Update FPS counter
+          this.fpsCounter++;
+          if (currentTime - this.fpsStartTime >= this.fpsUpdateInterval) {
+            this.currentFps = Math.round((this.fpsCounter * 1000) / (currentTime - this.fpsStartTime));
+            this.fpsCounter = 0;
+            this.fpsStartTime = currentTime;
+          }
         } catch (error) {
           console.error('Error detecting poses:', error);
         }
@@ -324,22 +420,89 @@ class PoseDetector {
     
     // Add status text for debugging
     if (this.debugMode) {
+      // Create a background for better readability
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(5, 5, 200, this.swingCooldown ? 60 : 40);
+      
       ctx.fillStyle = 'white';
       ctx.font = `${Math.max(12, this.canvas.width / 40)}px Arial`;
-      ctx.fillText('Tennis Swing Detection', 10, 20);
+      ctx.fillText('Tennis Swing Detection', 10, 25);
       
       if (this.swingCooldown) {
-        ctx.fillStyle = '#00ff00';
-        ctx.fillText('SWING DETECTED!', 10, 40);
+        ctx.fillStyle = '#ffff00';
+        ctx.font = `${Math.max(14, this.canvas.width / 35)}px Arial`;
+        ctx.fillText('SWING DETECTED!', 10, 50);
       }
     }
   }
   
+  // Get current pose keypoints for external use
+  getCurrentPose() {
+    return this.currentPose;
+  }
+  
+  // Get specific keypoints with confidence scores
+  getCurrentKeypoints() {
+    return this.currentKeypoints;
+  }
+  
+  // Get arm angles for game integration
+  getArmAngles() {
+    if (!this.currentKeypoints) {
+      return { confidence: 0 };
+    }
+    
+    const { right_shoulder, right_elbow, right_wrist } = this.currentKeypoints;
+    
+    // Check if we have all required keypoints with good confidence
+    if (!right_shoulder || !right_elbow || !right_wrist ||
+        right_shoulder.score < 0.5 || right_elbow.score < 0.5 || right_wrist.score < 0.5) {
+      return { confidence: 0 };
+    }
+    
+    // Calculate shoulder angle (relative to horizontal)
+    const shoulderAngle = Math.atan2(
+      right_elbow.y - right_shoulder.y,
+      right_elbow.x - right_shoulder.x
+    );
+    
+    // Calculate elbow angle (angle between upper arm and forearm)
+    const upperArmVector = {
+      x: right_elbow.x - right_shoulder.x,
+      y: right_elbow.y - right_shoulder.y
+    };
+    const forearmVector = {
+      x: right_wrist.x - right_elbow.x,
+      y: right_wrist.y - right_elbow.y
+    };
+    
+    // Calculate angle between vectors
+    const dotProduct = upperArmVector.x * forearmVector.x + upperArmVector.y * forearmVector.y;
+    const upperArmMag = Math.sqrt(upperArmVector.x ** 2 + upperArmVector.y ** 2);
+    const forearmMag = Math.sqrt(forearmVector.x ** 2 + forearmVector.y ** 2);
+    
+    const elbowAngle = Math.acos(dotProduct / (upperArmMag * forearmMag));
+    
+    // Average confidence of all keypoints
+    const confidence = (right_shoulder.score + right_elbow.score + right_wrist.score) / 3;
+    
+    return {
+      shoulderAngle,
+      elbowAngle,
+      confidence
+    };
+  }
+  
   // Process detected poses to identify swinging motion
   processPoses(poses) {
-    if (!poses || poses.length === 0) return;
+    if (!poses || poses.length === 0) {
+      this.currentPose = null;
+      this.currentKeypoints = {};
+      return;
+    }
     
     const pose = poses[0]; // Get first person detected
+    this.currentPose = pose;
     
     // Get all required keypoints for swing detection
     const keypoints = {};
@@ -348,6 +511,9 @@ class PoseDetector {
     pose.keypoints.forEach(kp => {
       keypoints[kp.name] = kp;
     });
+    
+    // Store current keypoints for external access
+    this.currentKeypoints = keypoints;
     
     // Get the specific keypoints we need
     const {
@@ -455,25 +621,41 @@ class PoseDetector {
   
   // Clean up resources
   cleanup() {
-    if (this.video && this.video.srcObject) {
-      const tracks = this.video.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
-      this.video.srcObject = null;
+    try {
+      if (this.video && this.video.srcObject) {
+        const tracks = this.video.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+        this.video.srcObject = null;
+      }
+    } catch (error) {
+      console.warn('Error stopping video tracks:', error);
     }
     
-    // Remove all created elements
-    const container = this.video?.parentElement;
-    if (container && document.body.contains(container)) {
-      document.body.removeChild(container);
+    // Remove all created elements with error handling
+    try {
+      if (this.container && document.body.contains(this.container)) {
+        document.body.removeChild(this.container);
+      }
+    } catch (error) {
+      console.warn('Error removing container:', error);
     }
     
-    // Remove toggle button
-    const toggleButton = document.querySelector('button');
-    if (toggleButton && document.body.contains(toggleButton)) {
-      document.body.removeChild(toggleButton);
+    // Remove toggle button with error handling
+    try {
+      if (this.toggleButton && document.body.contains(this.toggleButton)) {
+        document.body.removeChild(this.toggleButton);
+      }
+    } catch (error) {
+      console.warn('Error removing toggle button:', error);
     }
     
+    // Reset all properties
     this.detector = null;
+    this.video = null;
+    this.canvas = null;
+    this.canvasCtx = null;
+    this.container = null;
+    this.toggleButton = null;
     this.isSetup = false;
   }
 }
