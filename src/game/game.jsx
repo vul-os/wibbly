@@ -78,9 +78,9 @@ function TennisGame() {
                 // Position camera behind player 1 (left player)
                 if (players && players[0]) {
                     const player1 = players[0];
-                    // Initialize fixed camera position
-                    cameraPositionRef.current.set(player1.position.x - 10, 12, player1.position.z);
-                    cameraTargetRef.current.set(player1.position.x + 15, 3, player1.position.z);
+                    // Initialize fixed camera position - lower to ground
+                    cameraPositionRef.current.set(player1.position.x - 10, 6, player1.position.z);
+                    cameraTargetRef.current.set(player1.position.x + 15, 2, player1.position.z);
                     
                     camera.position.copy(cameraPositionRef.current);
                     camera.lookAt(cameraTargetRef.current);
@@ -108,14 +108,14 @@ function TennisGame() {
         // Target position: behind and above the player, always facing forward
         const targetPosition = new THREE.Vector3(
             player.position.x - 10, // Behind player
-            player.position.y + 12,  // Above player
+            player.position.y + 6,   // Lower above player (reduced from 12 to 6)
             player.position.z        // Same Z level as player
         );
         
         // Target look-at: ahead of the player
         const targetLookAt = new THREE.Vector3(
             player.position.x + 15,  // Look ahead
-            player.position.y + 3,   // Slightly above court
+            player.position.y + 2,   // Slightly lower look-at point (reduced from 3 to 2)
             player.position.z        // Same Z level
         );
         
@@ -223,8 +223,8 @@ function TennisGame() {
         playersRef.current = players;
 
         // Initialize camera position for fixed-behind mode
-        cameraPositionRef.current.set(-18, 12, 0);
-        cameraTargetRef.current.set(7, 3, 0);
+        cameraPositionRef.current.set(-18, 6, 0);  // Lowered from 12 to 6
+        cameraTargetRef.current.set(7, 2, 0);      // Lowered from 3 to 2
 
         // Setup initial camera
         console.log("Setting up initial camera mode:", currentCamera);
