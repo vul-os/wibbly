@@ -73,7 +73,7 @@ Audited against the tree, not against the pitch.
 | **magnetite integration** | *Planned* | The `InputProvider` seam does not exist yet in either repo |
 | **Tauri native shell** | *Planned (phase 2)* | Researched and specified; no Rust in this repo |
 | **RTMO / ONNX / WebGPU tracker** | *Planned (phase 3)* | No browser port exists to benchmark against |
-| Marketing pages in `src/pages/` | **Stale** | Carry invented figures ("1,235 players", "92% accuracy") and advertise Soccer and Boxing as "coming soon". **Do not treat them as claims.** The honest surface is `site/landing.html`. |
+| Marketing pages in `src/pages/` | **Thinning out** | Fabricated counters (a hardcoded `{players: 1250, matches: 8473, accuracy: 94}` animated as if live) and a line implying P2P already shipped have been removed. Soccer and Boxing are still shown as "Coming Soon" — they are real backlog items ([`WIBBLY.md` §8](WIBBLY.md)), not shipped games. The canonical surface is `site/landing.html`; `src/pages/` shrinks into it in phase 2. |
 
 ---
 
@@ -299,7 +299,10 @@ WIBBLY.md                the spec and the program backlog
 
 ## License
 
-`packages/wibbly-input` declares **Apache-2.0**. The repository has **no root `LICENSE`
-file yet** — until one lands, the licence of the app shell and the tennis game is
-unstated. That is a gap, not an implicit grant, and it is a founder call: see the open
-questions in [`WIBBLY.md` §9](WIBBLY.md).
+**MIT** — see [`LICENSE`](LICENSE). This covers the whole repository, including
+`packages/wibbly-input` and the tennis reference game.
+
+The models wibbly loads are separately licensed, and both are permissive: MoveNet ships
+under **Apache-2.0** via [tfjs-models](https://github.com/tensorflow/tfjs-models), and
+MediaPipe under **Apache-2.0**. That was a selection criterion, not luck — see
+[Model selection](#model-selection) for the alternatives ruled out on licensing alone.
