@@ -7,11 +7,6 @@ const Home = () => {
   const sceneRef = useRef(null);
   const animationRef = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [gameStats, setGameStats] = useState({
-    players: 1250,
-    matches: 8473,
-    accuracy: 94
-  });
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -154,38 +149,9 @@ const Home = () => {
 
     animate();
     
-    // Mark as loaded and start stat animation
     setTimeout(() => {
       setIsLoaded(true);
-      animateStats();
     }, 800);
-
-    // Animate stats counter
-    const animateStats = () => {
-      const duration = 2000;
-      const startTime = Date.now();
-      const startStats = { players: 0, matches: 0, accuracy: 0 };
-      const endStats = { players: 1250, matches: 8473, accuracy: 94 };
-      
-      const updateStats = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        
-        setGameStats({
-          players: Math.floor(startStats.players + (endStats.players - startStats.players) * easeOut),
-          matches: Math.floor(startStats.matches + (endStats.matches - startStats.matches) * easeOut),
-          accuracy: Math.floor(startStats.accuracy + (endStats.accuracy - startStats.accuracy) * easeOut)
-        });
-        
-        if (progress < 1) {
-          requestAnimationFrame(updateStats);
-        }
-      };
-      
-      updateStats();
-    };
 
     // Cleanup
     return () => {
@@ -230,22 +196,6 @@ const Home = () => {
             <span className="logo-text">Wibbly</span>
             <span className="logo-suffix">.io</span>
             <div className="logo-glow"></div>
-          </div>
-          
-          {/* Game Stats Bar */}
-          <div className="stats-bar">
-            <div className="stat">
-              <span className="stat-number">{gameStats.players.toLocaleString()}</span>
-              <span className="stat-label">Players</span>
-            </div>
-            <div className="stat">
-              <span className="stat-number">{gameStats.matches.toLocaleString()}</span>
-              <span className="stat-label">Matches</span>
-            </div>
-            <div className="stat">
-              <span className="stat-number">{gameStats.accuracy}%</span>
-              <span className="stat-label">Accuracy</span>
-            </div>
           </div>
         </header>
 
@@ -335,8 +285,9 @@ const Home = () => {
               <p>
                 Wibbly.io brings you revolutionary movement-based games directly in your browser, designed for 
                 maximum accessibility across all devices. Our mission is to make gaming inclusive by using your 
-                body as the controller - no special equipment, no downloads, completely free to play. Currently 
-                featuring motion-controlled tennis with P2P multiplayer and additional sports coming soon.
+                body as the controller - no special equipment, no downloads, completely free to play. Currently
+                featuring single-player motion-controlled tennis against an AI opponent, with P2P multiplayer
+                and additional sports planned.
               </p>
               
               <h3>Why Movement-Based Browser Games?</h3>

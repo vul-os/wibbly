@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 // Remove OrbitControls import since we're implementing Wii Sports style camera
-import PoseDetector from '../poseDetection.js';
+import {
+    Calibration,
+    SpatialBinder,
+    SwingRecognizer,
+    WibblyInput,
+    equalClaimZones,
+} from '@vulos/wibbly-input';
+import CameraPreview from './camera-preview.jsx';
 
 // Import game modules
 import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment, toggleHitBoxVisibility } from './player.js';
@@ -20,13 +27,21 @@ function TennisGame() {
     const containerRef = useRef(null);
     const playersRef = useRef([]);
     const ballRef = useRef(null);
-    const poseDetectorRef = useRef(null);
+    const inputRef = useRef(null);
     const gameStateRef = useRef(createGameState());
     const playerDataRef = useRef(createPlayerData());
 
+    // Calibration is per-player, persisted locally, and is what kills the old
+    // `isRightHanded = true` hardcode. Created once for the component's life.
+    const calibrationRef = useRef(null);
+    if (!calibrationRef.current) calibrationRef.current = new Calibration();
+
     // Instructions dropdown state
     const [showInstructions, setShowInstructions] = useState(false);
-    
+    // Exposed to the preview component so it can render video + skeletons.
+    const [input, setInput] = useState(null);
+    const [trackedPlayers, setTrackedPlayers] = useState([]);
+
     const toggleInstructions = () => {
         setShowInstructions(!showInstructions);
     };
@@ -160,58 +175,72 @@ function TennisGame() {
             initializeGame(players, ballGroup, gameStateRef.current, playerDataRef.current);
         }
         
-        // Setup pose detection
-        async function setupPoseDetection() {
+        // Setup gesture input via the @vulos/wibbly-input seams.
+        //
+        // The game names no model, no runtime and no vendor here — only the
+        // seams. Swapping MoveNet for something else later is a constructor
+        // argument, not a rewrite of this file.
+        async function setupGestureInput() {
+            const calibration = calibrationRef.current;
+
+            const wibbly = new WibblyInput({
+                calibration,
+                // Two claim zones so a second player on the couch can join by
+                // standing in the right half of the frame. Tennis only drives
+                // player 1 today, but the binder is already multi-player.
+                binder: new SpatialBinder({
+                    maxPlayers: 2,
+                    claimZones: equalClaimZones(2),
+                    forgetAfterMs: 2000,
+                }),
+                recognizers: [
+                    new SwingRecognizer({
+                        // Live lookup: flipping handedness in the preview takes
+                        // effect on the very next frame.
+                        handedness: (playerId) => calibration.handednessFor(playerId),
+                    }),
+                ],
+                frame: { width: 640, height: 480, fps: 30 },
+                onError: (err) => console.error('Gesture input error:', err),
+            });
+
+            wibbly.onGesture((event) => {
+                if (event.kind !== 'swing') return;
+                // Only player 1 controls the racket in tennis today.
+                if (event.playerId !== 'player_1') return;
+
+                // Map the handedness-relative stroke onto the ball physics'
+                // left/right convention. Using `stroke` rather than the raw
+                // image-space `direction` is what makes a left-handed player's
+                // forehand behave like a right-handed player's forehand,
+                // instead of being mirrored into the wrong shot.
+                const swingDirection = event.detail?.stroke === 'backhand' ? 'left' : 'right';
+                handleSwing(swingDirection);
+            });
+
+            wibbly.onPeople((people) => {
+                const ids = people.map((p) => p.playerId);
+                setTrackedPlayers((prev) =>
+                    prev.length === ids.length && prev.every((id, i) => id === ids[i]) ? prev : ids,
+                );
+                // Continuously widen each player's reach envelope during play.
+                for (const person of people) calibration.observeReach(person.playerId, person);
+            });
+
             try {
-                console.log("Setting up pose detection...");
-                const poseDetector = new PoseDetector();
-                const setupSuccess = await poseDetector.setup();
-                
-                if (setupSuccess !== false) {
-                    // Register swing callback
-                    poseDetector.onSwing((swingDirection) => {
-                        console.log("Pose detection: Swing detected!", swingDirection);
-                        handleSwing(swingDirection);
-                    });
-                    
-                    poseDetectorRef.current = poseDetector;
-                    console.log("Pose detection initialized successfully");
-                } else {
-                    console.log("Pose detection setup failed, disabling");
-                    gameStateRef.current.usePoseDetection = false;
-                }
+                await wibbly.start();
+                inputRef.current = wibbly;
+                setInput(wibbly);
+                console.log('Gesture input initialized');
             } catch (error) {
-                console.error("Error setting up pose detection:", error);
-                console.log("Trying to request camera permissions manually...");
-                
-                // Try requesting camera permissions first
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    console.log("Camera permissions granted, retrying pose detection setup...");
-                    stream.getTracks().forEach(track => track.stop()); // Stop the test stream
-                    
-                    // Retry setup
-                    const poseDetector = new PoseDetector();
-                    const setupSuccess = await poseDetector.setup();
-                    
-                    if (setupSuccess !== false) {
-                        poseDetector.onSwing((swingDirection) => {
-                            console.log("Pose detection: Swing detected!", swingDirection);
-                            handleSwing(swingDirection);
-                        });
-                        
-                        poseDetectorRef.current = poseDetector;
-                        console.log("Pose detection initialized successfully on retry");
-                    } else {
-                        gameStateRef.current.usePoseDetection = false;
-                    }
-                } catch (permissionError) {
-                    console.error("Camera permissions denied:", permissionError);
-                    gameStateRef.current.usePoseDetection = false;
-                }
+                // Camera denied or unavailable — the game stays fully playable
+                // on the spacebar, which is the correct degradation.
+                console.error('Gesture input unavailable, falling back to keyboard:', error);
+                gameStateRef.current.usePoseDetection = false;
+                wibbly.stop();
             }
         }
-        
+
         // Function to handle swings (from pose detection or spacebar)
         function handleSwing(swingDirection = 'right') {
             console.log("Handling swing!", swingDirection);
@@ -312,10 +341,10 @@ function TennisGame() {
             renderer.render(scene, camera);
         }
         
-        // Setup pose detection early
+        // Setup gesture input early
         if (gameStateRef.current.usePoseDetection) {
-            console.log("Starting pose detection setup...");
-            setupPoseDetection();
+            console.log("Starting gesture input setup...");
+            setupGestureInput();
         }
         
         // Start game
@@ -345,11 +374,14 @@ function TennisGame() {
             renderer.domElement.removeEventListener('click', startGame);
             renderer.dispose();
             
-            // Clean up pose detector
-            if (poseDetectorRef.current) {
-                poseDetectorRef.current.cleanup();
+            // Tear down gesture input: stops the camera tracks, disposes the
+            // model and clears binder/recognizer state.
+            if (inputRef.current) {
+                inputRef.current.stop();
+                inputRef.current = null;
             }
-            
+            setInput(null);
+
             containerRef.current?.removeChild(renderer.domElement);
         };
     }, []);
@@ -357,7 +389,17 @@ function TennisGame() {
     return (
         <>
             <div ref={containerRef} style={{ width: '100vw', height: '100vh' }} />
-            
+
+            {/* Camera preview is rendered by the app, never injected by the
+                input library. Absent until the camera actually starts. */}
+            {input && (
+                <CameraPreview
+                    input={input}
+                    calibration={calibrationRef.current}
+                    players={trackedPlayers}
+                />
+            )}
+
             {/* Instructions Dropdown Button */}
             <div className="instructions-container">
                 <button 

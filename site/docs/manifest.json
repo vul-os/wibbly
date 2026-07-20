@@ -1,0 +1,70 @@
+{
+  "title": "wibbly",
+  "tagline": "Your camera is the controller. A gesture is an input event like any other.",
+  "logo": "/product-logos/wibbly.svg",
+  "home": "/products/wibbly/landing.html",
+  "repo": "https://github.com/vul-os/wibbly",
+  "brand": {
+    "accent": "#C4006B",
+    "accentHover": "#A30059",
+    "accentDark": "#FF4D9D",
+    "secondary": "#A45B00",
+    "canvasLight": "#F4F1F6",
+    "paperLight": "#FFFFFF",
+    "inkLight": "#16121A",
+    "canvasDark": "#0D0A10",
+    "paperDark": "#131017",
+    "inkDark": "#F3EFF7",
+    "font": "'Inter var', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    "displayFont": "'Bricolage Grotesque var', 'Inter var', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    "monoFont": "'JetBrains Mono var', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace",
+    "fonts": [
+      { "family": "Bricolage Grotesque var", "weight": "200 800", "style": "normal", "src": "/products/wibbly/fonts/bricolage-grotesque.woff2" },
+      { "family": "Inter var", "weight": "100 900", "style": "normal", "src": "/products/wibbly/fonts/inter.woff2" },
+      { "family": "JetBrains Mono var", "weight": "100 800", "style": "normal", "src": "/products/wibbly/fonts/jetbrains-mono.woff2" }
+    ]
+  },
+  "docsBase": "/products/wibbly/docs",
+  "groups": [
+    {
+      "title": "Start here",
+      "pages": [
+        { "slug": "overview", "file": "OVERVIEW.md", "title": "Overview", "blurb": "What wibbly is, and an honest table of what runs versus what is only written down." },
+        { "slug": "getting-started", "file": "GETTING-STARTED.md", "title": "Getting started", "blurb": "Clone, run the dev server, allow the camera, swing — plus the three limits you will hit." }
+      ]
+    },
+    {
+      "title": "How it works",
+      "pages": [
+        { "slug": "architecture", "file": "ARCHITECTURE.md", "title": "Architecture", "blurb": "The four seams — FrameSource, PoseTracker, GestureRecognizer, PlayerBinder — and today's monolith." },
+        { "slug": "models", "file": "MODELS.md", "title": "Model selection", "blurb": "Why MoveNet MultiPose and MediaPipe hands, and why every other candidate was rejected." },
+        { "slug": "multiplayer", "file": "MULTIPLAYER.md", "title": "Multiplayer & anti-cheat", "blurb": "Local versus networked play, and the guarantee gesture input cannot give you." }
+      ]
+    },
+    {
+      "title": "Run it",
+      "pages": [
+        { "slug": "configuration", "file": "CONFIGURATION.md", "title": "Configuration", "blurb": "Every tunable constant, where it lives in source, and what it costs you." },
+        { "slug": "runtime-targets", "file": "RUNTIME-TARGETS.md", "title": "Runtime targets", "blurb": "Browser-first, why Tauri-with-webview-ML was rejected, and what the desktop shell will look like." }
+      ]
+    },
+    {
+      "title": "The project",
+      "pages": [
+        { "slug": "incentives", "file": "INCENTIVES.md", "title": "Developer incentives", "blurb": "Why not ads, and the four-rung ladder that replaces them." },
+        { "slug": "roadmap", "file": "ROADMAP.md", "title": "Roadmap", "blurb": "Three phases, the risk order, and the questions still open." }
+      ]
+    }
+  ],
+  "pages": [
+    { "slug": "overview", "file": "OVERVIEW.md", "title": "Overview", "group": "Start here", "blurb": "What wibbly is, and an honest table of what runs versus what is only written down." },
+    { "slug": "getting-started", "file": "GETTING-STARTED.md", "title": "Getting started", "group": "Start here", "blurb": "Clone, run the dev server, allow the camera, swing — plus the three limits you will hit." },
+    { "slug": "architecture", "file": "ARCHITECTURE.md", "title": "Architecture", "group": "How it works", "blurb": "The four seams — FrameSource, PoseTracker, GestureRecognizer, PlayerBinder — and today's monolith." },
+    { "slug": "models", "file": "MODELS.md", "title": "Model selection", "group": "How it works", "blurb": "Why MoveNet MultiPose and MediaPipe hands, and why every other candidate was rejected." },
+    { "slug": "multiplayer", "file": "MULTIPLAYER.md", "title": "Multiplayer & anti-cheat", "group": "How it works", "blurb": "Local versus networked play, and the guarantee gesture input cannot give you." },
+    { "slug": "configuration", "file": "CONFIGURATION.md", "title": "Configuration", "group": "Run it", "blurb": "Every tunable constant, where it lives in source, and what it costs you." },
+    { "slug": "runtime-targets", "file": "RUNTIME-TARGETS.md", "title": "Runtime targets", "group": "Run it", "blurb": "Browser-first, why Tauri-with-webview-ML was rejected, and what the desktop shell will look like." },
+    { "slug": "incentives", "file": "INCENTIVES.md", "title": "Developer incentives", "group": "The project", "blurb": "Why not ads, and the four-rung ladder that replaces them." },
+    { "slug": "roadmap", "file": "ROADMAP.md", "title": "Roadmap", "group": "The project", "blurb": "Three phases, the risk order, and the questions still open." }
+  ]
+}

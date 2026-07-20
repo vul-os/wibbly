@@ -2,8 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-// Import Firebase analytics to initialize it
-import { analytics } from './services/firebase.js';
+// Firebase Analytics was removed deliberately: it is a central tracking beacon
+// in a product whose thesis is decentralization (see WIBBLY.md §7). No
+// analytics SDK replaces it.
 
 // Import pages and components
 import Home from './pages/home.jsx';
