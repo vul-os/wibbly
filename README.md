@@ -26,7 +26,9 @@
 > What runs today is **one game** — single-camera tennis — driven by **one gesture**
 > (swing) from **one player**. The input seams described below are implemented and
 > unit-tested as a library, but nothing except tennis consumes them, no second game
-> exists, hand tracking is not built, and no line of wibbly code talks to magnetite.
+> exists, and hand tracking is not built. The magnetite bridge now works end-to-end
+> against a live node — but nothing on the far side consumes the events it delivers, so
+> networked gesture play is a proven pipe with no game on the other end.
 >
 > Read [`WIBBLY.md`](WIBBLY.md) for the full spec and backlog. Read the
 > [status table](#status--what-is-actually-built) below for what is real.
@@ -55,7 +57,7 @@ Audited against the tree, not against the pitch.
 
 | Capability | Status | Reality |
 |---|---|---|
-| `packages/wibbly-input` library | **Built** | TypeScript, zero DOM injection, 77 unit tests passing without a camera |
+| `packages/wibbly-input` library | **Built** | TypeScript, zero DOM injection, 86 unit tests passing without a camera |
 | `FrameSource` → `WebcamFrameSource` | **Built** | `getUserMedia`, owns its own capture loop |
 | `PoseTracker` → `MoveNetMultiPoseTracker` | **Built** | MoveNet **MultiPose** Lightning, returns `Person[]`, injectable detector for tests |
 | `GestureRecognizer` → `SwingRecognizer` | **Built** | Pure `detectSwing()` over wrist-velocity history; unit-testable without a camera |
@@ -70,10 +72,11 @@ Audited against the tree, not against the pitch.
 | **Hand tracking** (MediaPipe HandLandmarker) | *Planned* | `capabilities.hands` is `false` on the only tracker that exists |
 | **A second game** | *Planned* | Tennis is the only consumer of the SDK, so "generalises beyond tennis" is unproven |
 | **Networked play** | *Planned* | No transport, no lobby, no session code |
-| **magnetite integration** | *Planned* | The `InputProvider` seam does not exist yet in either repo |
+| **magnetite integration** | **Built, ingested end-to-end** | `packages/wibbly-magnetite` maps a `GestureEvent` onto magnetite's §3.7 `InputProvider` seam. Proven against a live `magnetite dev` node running a real wasm game, driven by this repo's own `wire.ts` + WebCrypto Ed25519: a fresh signed event returns `attested_ack`, a tampered one `signature does not verify`, an unsigned one `missing field 'signed'`. The wire format is pinned to magnetite's Rust verifier by golden vectors, so the two sides cannot drift silently. **Off by default** — local play needs no server. |
+| **A game that consumes gesture input over the wire** | *Planned* | Accepted events land in magnetite's per-connection queue and **nothing drains them** — no game in either repo reads gesture input yet. The pipe is proven; nothing is on the other end. |
 | **Tauri native shell** | *Planned (phase 2)* | Researched and specified; no Rust in this repo |
 | **RTMO / ONNX / WebGPU tracker** | *Planned (phase 3)* | No browser port exists to benchmark against |
-| Marketing pages in `src/pages/` | **Thinning out** | Fabricated counters (a hardcoded `{players: 1250, matches: 8473, accuracy: 94}` animated as if live) and a line implying P2P already shipped have been removed. Soccer and Boxing are still shown as "Coming Soon" — they are real backlog items ([`WIBBLY.md` §8](WIBBLY.md)), not shipped games. The canonical surface is `site/landing.html`; `src/pages/` shrinks into it in phase 2. |
+| Title screen, setup flow, in-game menu | **Built** | `src/pages/` is now four surfaces: title, first-run setup, play, 404. The marketing shell (`home`, `about`, `game-menu`, `game-container`) is deleted, along with the fabricated JSON-LD rating and play count that were still in `index.html`. Soccer and Boxing appear on the title screen as **Planned**, non-selectable, pointing at [`WIBBLY.md` §8](WIBBLY.md). The canonical public writing is `site/landing.html`. |
 
 ---
 
@@ -86,8 +89,16 @@ here is composited or staged.
 
 <table>
 <tr>
+<td><img src="docs/screenshots/title.png" alt="wibbly title screen" width="400"><br><em>Title — game selection; soccer and boxing show as planned, not playable</em></td>
+<td><img src="docs/screenshots/setup-intro.png" alt="wibbly first-run setup" width="400"><br><em>Setup — the camera is explained before the browser prompt fires</em></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/setup-handedness.png" alt="wibbly handedness selection" width="400"><br><em>Setup — handedness, driven by the real <code>Calibration</code> API</em></td>
 <td><img src="docs/screenshots/play.png" alt="wibbly tennis — Three.js court" width="400"><br><em>Tennis (<code>/play</code>) — court, players, camera rig</em></td>
-<td><img src="docs/screenshots/home.png" alt="wibbly home page" width="400"><br><em>Home (<code>/</code>) — the stale legacy shell, invented stats and all</em></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/in-game-menu.png" alt="wibbly in-game menu" width="400"><br><em>In-game menu — salvaged from the CAMERA branch, now wired</em></td>
+<td><img src="docs/screenshots/in-game-menu-settings.png" alt="wibbly settings tab" width="400"><br><em>In-game menu — settings</em></td>
 </tr>
 <tr>
 <td><img src="docs/screenshots/site-landing-dark.png" alt="wibbly mini-site, dark" width="400"><br><em>Mini-site — dark</em></td>
@@ -95,15 +106,17 @@ here is composited or staged.
 </tr>
 </table>
 
-Also captured: `about.png`, `not-found.png`. See
+Also captured: `in-game-menu-camera.png`, `not-found.png`. See
 [`docs/screenshots/README.md`](docs/screenshots/README.md).
 
 **One caveat, stated plainly.** In headless Chromium under SwiftShader, TensorFlow.js
-cannot initialize a WebGL or WebGPU backend — Three.js gets its own context and the
-court renders, but `WibblyInput.start()` rejects, the game degrades to its spacebar
-fallback, and the camera-preview panel never mounts. `play.png` therefore shows the
-scene without the preview overlay. Regenerate with `npm run screenshots -- --headed` on
-a machine with a real GPU to include it.
+cannot initialize a WebGL or WebGPU backend and falls back to its CPU backend, which
+takes ~10-12s to come up. The pipeline does therefore run — the setup screenshots show a
+live camera feed — but Chromium's synthetic stream is a rolling test pattern, not a
+person, so no skeleton is drawn and `checkFraming()` correctly reports "No one detected".
+That is a real verdict from the real function, not a placeholder. Regenerate with
+`npm run screenshots -- --headed` on a machine with a GPU, and a person in frame, to see
+tracking succeed.
 
 ---
 
@@ -283,7 +296,7 @@ Today the two repos do not talk to each other at all.
 ```
 packages/wibbly-input/   the seams — TypeScript library, no DOM injection, 77 tests
 src/game/                tennis: court, ball physics, player rig, AI opponent, camera rig
-src/pages/               legacy marketing shell — stale, oversized, slated to shrink
+src/pages/               title, setup, play, 404 — the whole app shell
 site/                    house-style static mini-site + docs (the honest surface)
 scripts/screenshots.mjs  Playwright screenshotter
 WIBBLY.md                the spec and the program backlog

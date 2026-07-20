@@ -7,16 +7,23 @@ Captured at 1440×900 @2x in Chromium with a **synthetic camera**
 rolling test pattern, not a person, so no pose is detected and no gesture ever fires.
 Nothing here is composited or staged.
 
-Headless caveat: under SwiftShader, TFJS cannot initialize a WebGL or WebGPU backend, so
-`WibblyInput.start()` rejects, the game falls back to the spacebar path, and the camera
-preview panel is absent from `play.png`. The Three.js court and page chrome are real.
-Regenerate with `npm run screenshots -- --headed` on a machine with a GPU to include it.
+Headless caveat: under SwiftShader, TFJS cannot initialize a WebGL or WebGPU backend and
+falls back to its CPU backend, which takes ~10-12s to come up. The pipeline therefore does
+run — the setup screens show a live preview — but it is looking at a test pattern, so no
+skeleton is drawn and the framing check correctly reports that it can see no one. Run
+`npm run screenshots -- --headed` on a machine with a GPU (and a person in frame) to see
+tracking actually succeed.
 
 | File | Surface | Status |
 |------|---------|--------|
-| home.png | Home — what wibbly is | captured |
-| about.png | About | captured |
-| play.png | Tennis reference game — Three.js court and page chrome, synthetic camera stream | captured |
+| title.png | Title screen — game selection (tennis playable, soccer/boxing planned) | captured |
+| setup-intro.png | First-run setup, step 1 — camera explained before the browser prompt fires | captured |
+| setup-handedness.png | First-run setup, step 2 — handedness, written to Calibration | captured |
+| setup-framing.png | First-run setup, step 3 — live checkFraming() verdict over the camera preview | captured |
+| play.png | Tennis — Three.js court and HUD, synthetic camera stream | captured |
+| in-game-menu.png | In-game menu over the paused court — Controls tab | captured |
+| in-game-menu-camera.png | In-game menu, Camera tab — real handedness control, disabled planned controls | captured |
+| in-game-menu-settings.png | In-game menu, Settings tab — wired settings vs visibly disabled planned ones | captured |
 | not-found.png | 404 | captured |
 | site-landing-light.png | Mini-site landing page | captured |
 | site-landing-dark.png | Mini-site landing page | captured |

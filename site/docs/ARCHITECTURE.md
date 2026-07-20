@@ -3,11 +3,15 @@
 wibbly's architecture is four seams. Game code never names a model, a runtime or a vendor — it sees
 only these interfaces, and every seam ships a working default.
 
-> **Status.** The seams below are implemented. They live in `packages/wibbly-input`, published
-> internally as `@vulos/wibbly-input` under Apache-2.0, with 77 unit tests that run without a camera.
-> The tennis game consumes them. The old monolithic `src/poseDetection.js` — which did all four jobs
-> at once and injected its own DOM — has been deleted. What is *not* proven is behaviour in a real
-> room with real people; see the note at the end of this page.
+> **Status.** The seams below are implemented. They live in `packages/wibbly-input` as
+> `@vulos/wibbly-input`, MIT licensed like the rest of the repo, with 86 unit tests that run without
+> a camera. The tennis game consumes them. The old monolithic `src/poseDetection.js` — which did all
+> four jobs at once and injected its own DOM — has been deleted.
+>
+> What is *not* proven is behaviour in a real room with real people. Every multi-person test in the
+> suite runs against **synthetic skeleton fixtures**, so `MoveNetMultiPoseTracker` and `SpatialBinder`
+> have never seen two real people. Treat them as implemented and unvalidated — which is a weaker
+> claim than working, and a stronger one than planned. See the note at the end of this page.
 
 ## The pipeline
 
@@ -128,7 +132,9 @@ The boundary is anti-cheat. magnetite's replay verification assumes deterministi
 input is not deterministic and cannot be replay-verified. Gesture games therefore run
 **client-attested** — spelled out in [Multiplayer & anti-cheat](/products/wibbly/docs/multiplayer).
 
-No wibbly code talks to magnetite today. The seam is proposed, not merged.
+A `packages/wibbly-magnetite` integration is being written now. It has **not** been proven against a
+live magnetite node, so nothing in wibbly's shipping path talks to magnetite today — treat the
+integration as in progress, not available.
 
 ## What phase 1 actually changed
 
@@ -143,7 +149,7 @@ each line of it:
 | `isRightHanded = true`, left branch an empty `TODO` | Handedness as a sign flip, both cases tested |
 | Swing logic entangled with the camera and the DOM | Pure `detectSwing` over landmark history |
 | `document.body.appendChild()` of a preview `<div>` and a "Hide Camera" `<button>` | An overlay component the host places |
-| Not importable, not testable | `@vulos/wibbly-input`, 77 passing tests |
+| Not importable, not testable | `@vulos/wibbly-input`, 86 passing tests |
 
 Every seam existed to dismantle one line of the left column.
 

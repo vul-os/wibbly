@@ -253,7 +253,9 @@ developer is forced to ship a tracking beacon.
 ### Phase 2 — the platform
 - [ ] Tennis ported onto the seam; 2-player local via one camera.
 - [x] Remove Firebase Analytics. *(Hosting migration off Firebase still open.)*
-- [x] Static site in the house style. *(Shrinking `src/pages/` still open.)*
+- [x] Static site in the house style.
+- [x] Shrink `src/pages/` — the marketing shell is deleted; the app is now a title
+      screen, a first-run camera setup flow, the play surface and a 404.
 - [x] Magnetite `InputProvider` seam + client-attested anti-cheat path.
 - [ ] **Soccer** — second reference game. Proves the SDK generalises beyond tennis,
       and is the first game to need a gesture that is *not* a swing: a kick is a
@@ -265,8 +267,9 @@ developer is forced to ship a tracking beacon.
       into `Calibration.handedness` today. Also the natural first test of 2-player
       local, since boxing is head-to-head by nature.
 
-> `src/pages/home.jsx` advertises Soccer and Boxing as "Coming Soon". They are listed
-> here so that claim points at tracked work rather than at nothing. Neither exists.
+> The title screen (`src/pages/title.jsx`) shows Soccer and Boxing as **Planned** cards
+> that cannot be selected. They are listed here so that presentation points at tracked
+> work rather than at nothing. Neither exists.
 
 ### Phase 3 — depth
 - [ ] `RtmoOnnxTracker` (ONNX Runtime Web + WebGPU), benchmarked against MoveNet.

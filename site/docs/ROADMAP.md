@@ -8,7 +8,7 @@ demo.
 Nothing else could start until the input layer was importable. **This phase has largely landed.**
 
 - [x] `packages/wibbly-input` scaffold; `poseDetection.js` moved in and **all DOM injection stripped**.
-      Published internally as `@vulos/wibbly-input`, Apache-2.0.
+      Published as `@vulos/wibbly-input`, MIT.
 - [x] `MoveNetMultiPoseTracker` — SinglePose replaced, `Person[]` returned, `MultiPose.Lightning`
       pinned rather than left to a library default.
 - [x] `PlayerBinder` plus the `SpatialBinder` default — nearest-centroid matching, sticky claim zones,
@@ -36,8 +36,22 @@ validation item at the top of phase 2.
 - [ ] Migrate hosting off Firebase; the deploy target and GitHub Actions workflow are still there.
 - [ ] Static site in the Vulos house style; shrink `src/pages/`, which is still larger than the game
       it markets and still advertises peer-to-peer multiplayer that does not exist.
-- [ ] magnetite `InputProvider` seam plus the client-attested anti-cheat path.
-- [ ] A second reference game — the only real proof that the SDK generalises beyond tennis.
+- [ ] magnetite `InputProvider` seam plus the client-attested anti-cheat path. A
+      `packages/wibbly-magnetite` integration is being written, but it has not been proven against a
+      live magnetite node — in progress, not available.
+- [ ] **Soccer** — second reference game. Chosen because a kick is the first gesture that is *not* a
+      swing: it is a lower-body gesture, so it exercises the leg keypoints `SwingRecognizer` ignores
+      entirely and forces `GestureRecognizer` to be genuinely plural rather than plural in the type
+      signature. No code exists.
+- [ ] **Boxing** — third reference game. Chosen because it is the first that needs **two independent
+      gesture streams from one player** — left and right hand, tracked separately with per-arm
+      cooldowns — which directly contradicts the single-dominant-hand model baked into
+      `Calibration.handedness` today. Being head-to-head by nature, it is also the natural first test
+      of 2-player local play. No code exists.
+
+> Both games are tracked here with a stated rationale so that any "coming soon" surfaced in the app
+> points at real backlog items rather than at nothing. Neither is playable, and neither should ever
+> be described as such.
 
 ## Phase 3 — depth
 
@@ -53,8 +67,9 @@ validation item at the top of phase 2.
 
 Genuinely open. None of these has been decided.
 
-- **The repo is private.** Publishing under `vulos.org/products/wibbly` makes it public-facing.
-  Founder call.
+- ~~**The repo is private.**~~ **Resolved.** The repo is now public and MIT licensed (root `LICENSE`),
+  and `packages/wibbly-input` is MIT too. Publishing under `vulos.org/products/wibbly` is therefore
+  no longer gated on a founder call.
 - **`navigator.gpu` in WKWebView on macOS 26.** Unresolved in research; needs an empirical test, not
   another citation.
 - **Other contributors.** There are several active branches on origin, and the seam refactor deleted

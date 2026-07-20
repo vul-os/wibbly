@@ -1,96 +1,300 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   wibbly app — "Court Lights"
+
+   Same identity as the mini-site (site/landing.html): a sports hall after dark.
+   Violet-tinted neutrals for the floor, chalk-white lines, and ONE hot magenta
+   that behaves like a motion trail — it marks movement, selection or a tracked
+   landmark, never decoration. Amber is functional only: it means "specified,
+   not built".
+
+   The app commits to the night-court palette. The mini-site is a document and
+   respects the reader's light/dark preference; this is a game, and it is always
+   played under the floodlights.
+
+   Fonts are the system stack. The mini-site vendors Bricolage Grotesque / Inter
+   / JetBrains Mono under site/fonts, but site/ is not this app's asset root, so
+   nothing is copied or fetched from a CDN here.
+   ───────────────────────────────────────────────────────────────────────────── */
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --display: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  --bg-base: #0d0a10;
+  --bg-primary: #131017;
+  --bg-secondary: #191521;
+  --bg-elevated: #1e1928;
+  --bg-hover: #221c2d;
+  --border: #272031;
+  --border-strong: #3e3451;
+  --text: #f3eff7;
+  --text-2: #a79db4;
+  --text-3: #6e6479;
 
+  --accent: #ff4d9d;
+  --accent-hover: #ff7fb8;
+  --accent-ink: #16000a;
+  --accent-dim: rgba(255, 77, 157, 0.13);
+  --accent-glow: rgba(255, 77, 157, 0.26);
+
+  --planned: #ffb020;
+  --planned-dim: rgba(255, 176, 32, 0.13);
+  --shipped: #4ade80;
+  --shipped-dim: rgba(74, 222, 128, 0.12);
+  --danger: #ff6b6b;
+  --danger-dim: rgba(255, 107, 107, 0.12);
+
+  --court-line: rgba(243, 239, 247, 0.09);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45), 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 30px 80px -24px rgba(0, 0, 0, 0.85), 0 8px 30px rgba(0, 0, 0, 0.5);
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  min-height: 100vh;
+  background: var(--bg-base);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+#root {
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+:where(button, a, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
 }
 
-#app {
-  max-width: 1280px;
+/* ── The court: a marked-out floor under floodlights ───────────────────────── */
+
+.wb-court {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 77, 157, 0.09) 0%, transparent 60%),
+    radial-gradient(90% 60% at 50% 110%, rgba(120, 90, 200, 0.07) 0%, transparent 60%),
+    var(--bg-base);
+}
+
+/* Chalk lines, drawn not decorated: a baseline, a service line, a centre mark. */
+.wb-court::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to bottom, transparent calc(50% - 1px), var(--court-line) 50%, transparent calc(50% + 1px)),
+    linear-gradient(to right, transparent calc(50% - 1px), var(--court-line) 50%, transparent calc(50% + 1px)),
+    linear-gradient(to right, transparent calc(12% - 1px), var(--court-line) 12%, transparent calc(12% + 1px)),
+    linear-gradient(to right, transparent calc(88% - 1px), var(--court-line) 88%, transparent calc(88% + 1px));
+}
+
+/* The motion trail: one slow magenta sweep, the only thing that moves. */
+.wb-court::after {
+  content: '';
+  position: absolute;
+  inset: -40% -10%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, var(--accent-glow) 0%, transparent 70%);
+  width: 60vmax;
+  height: 60vmax;
+  filter: blur(40px);
+  opacity: 0.5;
+  animation: wb-sweep 22s var(--ease) infinite;
+}
+
+@keyframes wb-sweep {
+  0% { transform: translate(-30vw, 10vh) scale(0.8); opacity: 0.25; }
+  50% { transform: translate(60vw, -12vh) scale(1.15); opacity: 0.5; }
+  100% { transform: translate(-30vw, 10vh) scale(0.8); opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-court::after { animation: none; }
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+.wb-stage {
+  position: relative;
+  z-index: 1;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: clamp(2rem, 5vh, 4.5rem) 1.5rem 3rem;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #f7df1eaa);
+/* ── Type ─────────────────────────────────────────────────────────────────── */
+
+.wb-wordmark {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(3.2rem, 11vw, 7.5rem);
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+  margin: 0;
+  text-transform: lowercase;
+  background: linear-gradient(100deg, var(--text) 30%, var(--accent) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.card {
-  padding: 2em;
+.wb-tagline {
+  margin: 0.6rem 0 0;
+  color: var(--text-2);
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  letter-spacing: 0.01em;
 }
 
-.read-the-docs {
-  color: #888;
+.wb-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 0 0.75rem;
 }
 
-button {
-  border-radius: 8px;
+.wb-h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.35rem;
+}
+
+.wb-lede {
+  color: var(--text-2);
+  margin: 0;
+}
+
+.wb-mono {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+
+/* ── Status pills ─────────────────────────────────────────────────────────── */
+
+.wb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  white-space: nowrap;
+}
+.wb-pill--playable { background: var(--shipped-dim); color: var(--shipped); border-color: rgba(74, 222, 128, 0.3); }
+.wb-pill--planned { background: var(--planned-dim); color: var(--planned); border-color: rgba(255, 176, 32, 0.3); }
+.wb-pill--accent { background: var(--accent-dim); color: var(--accent); border-color: rgba(255, 77, 157, 0.32); }
+.wb-pill--muted { background: rgba(167, 157, 180, 0.08); color: var(--text-3); border-color: var(--border); }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+
+.wb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.25s;
+  text-decoration: none;
+  transition: transform 0.18s var(--ease), background 0.18s var(--ease),
+    border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
 }
-button:hover {
-  border-color: #646cff;
+.wb-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  transform: translateY(-2px);
 }
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+.wb-btn:active:not(:disabled) { transform: translateY(0); }
+.wb-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+
+.wb-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  padding: 1rem 2.2rem;
+  box-shadow: 0 10px 34px -10px var(--accent-glow);
+}
+.wb-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  box-shadow: 0 16px 44px -10px var(--accent-glow);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.wb-btn--ghost { background: transparent; border-color: var(--border); color: var(--text-2); }
+.wb-btn--ghost:hover:not(:disabled) { color: var(--text); }
+
+.wb-btn--small { padding: 0.5rem 0.9rem; font-size: 0.85rem; }
+
+.wb-key {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  padding: 0.14rem 0.42rem;
+  border-radius: 5px;
+  border: 1px solid var(--border-strong);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text-2);
+  letter-spacing: 0.06em;
 }
+.wb-btn--primary .wb-key {
+  border-color: rgba(22, 0, 10, 0.35);
+  background: rgba(22, 0, 10, 0.16);
+  color: var(--accent-ink);
+}
+
+/* ── Panels ───────────────────────────────────────────────────────────────── */
+
+.wb-panel {
+  background: linear-gradient(160deg, var(--bg-secondary), var(--bg-primary));
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 1.5rem;
+}
+
+.wb-note {
+  border-left: 2px solid var(--border-strong);
+  padding-left: 0.9rem;
+  color: var(--text-3);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+.wb-note--accent { border-left-color: var(--accent); color: var(--text-2); }
+.wb-note--planned { border-left-color: var(--planned); color: var(--text-2); }
+.wb-note--danger { border-left-color: var(--danger); color: var(--text-2); }

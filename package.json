@@ -11,8 +11,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "screenshots": "node scripts/screenshots.mjs",
-    "test": "npm run test --workspace @vulos/wibbly-input",
-    "typecheck": "npm run typecheck --workspace @vulos/wibbly-input"
+    "test": "npm run test --workspace @vulos/wibbly-input && npm run test --workspace @vulos/wibbly-magnetite",
+    "typecheck": "npm run typecheck --workspace @vulos/wibbly-input && npm run typecheck --workspace @vulos/wibbly-magnetite"
   },
   "devDependencies": {
     "typescript": "^5.7.3",
@@ -23,6 +23,7 @@
     "@tensorflow-models/pose-detection": "^2.1.3",
     "@tensorflow/tfjs": "^4.22.0",
     "@vulos/wibbly-input": "*",
+    "@vulos/wibbly-magnetite": "*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.6.3",

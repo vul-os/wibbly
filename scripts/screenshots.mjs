@@ -19,15 +19,17 @@
  *   detection therefore finds no skeleton and no gesture ever fires. Nothing
  *   here composites or fakes gameplay that did not happen.
  *
- * Known headless limitation (measured, not assumed):
- *   Under headless Chromium + SwiftShader, TFJS cannot bring up a backend —
- *   the console reports "Initialization of backend webgpu failed" (no adapter)
- *   and "Initialization of backend webgl failed / WebGL is not supported on
- *   this device". Three.js gets its own WebGL context and the court renders
- *   fine, but `WibblyInput.start()` rejects, the game degrades to the spacebar
- *   fallback, and the camera-preview panel never mounts. So `play.png` shows
- *   the real 3D scene and page chrome WITHOUT the preview overlay.
- *   Run with `--headed` on a machine with a real GPU to capture the preview.
+ * Known headless behaviour (measured, not assumed):
+ *   Under headless Chromium + SwiftShader, TFJS cannot bring up an accelerated
+ *   backend — the console reports "Initialization of backend webgpu failed"
+ *   (no adapter) and "Initialization of backend webgl failed / WebGL is not
+ *   supported on this device". It then falls back to the CPU backend, which
+ *   DOES come up, after roughly 10-12 seconds. Consequences:
+ *     · the setup flow reaches its live-preview steps for real;
+ *     · pose estimation runs, but the synthetic stream is a test pattern, so
+ *       checkFraming() honestly reports "no one detected";
+ *     · Three.js gets its own WebGL context, so the court renders normally.
+ *   The long settle times below are that CPU fallback, not padding.
  *
  * Usage:
  *   npm run screenshots
@@ -67,29 +69,102 @@ const VIEWPORT = { width: 1440, height: 900 }
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 //
-// Read off src/main.jsx: `/`, `/about`, `/play` (+ `/tennis` alias), `*` → 404.
-// src/pages/game-menu.jsx and game-container.jsx exist in the tree but are not
-// mounted by the router, so there is no URL to photograph them at.
+// Read off src/main.jsx: `/`, `/setup`, `/play` (+ `/tennis` → /play), `*` → 404.
+//
+// `/play` redirects first-time visitors to `/setup`, so the play captures seed
+// localStorage to look like a returning player. That is a real app state, not a
+// staged one — it is exactly what the second visit looks like.
+
+const SEEN_SETUP = { seen: true, outcome: 'camera', at: 1 }
 
 const APP_ROUTES = [
   {
-    name: 'home',
+    name: 'title',
     path: '/',
-    description: 'Home — what wibbly is',
+    description: 'Title screen — game selection (tennis playable, soccer/boxing planned)',
   },
   {
-    name: 'about',
-    path: '/about',
-    description: 'About',
+    name: 'setup-intro',
+    path: '/setup',
+    description: 'First-run setup, step 1 — camera explained before the browser prompt fires',
+  },
+  {
+    name: 'setup-handedness',
+    path: '/setup',
+    description: 'First-run setup, step 2 — handedness, written to Calibration',
+    // Press the real button and let the real pipeline start. Headless has no
+    // GPU, so TFJS falls back to its CPU backend — slow, but it does come up,
+    // which is why this step reaches the live preview at all.
+    action: async (page) => {
+      await page.getByRole('button', { name: /turn on my camera/i }).click({ force: true, timeout: 60_000 })
+      await page.waitForSelector('.wb-setup__hands', { timeout: 60_000 })
+      await page.waitForTimeout(2_500)
+    },
+  },
+  {
+    name: 'setup-framing',
+    path: '/setup',
+    description: 'First-run setup, step 3 — live checkFraming() verdict over the camera preview',
+    action: async (page) => {
+      await page.getByRole('button', { name: /turn on my camera/i }).click({ force: true, timeout: 60_000 })
+      await page.waitForSelector('.wb-setup__hands', { timeout: 60_000 })
+      // force+long timeout: CPU-backend inference starves the compositor, so
+      // Playwright's stability check can otherwise time out on a static button.
+      await page.getByRole('button', { name: /check my framing/i }).click({ force: true, timeout: 60_000 })
+      // Let the pipeline score real frames. The synthetic stream is a test
+      // pattern, not a person, so the honest verdict here is "no one detected".
+      await page.waitForTimeout(6_000)
+    },
   },
   {
     name: 'play',
     path: '/play',
-    description: 'Tennis reference game — Three.js court and page chrome, synthetic camera stream',
+    description: 'Tennis — Three.js court and HUD, synthetic camera stream',
+    storage: SEEN_SETUP,
     // The game mounts async: WebGL scene, then the GLB court, then getUserMedia
     // + a TFJS model download. Wait on the canvas, then give the rest time.
     waitFor: 'canvas',
-    settleMs: 9_000,
+    settleMs: 16_000,
+  },
+  {
+    name: 'in-game-menu',
+    path: '/play',
+    description: 'In-game menu over the paused court — Controls tab',
+    storage: SEEN_SETUP,
+    waitFor: 'canvas',
+    settleMs: 16_000,
+    action: async (page) => {
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(900)
+    },
+  },
+  {
+    name: 'in-game-menu-camera',
+    path: '/play',
+    description: 'In-game menu, Camera tab — real handedness control, disabled planned controls',
+    storage: SEEN_SETUP,
+    waitFor: 'canvas',
+    settleMs: 16_000,
+    action: async (page) => {
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(600)
+      await page.getByRole('button', { name: /camera/i }).first().click({ force: true, timeout: 60_000 })
+      await page.waitForTimeout(500)
+    },
+  },
+  {
+    name: 'in-game-menu-settings',
+    path: '/play',
+    description: 'In-game menu, Settings tab — wired settings vs visibly disabled planned ones',
+    storage: SEEN_SETUP,
+    waitFor: 'canvas',
+    settleMs: 16_000,
+    action: async (page) => {
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(600)
+      await page.getByRole('button', { name: /settings/i }).first().click({ force: true, timeout: 60_000 })
+      await page.waitForTimeout(500)
+    },
   },
   {
     name: 'not-found',
@@ -219,8 +294,14 @@ async function capture(page, base, route, theme) {
     }
     await page.waitForTimeout(route.settleMs ?? 800)
 
+    // Drive the real UI to reach a state that has no URL of its own (menu
+    // tabs, setup steps). Real clicks and real keystrokes only.
+    if (route.action) await route.action(page)
+
     const outPath = path.join(OUT, `${label}.png`)
-    await page.screenshot({ path: outPath, fullPage: false })
+    // Generous timeout: with no GPU, TFJS runs pose estimation on the CPU and
+    // can starve the compositor enough to miss the 30s default.
+    await page.screenshot({ path: outPath, fullPage: false, timeout: 90_000 })
     console.log(`     saved docs/screenshots/${label}.png`)
     return { label, description: route.description, status: 'ok' }
   } catch (err) {
@@ -229,7 +310,7 @@ async function capture(page, base, route, theme) {
   }
 }
 
-async function newContext(browser, theme) {
+async function newContext(browser, theme, appStorage) {
   const ctx = await browser.newContext({
     viewport: VIEWPORT,
     deviceScaleFactor: 2,
@@ -239,6 +320,11 @@ async function newContext(browser, theme) {
   })
   if (theme) {
     await ctx.addInitScript(t => { try { localStorage.setItem('vulos-theme', t) } catch {} }, theme)
+  }
+  if (appStorage) {
+    await ctx.addInitScript(s => {
+      try { localStorage.setItem('wibbly.setup.v1', JSON.stringify(s)) } catch {}
+    }, appStorage)
   }
   return ctx
 }
@@ -284,12 +370,14 @@ async function main() {
 
   const results = []
 
-  // App surfaces — one context, no theming (the app has a single palette).
-  {
-    const ctx = await newContext(browser, null)
+  // App surfaces. One context per route: several of them differ only by
+  // localStorage (first run vs returning player), and a shared context would
+  // leak that state between captures.
+  for (const route of APP_ROUTES) {
+    const ctx = await newContext(browser, null, route.storage)
     const page = await ctx.newPage()
     page.on('pageerror', e => console.warn(`     [pageerror] ${e.message}`))
-    for (const route of APP_ROUTES) results.push(await capture(page, APP_BASE, route))
+    results.push(await capture(page, APP_BASE, route))
     await ctx.close()
   }
 
@@ -322,10 +410,12 @@ async function main() {
     'rolling test pattern, not a person, so no pose is detected and no gesture ever fires.',
     'Nothing here is composited or staged.',
     '',
-    'Headless caveat: under SwiftShader, TFJS cannot initialize a WebGL or WebGPU backend, so',
-    '`WibblyInput.start()` rejects, the game falls back to the spacebar path, and the camera',
-    'preview panel is absent from `play.png`. The Three.js court and page chrome are real.',
-    'Regenerate with `npm run screenshots -- --headed` on a machine with a GPU to include it.',
+    'Headless caveat: under SwiftShader, TFJS cannot initialize a WebGL or WebGPU backend and',
+    'falls back to its CPU backend, which takes ~10-12s to come up. The pipeline therefore does',
+    'run — the setup screens show a live preview — but it is looking at a test pattern, so no',
+    'skeleton is drawn and the framing check correctly reports that it can see no one. Run',
+    '`npm run screenshots -- --headed` on a machine with a GPU (and a person in frame) to see',
+    'tracking actually succeed.',
     '',
     '| File | Surface | Status |',
     '|------|---------|--------|',

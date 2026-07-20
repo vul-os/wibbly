@@ -15,10 +15,10 @@ way.
 
 | Capability | State |
 |---|---|
-| `@vulos/wibbly-input` — four seams + Calibration, importable | **Implemented**, 77 tests green |
+| `@vulos/wibbly-input` — four seams + Calibration, importable | **Implemented**, 86 tests green |
 | Browser pose tracking (TF.js MoveNet, WebGL) | **Working** |
-| Multi-person tracking (`MultiPose.Lightning`, up to 6) | **Implemented**, unit-tested |
-| `SpatialBinder` — durable `PlayerId`s, claim zones, occlusion | **Implemented**, unit-tested |
+| Multi-person tracking (`MultiPose.Lightning`, up to 6) | **Implemented**, synthetic fixtures only |
+| `SpatialBinder` — durable `PlayerId`s, claim zones, occlusion | **Implemented**, synthetic fixtures only |
 | `swing` gesture as a pure `detectSwing` function | **Implemented**, unit-tested |
 | Left- and right-handed play | **Implemented**, unit-tested |
 | Adaptive frame pacing | **Implemented**, unit-tested |
@@ -26,7 +26,9 @@ way.
 | Firebase Analytics | **Removed** — no SDK, no dependency |
 | Multi-person play validated with real people | **Not validated** — fixtures are not a living room |
 | 2-player tennis | **Next** — the binder is multi-player, the game is not |
+| Soccer, Boxing reference games | **Planned** — tracked backlog, no code |
 | Hand landmarks, pinch, point | **Not started** |
+| magnetite integration (`packages/wibbly-magnetite`) | **In progress** — unproven against a live node |
 | Networked play, lobbies, payments | **Not started** — no network code at all |
 | Tauri desktop shell | **Phase 3** |
 | Release build | **Source only** |

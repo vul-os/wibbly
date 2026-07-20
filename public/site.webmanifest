@@ -1,109 +1,23 @@
 {
-  "name": "Wibbly.io - Motion Tennis Game",
-  "short_name": "Wibbly Tennis",
-  "description": "Revolutionary motion-controlled tennis game using your camera. Play 3D tennis by swinging your arms!",
+  "name": "wibbly — camera gesture games",
+  "short_name": "wibbly",
+  "description": "Camera gesture games in a browser tab. Tracking runs on your device; camera frames are never uploaded.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f0f23",
-  "theme_color": "#6366f1",
+  "background_color": "#0D0A10",
+  "theme_color": "#0D0A10",
   "orientation": "landscape-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["games", "sports", "entertainment"],
-  "screenshots": [
-    {
-      "src": "/screenshots/gameplay-wide.jpg",
-      "sizes": "1280x720",
-      "type": "image/jpeg",
-      "form_factor": "wide",
-      "label": "Wibbly Tennis gameplay in action"
-    },
-    {
-      "src": "/screenshots/gameplay-mobile.jpg", 
-      "sizes": "750x1334",
-      "type": "image/jpeg",
-      "form_factor": "narrow",
-      "label": "Wibbly Tennis on mobile"
-    }
-  ],
-  "icons": [
-    {
-      "src": "/icons/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-128x128.png",
-      "sizes": "128x128", 
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
-    }
-  ],
+  "categories": ["games", "sports"],
+  "icons": [],
   "shortcuts": [
     {
-      "name": "Play Tennis",
+      "name": "Play tennis",
       "short_name": "Play",
-      "description": "Jump straight into motion tennis gameplay",
-      "url": "/play",
-      "icons": [
-        {
-          "src": "/icons/tennis-shortcut.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Learn About Motion Gaming",
-      "short_name": "About", 
-      "description": "Learn how motion-controlled gaming works",
-      "url": "/about",
-      "icons": [
-        {
-          "src": "/icons/info-shortcut.png",
-          "sizes": "192x192", 
-          "type": "image/png"
-        }
-      ]
+      "url": "/play"
     }
   ],
   "related_applications": [],
   "prefer_related_applications": false
-} 
+}

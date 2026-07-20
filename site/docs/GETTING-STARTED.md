@@ -18,7 +18,7 @@ no hosted deployment — those arrive when the input library lands. What follows
 git clone https://github.com/vul-os/wibbly
 cd wibbly
 npm install
-npm test        # 77 seam tests — no camera, no GPU, ~2 seconds
+npm test        # 86 seam tests — no camera, no GPU, ~2 seconds
 npm run dev
 ```
 
