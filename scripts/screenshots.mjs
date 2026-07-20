@@ -148,7 +148,11 @@ const APP_ROUTES = [
     action: async (page) => {
       await page.keyboard.press('Escape')
       await page.waitForTimeout(600)
-      await page.getByRole('button', { name: /camera/i }).first().click({ force: true, timeout: 60_000 })
+      // Scoped to the tab nav on purpose: the camera preview inset carries a
+      // "Collapse camera preview" button that sits EARLIER in the DOM, so an
+      // unscoped /camera/i match collapsed the inset and captured the Controls
+      // tab instead of this one.
+      await page.locator('.menu-tabs .tab-btn', { hasText: /camera/i }).first().click({ force: true, timeout: 60_000 })
       await page.waitForTimeout(500)
     },
   },
@@ -162,7 +166,7 @@ const APP_ROUTES = [
     action: async (page) => {
       await page.keyboard.press('Escape')
       await page.waitForTimeout(600)
-      await page.getByRole('button', { name: /settings/i }).first().click({ force: true, timeout: 60_000 })
+      await page.locator('.menu-tabs .tab-btn', { hasText: /settings/i }).first().click({ force: true, timeout: 60_000 })
       await page.waitForTimeout(500)
     },
   },

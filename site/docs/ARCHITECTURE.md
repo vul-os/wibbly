@@ -15,25 +15,93 @@ only these interfaces, and every seam ships a working default.
 
 ## The pipeline
 
-```
-  camera
-    │
-    ▼
-┌─────────────┐   VideoFrame   ┌──────────────┐   Person[]   ┌──────────────┐
-│ FrameSource │ ─────────────▶ │ PoseTracker  │ ───────────▶ │ PlayerBinder │
-└─────────────┘                └──────────────┘              └──────┬───────┘
-                                                        stable PlayerId
-                                                                    │
-                              ┌──────────────────┐   GestureEvent   ▼
-                    game ◀─── │ GestureRecognizer│ ◀────────── (landmarks)
-                              └──────────────────┘
-                                       ▲
-                                 Calibration
-                          (handedness, reach envelope)
-```
+<style>
+.wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
+:root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
+.wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
+.wbf svg{display:block;height:auto;width:100%;min-width:620px}
+.wbf img{display:block;width:100%;height:auto}
+.wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
+.wbf figcaption b{color:var(--tx)}
+</style>
 
-Pixels enter on the left and never reach the right. What crosses into game code is a `GestureEvent`
-of a few dozen bytes.
+<figure class="wbf">
+<div class="sc">
+<svg viewBox="0 0 900 250" width="900" role="img" aria-label="The four seams in order: FrameSource captures frames, PoseTracker turns them into an array of people, PlayerBinder attaches durable player identities, and GestureRecognizer emits GestureEvents to the game. Calibration feeds the recognizer. All of it runs inside the device.">
+  <defs>
+    <marker id="a-arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ln)"/>
+    </marker>
+  </defs>
+  <g font-family="ui-monospace, monospace">
+    <rect x="2" y="14" width="896" height="176" rx="10" fill="none" stroke="var(--a)" stroke-width="1.2" stroke-dasharray="6 6" opacity=".6"/>
+    <text x="16" y="33" font-size="10" font-weight="700" fill="var(--a)" letter-spacing="1.3">YOUR DEVICE — PIXELS NEVER LEAVE THIS BOX</text>
+    <rect x="14" y="48" width="176" height="86" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="28" y="69" font-size="9" fill="var(--tx2)" letter-spacing="1.3">SEAM 01</text>
+    <text x="28" y="90" font-size="13.5" font-weight="700" fill="var(--tx)">FrameSource</text>
+    <text x="28" y="109" font-size="10" fill="var(--tx2)">WebcamFrameSource</text>
+    <text x="28" y="125" font-size="10" fill="var(--tx2)">getUserMedia</text>
+    <rect x="238" y="48" width="176" height="86" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="252" y="69" font-size="9" fill="var(--tx2)" letter-spacing="1.3">SEAM 02</text>
+    <text x="252" y="90" font-size="13.5" font-weight="700" fill="var(--tx)">PoseTracker</text>
+    <text x="252" y="109" font-size="10" fill="var(--tx2)">MoveNet MultiPose</text>
+    <text x="252" y="125" font-size="10" fill="var(--tx2)">→ Person[]</text>
+    <rect x="462" y="48" width="176" height="86" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="476" y="69" font-size="9" fill="var(--tx2)" letter-spacing="1.3">SEAM 04</text>
+    <text x="476" y="90" font-size="13.5" font-weight="700" fill="var(--tx)">PlayerBinder</text>
+    <text x="476" y="109" font-size="10" fill="var(--tx2)">SpatialBinder</text>
+    <text x="476" y="125" font-size="10" fill="var(--tx2)">→ stable PlayerId</text>
+    <rect x="686" y="48" width="196" height="86" rx="8" fill="none" stroke="var(--a)" stroke-width="1.4"/>
+    <text x="700" y="69" font-size="9" fill="var(--tx2)" letter-spacing="1.3">SEAM 03</text>
+    <text x="700" y="90" font-size="13.5" font-weight="700" fill="var(--tx)">GestureRecognizer</text>
+    <text x="700" y="109" font-size="10" fill="var(--tx2)">detectSwing()</text>
+    <text x="700" y="125" font-size="10" font-weight="700" fill="var(--a)">→ GestureEvent</text>
+    <g stroke="var(--ln)" stroke-width="1.6" marker-end="url(#a-arw)" fill="none">
+      <path d="M194 91 H232"/>
+      <path d="M418 91 H456"/>
+      <path d="M642 91 H680"/>
+    </g>
+    <text x="196" y="83" font-size="9" fill="var(--tx2)">VideoFrame</text>
+    <text x="422" y="83" font-size="9" fill="var(--tx2)">Person[]</text>
+    <text x="646" y="83" font-size="9" fill="var(--tx2)">+ id</text>
+    <rect x="686" y="156" width="196" height="26" rx="6" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="700" y="173" font-size="10" fill="var(--tx2)">Calibration — handedness, reach</text>
+    <path d="M784 154 V140" stroke="var(--ln)" stroke-width="1.6" fill="none" marker-end="url(#a-arw)"/>
+    <path d="M882 91 H896 Q900 91 900 99 V210 Q900 218 892 218 H726" stroke="var(--a)" stroke-width="1.6" fill="none" marker-end="url(#a-arw)"/>
+    <text x="740" y="214" font-size="11" font-weight="700" fill="var(--a)">game code — the only thing it ever sees</text>
+  </g>
+</svg>
+</div>
+<figcaption><b>Pixels enter on the left and never reach the right.</b> What crosses into game code is a <code>GestureEvent</code> of a few dozen bytes. Each seam ships a working default, and each one can be replaced without the game noticing.</figcaption>
+</figure>
+
+The shape of that diagram is the whole argument: it is a **reduction**. Every stage throws away
+information the next stage does not need, and the thing that survives to the end is too small to be
+worth intercepting.
+
+<figure class="wbf">
+<div class="sc">
+<svg viewBox="0 0 900 200" width="900" role="img" aria-label="Data volume across the pipeline, on a log scale: a camera frame is about 8 megabytes, a landmark set about 1 kilobyte, a bound skeleton about 1 kilobyte plus an id, and a GestureEvent about 64 bytes.">
+  <g font-family="ui-monospace, monospace">
+    <text x="16" y="26" font-size="10" fill="var(--tx2)" letter-spacing="1.3">VOLUME PER STAGE — LOG SCALE</text>
+    <text x="16" y="60" font-size="11" fill="var(--tx)">Camera frame</text>
+    <rect x="180" y="49" width="600" height="13" rx="2" fill="var(--a)"/>
+    <text x="800" y="60" font-size="11" font-weight="700" fill="var(--tx)">8 MB</text>
+    <text x="16" y="94" font-size="11" fill="var(--tx)">Landmark set</text>
+    <rect x="180" y="83" width="288" height="13" rx="2" fill="var(--am)"/>
+    <text x="800" y="94" font-size="11" font-weight="700" fill="var(--tx)">~1 KB</text>
+    <text x="16" y="128" font-size="11" fill="var(--tx)">Bound skeleton</text>
+    <rect x="180" y="117" width="276" height="13" rx="2" fill="var(--am)"/>
+    <text x="800" y="128" font-size="11" font-weight="700" fill="var(--tx)">~1 KB + id</text>
+    <text x="16" y="162" font-size="11" fill="var(--tx)">GestureEvent</text>
+    <rect x="180" y="151" width="72" height="13" rx="2" fill="var(--ok)"/>
+    <text x="800" y="162" font-size="11" font-weight="700" fill="var(--tx)">≈64 B</text>
+    <text x="180" y="186" font-size="9" fill="var(--tx2)">8 MB → 64 B is five orders of magnitude; drawn linearly the last bar would be invisible.</text>
+  </g>
+</svg>
+</div>
+<figcaption>The privacy guarantee and the architecture are the <b>same fact</b> seen twice. By the time the pipeline produces something worth transmitting, the pixels are three stages gone.</figcaption>
+</figure>
 
 ## 1. `FrameSource` — where pixels come from
 

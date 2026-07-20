@@ -55,6 +55,14 @@ export function defaultModelUrl(): string {
  */
 export const CSP_HOSTILE_BACKENDS = ['wasm'];
 
+/**
+ * Backends to claim explicitly if every preferred one fails, before letting
+ * TFJS auto-select. Must contain only backends that are safe under the
+ * production CSP — i.e. that need neither `'unsafe-eval'` nor
+ * `'wasm-unsafe-eval'`. See {@link selectBackend} for why this step exists.
+ */
+export const LAST_RESORT_BACKENDS = ['cpu'];
+
 /** What backend selection actually settled on. */
 export interface BackendInfo {
   /** The backend TFJS is running on, e.g. 'webgl' | 'cpu' | 'wasm'. */
@@ -100,10 +108,37 @@ export interface MoveNetTrackerConfig {
    *
    * with no `'wasm-unsafe-eval'` and no `'unsafe-eval'`, so the TFJS **WASM
    * backend cannot instantiate there at all** — `WebAssembly.instantiate` is
-   * blocked. Letting TFJS auto-select means the backend that runs depends on
-   * what happens to be registered, which is exactly the kind of thing that
-   * works in testing and silently does not work in production. WebGL needs no
-   * eval of any kind and is the backend this is built for.
+   * blocked. (Specifically `'wasm-unsafe-eval'` is what it needs; the TFJS
+   * bundle contains no `eval(` or `new Function(`, so `'unsafe-eval'` is not
+   * the missing directive.) Letting TFJS auto-select means the backend that
+   * runs depends on what happens to be registered, which is exactly the kind
+   * of thing that works in testing and silently does not work in production.
+   * WebGL needs no eval of any kind and is the backend this is built for.
+   *
+   * ── Cross-engine notes ────────────────────────────────────────────────────
+   * The `webgl` backend is NOT Chromium-specific: TFJS selects it by capability
+   * probing, not by user agent, and it works on Firefox and Safari. Safari 15+
+   * with WebGL2 and `EXT_color_buffer_float` runs f32 rather than f16, and the
+   * old iOS-specific `WEBGL_FORCE_F16_TEXTURES` auto-enable no longer exists in
+   * TFJS 4.x — so there is nothing engine-conditional to set here, and we
+   * deliberately set nothing.
+   *
+   * `webgpu` is intentionally NOT in the default list. WebGPU itself is broadly
+   * available now, but the tfjs-webgpu backend is scoped by its own README to
+   * Chromium and is not documented as tested against Firefox or Safari.
+   * Defaulting to it would be exactly the untested-in-the-target-browser bet
+   * this whole file exists to avoid.
+   *
+   * ── Two known gaps NOT handled here ───────────────────────────────────────
+   * Both are real and both are upstream; neither is papered over:
+   *
+   *  1. TFJS ships no `webglcontextlost` recovery. Backgrounding a tab on iOS
+   *     can lose the WebGL context, and TFJS will not re-init the backend or
+   *     reload the model by itself. Recovering means re-creating the tracker,
+   *     which is the consumer's call (it owns the lifecycle), not something
+   *     this class can do behind its back.
+   *  2. TFJS is effectively dormant upstream — 4.22.0 (Oct 2024) is the last
+   *     release. Assume no upstream fix for either of the above.
    */
   preferredBackends?: string[];
   /**
@@ -173,27 +208,67 @@ export async function selectBackend(
   tf: TfLike,
   preferred: string[] = ['webgl'],
   cspHostile: string[] = CSP_HOSTILE_BACKENDS,
+  lastResort: string[] = LAST_RESORT_BACKENDS,
 ): Promise<BackendInfo> {
   let lastError: unknown = null;
 
-  for (const name of preferred) {
+  const tryBackend = async (name: string): Promise<boolean> => {
     try {
       // setBackend resolves false when the backend is registered but cannot
       // initialise (no GPU, no adapter), and throws when it is not registered
       // at all. Both mean "try the next one".
       if (await tf.setBackend(name)) {
         await tf.ready();
-        if (tf.getBackend() === name) {
-          return { backend: name, preferred: true, cspHostile: false, warning: null };
-        }
+        if (tf.getBackend() === name) return true;
       }
     } catch (err) {
       lastError = err;
     }
+    return false;
+  };
+
+  for (const name of preferred) {
+    if (await tryBackend(name)) {
+      return { backend: name, preferred: true, cspHostile: false, warning: null };
+    }
   }
 
-  // Nothing preferred came up. Let TFJS settle on whatever it can and describe
-  // the consequences rather than pretending this is fine.
+  // Nothing preferred came up. Before handing the choice to TFJS, CLAIM a
+  // known-CSP-safe backend explicitly.
+  //
+  // This is the whole reason this step exists. WebGL being unavailable is not
+  // hypothetical and is not confined to one engine: it happens under hardened
+  // browsing modes that disable WebGL outright, behind a `webgl.disabled`-style
+  // preference, in software-rendering-blocklisted driver configurations, and in
+  // headless/CI contexts. On such a machine, "let TFJS pick" resolves to
+  // whichever backend happens to be registered — and if the WASM backend is in
+  // the bundle, that is WASM, which the production embed's CSP
+  // (`script-src 'self' 'unsafe-inline'`, no `'wasm-unsafe-eval'`) forbids from
+  // instantiating at all. The result is a tracker that reports success and
+  // never emits a skeleton.
+  //
+  // CPU is pure JS: no eval, no WebAssembly, nothing the CSP objects to. It is
+  // genuinely slow, and it is reported as such below — but slow-and-working
+  // beats fast-and-blocked, and the choice is made here rather than left to
+  // whatever the bundler happened to register.
+  for (const name of lastResort) {
+    if (preferred.includes(name) || cspHostile.includes(name)) continue;
+    if (await tryBackend(name)) {
+      return {
+        backend: name,
+        preferred: false,
+        cspHostile: false,
+        warning:
+          `Pose tracking could not start the preferred backend (${preferred.join(', ')}) and ` +
+          `explicitly fell back to "${name}". It will run, but slowly — expect a long startup ` +
+          `and low frame rates. This usually means hardware acceleration (WebGL) is disabled or ` +
+          `unavailable in this browser.` + (lastError ? ` Last error: ${String(lastError)}` : ''),
+      };
+    }
+  }
+
+  // Nothing we named is usable either. Let TFJS settle on whatever it can and
+  // describe the consequences rather than pretending this is fine.
   await tf.ready();
   const backend = tf.getBackend();
   const hostile = cspHostile.includes(backend);

@@ -161,6 +161,92 @@ describe('MoveNetMultiPoseTracker', () => {
       await selectBackend(tf);
       expect(spy).toHaveBeenCalledWith('webgl');
     });
+
+    /**
+     * WebGL being unavailable is not hypothetical and is not one browser's
+     * problem: hardened browsing modes disable it, preferences disable it,
+     * driver blocklists disable it. On such a machine "let TFJS decide" can
+     * land on WASM, which the embed's CSP forbids from instantiating — a
+     * tracker that reports success and never emits a skeleton.
+     */
+    describe('CSP-safe last resort', () => {
+      it('claims CPU explicitly rather than letting TFJS pick WASM', async () => {
+        // Both cpu and wasm registered, webgl dead, and TFJS would have
+        // defaulted to wasm. The explicit claim must win.
+        const tf = fakeTf({ webgl: false, cpu: true, wasm: true }, 'wasm');
+        const info = await selectBackend(tf);
+        expect(info.backend).toBe('cpu');
+        expect(info.cspHostile).toBe(false);
+      });
+
+      it('reports the CPU fallback as not-preferred and explains the cost', async () => {
+        const info = await selectBackend(fakeTf({ webgl: false, cpu: true }, 'wasm'));
+        expect(info.preferred).toBe(false);
+        expect(info.warning).toMatch(/slowly/i);
+        expect(info.warning).toMatch(/WebGL/);
+      });
+
+      it('is tried only after every preferred backend has failed', async () => {
+        const tf = fakeTf({ webgpu: false, webgl: false, cpu: true }, 'wasm');
+        const spy = vi.spyOn(tf, 'setBackend');
+        await selectBackend(tf, ['webgpu', 'webgl']);
+        expect(spy.mock.calls.map((c) => c[0])).toEqual(['webgpu', 'webgl', 'cpu']);
+      });
+
+      it('is skipped entirely when a preferred backend works', async () => {
+        const tf = fakeTf({ webgl: true, cpu: true });
+        const spy = vi.spyOn(tf, 'setBackend');
+        await selectBackend(tf);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).not.toHaveBeenCalledWith('cpu');
+      });
+
+      it('refuses to claim a CSP-hostile backend as a last resort', async () => {
+        // Even if someone configures it, wasm must never be *chosen* here.
+        const tf = fakeTf({ webgl: false, wasm: true }, 'cpu');
+        const spy = vi.spyOn(tf, 'setBackend');
+        const info = await selectBackend(tf, ['webgl'], ['wasm'], ['wasm']);
+        expect(spy).not.toHaveBeenCalledWith('wasm');
+        expect(info.backend).toBe('cpu'); // whatever tf settled on, not our pick
+        expect(info.preferred).toBe(false);
+      });
+
+      it('never re-tries a backend already tried as preferred', async () => {
+        const tf = fakeTf({ cpu: false }, 'wasm');
+        const spy = vi.spyOn(tf, 'setBackend');
+        await selectBackend(tf, ['cpu']);
+        expect(spy.mock.calls.filter((c) => c[0] === 'cpu').length).toBe(1);
+      });
+
+      it('still degrades to TFJS auto-selection when the last resort is unregistered', async () => {
+        const info = await selectBackend(fakeTf({ webgl: false }, 'wasm'));
+        expect(info.backend).toBe('wasm');
+        expect(info.cspHostile).toBe(true);
+        expect(info.warning).toMatch(/wasm-unsafe-eval/);
+      });
+    });
+
+    it('keeps the BackendInfo shape the app renders from', async () => {
+      // demo.jsx reads `.cspHostile` and `.preferred` off this object to decide
+      // what to tell the player. Changing the shape silently breaks that.
+      for (const tf of [
+        fakeTf({ webgl: true }),
+        fakeTf({ webgl: false, cpu: true }, 'wasm'),
+        fakeTf({ webgl: false }, 'wasm'),
+      ]) {
+        const info = await selectBackend(tf);
+        expect(Object.keys(info).sort()).toEqual([
+          'backend',
+          'cspHostile',
+          'preferred',
+          'warning',
+        ]);
+        expect(typeof info.backend).toBe('string');
+        expect(typeof info.preferred).toBe('boolean');
+        expect(typeof info.cspHostile).toBe('boolean');
+        expect(info.warning === null || typeof info.warning === 'string').toBe(true);
+      }
+    });
   });
 
   it('caps maxPeople at the model ceiling of 6', () => {

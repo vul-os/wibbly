@@ -119,9 +119,20 @@ function TennisGame({
             }
         }
         
-        // Scene setup
+        // Scene setup.
+        //
+        // The court is lit as a sports hall after dark, not an afternoon
+        // outdoors — this is the "Court Lights" identity the whole UI is built
+        // on, and a daylight-blue sky behind a violet-black interface was the
+        // single loudest inconsistency in the product. The fog is what makes it
+        // read as an enclosed hall: the far end of the court falls off into the
+        // dark instead of ending at a hard horizon.
+        //
+        // Only the ambience changes here. The lights below still key the court
+        // itself, so play readability is unaffected.
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
+        scene.background = new THREE.Color(0x0b0810);
+        scene.fog = new THREE.Fog(0x0b0810, 26, 74);
 
         // Wii Sports style camera - positioned behind player 1
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -577,7 +588,19 @@ function TennisGame({
 
     return (
         <>
-            <div ref={containerRef} style={{ width: '100vw', height: '100vh' }} />
+            {/* 100dvh, not 100vh: Safari measures vh against the viewport with
+                its toolbars hidden, so a 100vh canvas overflows the visible
+                area and the page scrolls by the height of the browser chrome —
+                worst inside the demo's iframe. The class carries a vh fallback
+                for engines without dvh. */}
+            <div ref={containerRef} className="wb-gamecanvas" />
+            <style>{`
+                .wb-gamecanvas {
+                    width: 100%;
+                    height: 100vh;
+                    height: 100dvh;
+                }
+            `}</style>
 
             {/* Camera preview is rendered by the app, never injected by the
                 input library. Absent until the camera actually starts. */}

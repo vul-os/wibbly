@@ -71,17 +71,29 @@ export default function Play() {
         onInputState={setCameraStatus}
       />
 
+      {/* The score bug. Broadcast furniture: a brand block, a live input
+          readout, and the menu affordance — one unit, top-left, always on. */}
       <div className="wb-hud">
-        <button type="button" className="wb-hud__brand" onClick={() => navigate('/')} title="Quit to title">
+        <button
+          type="button"
+          className="wb-hud__brand"
+          onClick={() => navigate('/')}
+          title="Quit to title"
+        >
           wibbly
         </button>
+
+        <span className="wb-hud__divider" aria-hidden="true" />
+
         <span className={`wb-hud__status wb-hud__status--${cameraStatus}`}>
+          <span className="wb-hud__dot" />
           {cameraStatus === 'live' && 'camera tracking'}
           {cameraStatus === 'keyboard' && 'spacebar only'}
           {cameraStatus === 'unknown' && 'starting…'}
         </span>
+
         <button type="button" className="wb-hud__menu" onClick={() => setMenuOpen(true)}>
-          Menu <span className="wb-hud__key">ESC</span>
+          Menu <span className="wb-hud__key">Esc</span>
         </button>
       </div>
 
@@ -101,53 +113,92 @@ export default function Play() {
       />
 
       <style>{`
-        .wb-play { position: relative; width: 100%; height: 100vh; overflow: hidden; }
+        .wb-play {
+          position: relative; width: 100%; overflow: hidden;
+          /* Safari reports 100vh as the viewport WITHOUT its toolbars, so a
+             100vh play surface is taller than the visible area and the page
+             scrolls under the chrome. dvh is the correct unit; the vh line
+             remains as the fallback for older engines. */
+          height: 100vh;
+          height: 100dvh;
+        }
 
+        /* ── Score bug ────────────────────────────────────────────────────
+           One unit rather than three floating chips: brand, a hairline rule,
+           the live input readout, then the menu. Reads as broadcast furniture
+           laid over the court. */
         .wb-hud {
           position: fixed; top: 16px; left: 16px; z-index: 1000;
-          display: flex; align-items: center; gap: .6rem;
-          padding: .4rem .5rem .4rem .75rem;
-          border-radius: 999px;
-          background: rgba(13, 10, 16, .72);
-          border: 1px solid var(--border-strong, #3E3451);
-          backdrop-filter: blur(12px);
+          display: flex; align-items: center; gap: .7rem;
+          padding: .38rem .42rem .38rem .85rem;
+          border-radius: 12px;
+          background: rgba(8, 6, 16, .78);
+          border: 1px solid var(--border-strong, #3D3253);
+          /* Safari requires the -webkit- prefix for backdrop-filter; without it
+             the panel is simply flat, which is a graceful degradation. */
+          -webkit-backdrop-filter: blur(14px) saturate(1.2);
+          backdrop-filter: blur(14px) saturate(1.2);
           font-family: var(--sans, system-ui, sans-serif);
-          box-shadow: var(--shadow-sm, 0 4px 14px rgba(0,0,0,.4));
+          box-shadow: 0 18px 44px -20px rgba(0,0,0,.9);
         }
+
         .wb-hud__brand {
           background: none; border: 0; padding: 0;
-          color: var(--text, #F3EFF7);
-          font-family: inherit; font-size: 1rem; font-weight: 700;
-          letter-spacing: -.02em; cursor: pointer;
+          color: var(--text, #F4F0F8);
+          font-family: var(--display, system-ui, sans-serif);
+          font-weight: 800;
+          font-stretch: 106%;
+          font-size: 1.02rem; letter-spacing: -.035em;
+          text-transform: lowercase; cursor: pointer;
+          transition: color .18s ease;
         }
         .wb-hud__brand:hover { color: var(--accent, #FF4D9D); }
 
-        .wb-hud__status {
-          font-family: var(--mono, monospace); font-size: .66rem;
-          letter-spacing: .12em; text-transform: uppercase;
-          padding: .2rem .55rem; border-radius: 999px;
-          border: 1px solid var(--border, #272031); color: var(--text-3, #6E6479);
+        .wb-hud__divider {
+          width: 1px; height: 18px; flex: none;
+          background: var(--border-strong, #3D3253);
         }
-        .wb-hud__status--live { color: var(--shipped, #4ADE80); border-color: rgba(74,222,128,.3); }
-        .wb-hud__status--keyboard { color: var(--planned, #FFB020); border-color: rgba(255,176,32,.3); }
+
+        .wb-hud__status {
+          display: inline-flex; align-items: center; gap: .4rem;
+          font-family: var(--mono, monospace); font-size: .62rem; font-weight: 600;
+          letter-spacing: .16em; text-transform: uppercase;
+          color: var(--text-3, #6F6580);
+        }
+        .wb-hud__dot {
+          width: 6px; height: 6px; border-radius: 50%; flex: none;
+          background: currentColor;
+        }
+        .wb-hud__status--live { color: var(--shipped, #4ADE80); }
+        .wb-hud__status--live .wb-hud__dot {
+          box-shadow: 0 0 8px currentColor;
+          animation: wb-hudpulse 2.2s ease-in-out infinite;
+        }
+        .wb-hud__status--keyboard { color: var(--planned, #FFB020); }
+        @keyframes wb-hudpulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
         .wb-hud__menu {
           display: inline-flex; align-items: center; gap: .45rem;
-          padding: .4rem .8rem; border-radius: 999px;
+          padding: .42rem .8rem; border-radius: 8px;
           background: var(--accent, #FF4D9D); border: 0;
           color: var(--accent-ink, #16000A);
-          font-family: inherit; font-size: .82rem; font-weight: 700; cursor: pointer;
-          transition: background .18s ease;
+          font-family: inherit; font-size: .8rem; font-weight: 700;
+          cursor: pointer; transition: background .18s ease;
         }
         .wb-hud__menu:hover { background: var(--accent-hover, #FF7FB8); }
         .wb-hud__key {
-          font-family: var(--mono, monospace); font-size: .6rem; letter-spacing: .08em;
-          padding: .1rem .3rem; border-radius: 4px; background: rgba(22,0,10,.2);
+          font-family: var(--mono, monospace); font-size: .58rem; font-weight: 700;
+          letter-spacing: .1em; text-transform: uppercase;
+          padding: .12rem .32rem; border-radius: 4px; background: rgba(22,0,10,.2);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .wb-hud__status--live .wb-hud__dot { animation: none; }
         }
 
         @media (max-width: 600px) {
-          .wb-hud { top: 10px; left: 10px; }
-          .wb-hud__status { display: none; }
+          .wb-hud { top: 10px; left: 10px; gap: .5rem; }
+          .wb-hud__status, .wb-hud__divider { display: none; }
         }
       `}</style>
     </div>

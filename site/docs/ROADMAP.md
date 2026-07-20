@@ -3,6 +3,53 @@
 Three phases. The ordering is by risk and by dependency, not by how good each item would look in a
 demo.
 
+<style>
+.wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
+:root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
+.wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
+.wbf svg{display:block;height:auto;width:100%;min-width:620px}
+.wbf img{display:block;width:100%;height:auto}
+.wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
+.wbf figcaption b{color:var(--tx)}
+</style>
+
+<figure class="wbf">
+<div class="sc">
+<svg viewBox="0 0 900 250" width="900" role="img" aria-label="The three phases as a dependency chain. Phase 1, the library, is mostly landed with one item outstanding. Phase 2, the platform, is partly started and is gated on validating multi-person tracking against real people. Phase 3, depth, has not been started.">
+  <g font-family="ui-monospace, monospace">
+    <text x="16" y="26" font-size="10" fill="var(--tx2)" letter-spacing="1.3">ORDERED BY RISK AND DEPENDENCY — NOT BY DEMO VALUE</text>
+    <rect x="14" y="44" width="272" height="122" rx="8" fill="var(--sf)" stroke="var(--ok)" stroke-width="1.4"/>
+    <text x="30" y="66" font-size="9" fill="var(--tx2)" letter-spacing="1.3">PHASE 1</text>
+    <text x="30" y="86" font-size="13.5" font-weight="700" fill="var(--tx)">The library</text>
+    <text x="30" y="106" font-size="10" fill="var(--ok)" font-weight="700">● MOSTLY LANDED</text>
+    <text x="30" y="126" font-size="9.5" fill="var(--tx2)">6 of 7 items done · 86 tests</text>
+    <text x="30" y="142" font-size="9.5" fill="var(--tx2)">outstanding: hand tracking</text>
+    <text x="30" y="158" font-size="9.5" fill="var(--tx2)">blocks: everything else</text>
+    <rect x="314" y="44" width="272" height="122" rx="8" fill="var(--sf)" stroke="var(--am)" stroke-width="1.4"/>
+    <text x="330" y="66" font-size="9" fill="var(--tx2)" letter-spacing="1.3">PHASE 2</text>
+    <text x="330" y="86" font-size="13.5" font-weight="700" fill="var(--tx)">The platform</text>
+    <text x="330" y="106" font-size="10" fill="var(--am)" font-weight="700">◐ PARTLY STARTED</text>
+    <text x="330" y="126" font-size="9.5" fill="var(--tx2)">tennis on the seams · analytics out</text>
+    <text x="330" y="142" font-size="9.5" fill="var(--tx2)">gated on: real-people validation</text>
+    <text x="330" y="158" font-size="9.5" fill="var(--tx2)">soccer, boxing: no code</text>
+    <rect x="614" y="44" width="272" height="122" rx="8" fill="none" stroke="var(--ln)" stroke-width="1.4" stroke-dasharray="5 5"/>
+    <text x="630" y="66" font-size="9" fill="var(--tx2)" letter-spacing="1.3">PHASE 3</text>
+    <text x="630" y="86" font-size="13.5" font-weight="700" fill="var(--tx)">Depth</text>
+    <text x="630" y="106" font-size="10" fill="var(--tx2)" font-weight="700">○ NOT STARTED</text>
+    <text x="630" y="126" font-size="9.5" fill="var(--tx2)">RTMO on ONNX + WebGPU</text>
+    <text x="630" y="142" font-size="9.5" fill="var(--tx2)">Tauri shell · networked play</text>
+    <text x="630" y="158" font-size="9.5" fill="var(--tx2)">incentive rails</text>
+    <path d="M290 105 H310" stroke="var(--ln)" stroke-width="1.6"/>
+    <path d="M590 105 H610" stroke="var(--ln)" stroke-width="1.6"/>
+    <rect x="14" y="188" width="872" height="46" rx="8" fill="none" stroke="var(--a)" stroke-width="1.3"/>
+    <text x="30" y="207" font-size="10" font-weight="700" fill="var(--a)" letter-spacing="1.2">THE GATE NOBODY SHOULD SKIP</text>
+    <text x="30" y="225" font-size="10" fill="var(--tx2)">Validate multi-person tracking against real people and real cameras. It is implemented and unit-tested on fixtures; it has never met a living room.</text>
+  </g>
+</svg>
+</div>
+<figcaption>The highest-risk component — the player binder — was deliberately built <b>first</b>, not deferred. What has not happened is validation: fixtures are not a living room, and that gate sits in front of every claim about couch multiplayer.</figcaption>
+</figure>
+
 ## Phase 1 — the library (blocks everything)
 
 Nothing else could start until the input layer was importable. **This phase has largely landed.**

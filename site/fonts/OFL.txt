@@ -1,0 +1,32 @@
+Fonts vendored for the wibbly mini-site and docs
+================================================
+
+Every font below is served from this directory only. Nothing is fetched from a
+CDN or any third-party host at runtime — the pages are served under a
+`default-src 'self'` Content-Security-Policy and hold to it.
+
+All three families are licensed under the SIL Open Font License, Version 1.1,
+which permits redistribution and embedding, including in this bundled form.
+Full licence text: https://openfontlicense.org/  (OFL-1.1)
+
+  archivo.woff2, archivo-ext.woff2
+      Archivo (variable: weight 100–900, width 62–125%)
+      Copyright (c) The Archivo Project Authors
+      https://github.com/Omnibus-Type/Archivo
+      Used for display headings — run wide, in capitals, as the "scoreboard" voice.
+
+  instrument-sans.woff2, instrument-sans-ext.woff2
+      Instrument Sans (variable: weight 400–700, width 75–100%)
+      Copyright (c) The Instrument Sans Project Authors
+      https://github.com/Instrument/instrument-sans
+      Used for body text.
+
+  jetbrains-mono.woff2
+      JetBrains Mono (variable: weight 100–800)
+      Copyright (c) JetBrains s.r.o.
+      https://github.com/JetBrains/JetBrainsMono
+      Used for every label, status and measurement — the "instrument" voice.
+
+Each family ships as two subsets (latin and latin-ext) selected by the
+`unicode-range` descriptor on the @font-face rules, except JetBrains Mono which
+ships as a single file.

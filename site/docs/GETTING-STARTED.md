@@ -3,6 +3,16 @@
 wibbly runs as a Vite dev server today. There is no release binary, no Docker image, no installer and
 no hosted deployment — those arrive when the input library lands. What follows is the whole of it.
 
+<style>
+.wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
+:root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
+.wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
+.wbf svg{display:block;height:auto;width:100%;min-width:620px}
+.wbf img{display:block;width:100%;height:auto}
+.wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
+.wbf figcaption b{color:var(--tx)}
+</style>
+
 ## Requirements
 
 - **Node 20+** and npm.
@@ -11,6 +21,31 @@ no hosted deployment — those arrive when the input library lands. What follows
   unsupported — if you try one, report what happened.
 - **A webcam**, and a machine with working WebGL.
 - **Room.** About two metres of clearance, with your upper body in frame.
+
+<figure class="wbf">
+<div class="sc">
+<svg viewBox="0 0 900 260" width="900" role="img" aria-label="A framing guide: stand about two metres back from the camera with your upper body — shoulders, elbows and wrists — inside the frame, and even light on your face rather than a bright window behind you.">
+  <g font-family="ui-monospace, monospace">
+    <text x="16" y="24" font-size="10" fill="var(--tx2)" letter-spacing="1.3">FRAMING GUIDE — SIDE VIEW</text>
+    <rect x="24" y="46" width="26" height="18" rx="3" fill="var(--sf)" stroke="var(--a)" stroke-width="1.4"/>
+    <circle cx="37" cy="55" r="5" fill="var(--a)"/>
+    <text x="10" y="82" font-size="9" fill="var(--tx2)">camera</text>
+    <path d="M60 55 H700" stroke="var(--ln)" stroke-width="1.4" stroke-dasharray="5 5"/>
+    <path d="M60 40 V70 M700 40 V70" stroke="var(--ln)" stroke-width="1.2"/>
+    <text x="330" y="36" font-size="12" font-weight="700" fill="var(--tx)">≈ 2 metres</text>
+    <g transform="translate(700,0)">
+      <circle cx="20" cy="90" r="22" fill="none" stroke="var(--tx)" stroke-width="2.2"/>
+      <path d="M20 112 V178 M-20 138 H60 M20 178 L-6 230 M20 178 L46 230" transform="translate(0,0)" stroke="var(--tx)" stroke-width="2.2" fill="none"/>
+    </g>
+    <rect x="686" y="60" width="188" height="150" rx="10" fill="none" stroke="var(--ok)" stroke-width="1.6" stroke-dasharray="4 4"/>
+    <text x="694" y="76" font-size="9" fill="var(--ok)" font-weight="700">UPPER BODY IN FRAME</text>
+    <text x="694" y="234" font-size="9" fill="var(--tx2)">shoulders · elbows · wrists</text>
+    <text x="330" y="250" font-size="10" fill="var(--tx2)">Even light on you — not a bright window behind you.</text>
+  </g>
+</svg>
+</div>
+<figcaption>What the setup framing check is actually looking for: <b>about two metres of standing distance</b>, with shoulders, elbows and wrists inside the frame. This is a diagram, not a screenshot — see the honesty note under the setup screenshots below for why.</figcaption>
+</figure>
 
 ## Run it
 
@@ -33,12 +68,42 @@ npm run preview   # serve the built bundle locally
 
 ## Play the tennis demo
 
-1. Open the game from the menu.
+1. Open the game from the menu. First run walks you through a three-step setup wizard before the
+   court appears.
+
+<figure class="wbf">
+<div class="sc">
+<img src="/products/wibbly/shots/setup-intro.png" alt="Setup step 1: what the camera is for and why it stays on-device, shown before the browser&#x27;s camera permission prompt appears." loading="lazy" decoding="async" />
+</div>
+<figcaption>Step 1 of 3. wibbly explains <b>why</b> it wants the camera before the browser asks permission for it — the pipeline described in <a href="/products/wibbly/docs/architecture">Architecture</a> starts here.</figcaption>
+</figure>
+
+<figure class="wbf">
+<div class="sc">
+<img src="/products/wibbly/shots/setup-handedness.png" alt="Setup step 2: choosing left- or right-handed play, written to Calibration and keyed to your player id." loading="lazy" decoding="async" />
+</div>
+<figcaption>Step 2 of 3. Handedness is picked once here and persisted to <code>Calibration</code> — see <a href="/products/wibbly/docs/configuration">Configuration</a> for how it flips the swing sign rather than branching the code.</figcaption>
+</figure>
+
+<figure class="wbf">
+<div class="sc">
+<img src="/products/wibbly/shots/setup-framing.png" alt="Setup step 3: the live framing check running over the camera preview, verifying standing distance and that the upper body is in frame." loading="lazy" decoding="async" />
+</div>
+<figcaption>Step 3 of 3, <code>checkFraming()</code> running live. <b>Honesty note:</b> this screenshot was captured in headless Chromium against a synthetic test-pattern camera, not a person — TF.js falls back to its CPU backend under SwiftShader. The preview and the live verdict are real; there is no person in frame, so the check correctly reports that it cannot see one. No skeleton is drawn here because none was detected.</figcaption>
+</figure>
+
 2. Stand roughly **two metres** back, upper body fully in frame, with even light on you rather than a
-   bright window behind you.
+   bright window behind you — the same framing the guide above and step 3 check for.
 3. **Swing.** The recognizer watches wrist velocity across a short history and fires once per swing,
    gated by a cooldown so one stroke does not register three times. Set your handedness in the camera
    preview — it takes effect on the very next frame.
+
+<figure class="wbf">
+<div class="sc">
+<img src="/products/wibbly/shots/play.png" alt="Tennis in play: the Three.js court and HUD during a rally." loading="lazy" decoding="async" />
+</div>
+<figcaption>The tennis court and HUD, mid-rally. <b>Honesty note:</b> also captured against the synthetic test-pattern camera used across these screenshots, so no swing was actually detected in this frame — the racket state and score shown are whatever the demo was in when the screenshot was taken, not a live gesture. Treat this as a UI reference, not proof of a working swing.</figcaption>
+</figure>
 
 Three limits are worth knowing before you conclude something is broken.
 

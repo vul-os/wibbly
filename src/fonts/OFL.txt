@@ -1,0 +1,78 @@
+Fonts vendored for the wibbly APP (src/)
+========================================
+
+These are the app's own copies. src/style.css imports them by relative path so
+Vite emits them as hashed, same-origin assets — which is what makes them work
+under the demo build's `default-src 'self'` / `font-src 'self' data:` CSP, and
+what makes them resolve correctly when the demo is served from the sub-path
+/products/wibbly/play/ rather than the site root.
+
+Nothing here is fetched from a CDN or any third-party host at runtime. That is
+verified, not assumed: scripts/verify-demo.mjs asserts that EVERY network
+request the demo makes is same-origin, and these .woff2 files appear in that
+request list under the deploy prefix.
+
+SAME FAMILIES AS THE MINI-SITE, ON PURPOSE. site/fonts/ carries Archivo,
+Instrument Sans and JetBrains Mono, and so does this directory — the two
+surfaces are one product, a visitor reaches the app from the landing page in
+one click, and two different display voices across that one click would read
+as an accident rather than a decision. An earlier pass had the app on
+Bricolage Grotesque; that face is dropped here because ofisi already owns it
+suite-wide.
+
+NOTE ON DUPLICATION. site/fonts/ is the mini-site's asset root and is a
+SEPARATE bundle. The app deliberately does not reach across into it: site/ is
+not this app's asset root, a build cannot import from it cleanly, and the
+demo's CSP requires these to be emitted as hashed assets under the app's own
+base path. So the bytes are duplicated and the families are kept in step by
+hand. (jetbrains-mono.woff2 is byte-identical between the two directories.)
+
+All three families are licensed under the SIL Open Font License, Version 1.1,
+which permits redistribution and embedding, including in this bundled form.
+Full licence text: https://openfontlicense.org/  (OFL-1.1)
+
+  archivo.woff2, archivo-ext.woff2
+      Archivo (variable: weight 100–900, width 62–125%)
+      Copyright (c) The Archivo Project Authors
+      https://github.com/Omnibus-Type/Archivo
+      Reserved Font Name: "Archivo"
+      The display voice: wordmark, headings, game names. Archivo has no
+      optical-size axis; it has a WIDTH axis, and that is the axis this app
+      drives per-use — 118% at wordmark scale down to 104% at UI scale, via
+      the high-level `font-stretch` property. Wide-and-tight is the scoreboard
+      look the whole identity is built on. See the header of src/style.css for
+      the full width scale and why its floor stays near normal width.
+
+  instrument-sans.woff2, instrument-sans-ext.woff2
+      Instrument Sans (variable: weight 400–700, width 75–100%)
+      Copyright (c) The Instrument Sans Project Authors
+      https://github.com/Instrument/instrument-sans
+      Reserved Font Name: "Instrument Sans"
+      Body prose only. This app carries a lot of carefully-worded honesty copy
+      about what is and is not built, and that text has to be read, not
+      admired. The app asks for weights 400–700 only, which is exactly the
+      range this file covers — nothing is left to synthesis, which matters
+      because :root sets `font-synthesis: none`.
+
+  jetbrains-mono.woff2
+      JetBrains Mono (variable: weight 100–800)
+      Copyright (c) 2020 The JetBrains Mono Project Authors
+      https://github.com/JetBrains/JetBrainsMono
+      Reserved Font Name: "JetBrains Mono"
+      The telemetry register: every number, status, unit, key cap and label,
+      always uppercase, wide-tracked and tabular. If it is a measurement, it is
+      set in this face — that rule is what makes data read as data. This face
+      is UNCHANGED by the move to Archivo, which is why the app's data surfaces
+      look exactly as they did.
+
+Archivo and Instrument Sans each ship as two subsets (latin and latin-ext)
+selected by the `unicode-range` descriptor on their @font-face rules, matching
+the mini-site's bundle. The app's own copy is latin-only in practice, so the
+two -ext files are declared but never fetched at runtime; they are kept so that
+any future accented copy renders in the right face instead of falling back.
+JetBrains Mono ships as a single file.
+
+Under OFL-1.1 the fonts may be bundled and redistributed with the software,
+including sold as part of it, but may not be sold on their own, and any
+Modified Version must not use the Reserved Font Names above. These files are
+unmodified subsets/builds of the upstream releases.

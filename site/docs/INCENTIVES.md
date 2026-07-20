@@ -26,6 +26,46 @@ themselves is a different and larger breach of trust than a web page doing it.
 
 Ordered by fit with what magnetite already has, so the cheapest rungs come first.
 
+<style>
+.wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
+:root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
+.wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
+.wbf svg{display:block;height:auto;width:100%;min-width:620px}
+.wbf img{display:block;width:100%;height:auto}
+.wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
+.wbf figcaption b{color:var(--tx)}
+</style>
+
+<figure class="wbf">
+<div class="sc">
+<svg viewBox="0 0 900 268" width="900" role="img" aria-label="The four-rung incentive ladder, drawn as ascending steps. Rung one is host-earns, which needs no new machinery. Rung two is non-custodial paid games and cosmetics. Rung three is tournaments with entry pools. Rung four is a bounty or patronage pool. None of the four is built.">
+  <g font-family="ui-monospace, monospace">
+    <text x="16" y="26" font-size="10" fill="var(--tx2)" letter-spacing="1.3">CHEAPEST RUNG FIRST — NONE OF THE FOUR IS BUILT</text>
+    <rect x="14" y="196" width="206" height="48" rx="7" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="30" y="216" font-size="11.5" font-weight="700" fill="var(--tx)">1 · Host-earns</text>
+    <text x="30" y="233" font-size="9.5" fill="var(--tx2)">no new economic machinery</text>
+    <rect x="236" y="146" width="206" height="48" rx="7" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="252" y="166" font-size="11.5" font-weight="700" fill="var(--tx)">2 · Paid games</text>
+    <text x="252" y="183" font-size="9.5" fill="var(--tx2)">non-custodial, low platform cut</text>
+    <rect x="458" y="96" width="206" height="48" rx="7" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="474" y="116" font-size="11.5" font-weight="700" fill="var(--tx)">3 · Tournaments</text>
+    <text x="474" y="133" font-size="9.5" fill="var(--tx2)">the pool is the prize</text>
+    <rect x="680" y="46" width="206" height="48" rx="7" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="696" y="66" font-size="11.5" font-weight="700" fill="var(--tx)">4 · Bounty pool</text>
+    <text x="696" y="83" font-size="9.5" fill="var(--tx2)">works before there is an audience</text>
+    <g stroke="var(--ln)" stroke-width="1.5" fill="none">
+      <path d="M220 208 H236"/>
+      <path d="M442 158 H458"/>
+      <path d="M664 108 H680"/>
+    </g>
+    <path d="M14 258 H886" stroke="var(--a)" stroke-width="1.3" stroke-dasharray="5 5"/>
+    <text x="14" y="253" font-size="9.5" fill="var(--a)" font-weight="700">ADS SIT BELOW THIS LINE — DECLINED BY DEFAULT, AVAILABLE ONLY AS AN OPT-IN AdProvider SEAM</text>
+  </g>
+</svg>
+</div>
+<figcaption>Rungs 1 and 2 reuse payment machinery magnetite already has, which is why they come first. Rung 3 carries a real constraint: gesture input is <b>client-attested</b>, so high-stakes formats need a referee or in-person play. <b>No payment path, host-earns split or tournament code exists in wibbly today.</b></figcaption>
+</figure>
+
 1. **Host-earns.** magnetite already pays capacity providers. A popular gesture game generates
    sessions; a developer who also hosts earns from them. This requires no new economic machinery at
    all — only the `InputProvider` seam that gesture games need anyway.
