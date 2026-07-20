@@ -1,12 +1,16 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { assetUrl } from '../mode.js';
 
 export function loadCourt(scene) {
     return new Promise((resolve, reject) => {
         const loader = new GLTFLoader();
         
         loader.load(
-            '/models/court.glb',
+            // Resolved against the build base, NOT hardcoded to the site root:
+            // at /products/wibbly/play/ the old absolute path 404'd and the
+            // court silently degraded to placeholder geometry.
+            assetUrl('models/court.glb'),
             (gltf) => {
                 console.log('Court loaded successfully');
                 const model = gltf.scene;

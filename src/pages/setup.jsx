@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calibration, WibblyInput, checkFraming, drawSkeletons } from '@vulos/wibbly-input';
 import { recordSetup } from '../components/game-settings.js';
+import { modelUrl } from '../mode.js';
 
 /**
  * First-run setup.
@@ -53,6 +54,8 @@ export default function Setup() {
 
     const wibbly = new WibblyInput({
       calibration: calibrationRef.current,
+      // Same-origin vendored weights — see src/mode.js.
+      trackerConfig: { modelUrl: modelUrl() },
       frame: { width: 640, height: 480, fps: 30 },
       onError: (err) => console.error('[setup] pipeline error:', err),
     });
@@ -198,8 +201,9 @@ export default function Setup() {
                 tab or leaving this page stops the camera and releases the device.
               </li>
               <li>
-                <strong>A model downloads once.</strong> The pose model is fetched from Google's
-                TFJS CDN the first time, then cached by your browser.
+                <strong>The model ships with the app.</strong> The ~9&nbsp;MB pose model is served
+                from this same origin, not fetched from a third-party CDN. It loads once, then
+                your browser caches it.
               </li>
               <li>
                 <strong>You can say no.</strong> The whole game is playable on the spacebar.

@@ -563,10 +563,13 @@
       <p class="tagline">A gesture is an input event like any other — and the frames it came from never leave the device.</p>
       <p class="blurb">wibbly is an input layer plus a shell that makes camera-controlled games cheap to build, with one reference game (tennis) to prove it. Pose estimation runs in a plain browser tab: no console, no download, no dongle. The input library is real — <code>@vulos/wibbly-input</code> implements all four seams behind 86 unit tests that run without a camera, and the tennis game consumes it. What is still only written down is hand tracking, a second player actually playing, and every form of networked play. This page keeps those two lists apart. Everything is <a class="link" href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">MIT on GitHub</a>.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="#status">See what's actually built</a>
-        <a class="btn btn-ghost" href="/products/wibbly/docs">Read the docs</a>
+        <a class="btn btn-primary" href="/products/wibbly/play/" target="_top">Play it in your browser</a>
+        <a class="btn btn-ghost" href="#status">See what's actually built</a>
+        <a class="btn btn-ghost" href="/products/wibbly/docs" target="_top">Read the docs</a>
         <a class="btn btn-ghost" href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">View on GitHub</a>
       </div>
+      <p class="status-line" style="border-left-color:var(--shipped);background:var(--shipped-dim)"><b style="color:var(--shipped)">About the demo</b><br />
+        One game, one gesture, solo. It asks for your camera and needs <b style="font-family:inherit;text-transform:none;letter-spacing:0;font-size:inherit">no server and no account</b> — pose estimation and the model both run in the tab, and frames are never uploaded. There is no second player in it, because networked play does not work yet (see below).</p>
       <p class="status-line"><b>Honest status</b><br />
         React&nbsp;19 + Vite + Three.js. Phase 1 has landed: the old 480-line detector that injected its own DOM is gone, replaced by <code>@vulos/wibbly-input</code> — MoveNet <em>MultiPose</em>, a spatial player binder, handedness as a sign flip rather than a hardcode, and an adaptive frame pacer, all under 86 passing tests. What those tests prove is the logic, not a room: every multi-person test runs against <em>synthetic skeleton fixtures</em>, so the tracker and binder have never seen two real people. Tennis still drives one player, with one gesture. Hand tracking, networked play, a desktop shell and a release build do not exist.</p>
 
@@ -1080,8 +1083,10 @@ npm run dev
         <img src="/brand/icon-128.png" alt="Vulos logo" />
         <div>
           <h3>Listed alongside the Vulos suite</h3>
-          <p><a href="/products" target="_top" style="color:var(--text);font-weight:600">Vulos</a> is a family of open, self-hostable software. wibbly is fully independent — it runs on a machine you control, needs no Vulos account and no Vulos infrastructure — and shares the suite's posture that computation should happen where the data already is. Its planned platform layer (sessions, discovery, payments) comes from magnetite, which is itself standalone.</p>
-          <a class="more" href="/products" target="_top">Explore Vulos →</a>
+          <p><a href="/products" target="_top" style="color:var(--text);font-weight:600">Vulos</a> is a family of open, self-hostable software. wibbly is fully independent — it runs on a machine you control, needs no Vulos account and no Vulos infrastructure — and shares the suite's posture that computation should happen where the data already is. Its planned platform layer (sessions, discovery, payments) comes from <a class="link" href="/products/magnetite" target="_top">magnetite</a>, which is itself standalone.</p>
+          <p style="margin-top:14px"><b style="color:var(--text)">Where magnetite fits.</b> The demo above needs no server at all — solo play is entirely local. The path <em>out</em> of wibbly to a server is partly real: signed attested input events reach a live magnetite node and come back <code>attested_ack</code>, which is proven end-to-end. What does not exist is the far side — <b style="font-family:inherit;text-transform:none;letter-spacing:0;font-size:inherit">no game in either repo reads gesture input off that queue</b>, so running a magnetite node does not get you multiplayer wibbly today. Magnetite is worth running on its own terms: a deterministic authoritative runtime, a WASM sandbox, replay verification, and bring-any-server hosting.</p>
+          <a class="more" href="/products/magnetite" target="_top">See magnetite →</a>
+          <a class="more" href="/products" target="_top" style="margin-left:18px">Explore Vulos →</a>
         </div>
       </div>
     </div>

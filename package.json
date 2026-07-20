@@ -8,10 +8,15 @@
   ],
   "scripts": {
     "dev": "vite",
+    "dev:demo": "VITE_WIBBLY_MODE=demo vite",
     "build": "vite build",
+    "build:demo": "VITE_WIBBLY_MODE=demo WIBBLY_BASE=/products/wibbly/play/ WIBBLY_OUTDIR=dist-demo vite build",
     "preview": "vite preview",
     "screenshots": "node scripts/screenshots.mjs",
-    "test": "npm run test --workspace @vulos/wibbly-input && npm run test --workspace @vulos/wibbly-magnetite",
+    "verify:model": "node scripts/verify-model.mjs",
+    "verify:demo": "node scripts/verify-demo.mjs",
+    "test": "npm run test --workspace @vulos/wibbly-input && npm run test --workspace @vulos/wibbly-magnetite && npm run test:app",
+    "test:app": "vitest run --config vitest.config.js",
     "typecheck": "npm run typecheck --workspace @vulos/wibbly-input && npm run typecheck --workspace @vulos/wibbly-magnetite"
   },
   "devDependencies": {

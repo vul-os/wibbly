@@ -12,6 +12,8 @@ import Title from './pages/title.jsx';
 import Setup from './pages/setup.jsx';
 import Play from './pages/play.jsx';
 import NotFound from './pages/not-found.jsx';
+import Demo from './pages/demo.jsx';
+import { isDemo } from './mode.js';
 
 /**
  * Four surfaces, and that is the whole app:
@@ -26,7 +28,19 @@ import NotFound from './pages/not-found.jsx';
  * duplicating it inside the app only created a second place for claims to
  * drift out of date.
  */
+/**
+ * Demo mode is deliberately NOT a route inside the app above.
+ *
+ * It renders one component and nothing else — no Router, no history, no 404,
+ * no route that could push the embedding page somewhere unexpected. A router
+ * inside an iframe is a way to navigate the frame, and the demo's contract
+ * with the page hosting it is that it never navigates at all.
+ *
+ * Dropping the router also drops react-router from the demo bundle.
+ */
 function App() {
+  if (isDemo()) return <Demo />;
+
   return (
     <Router>
       <Routes>

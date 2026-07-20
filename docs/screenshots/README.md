@@ -28,4 +28,21 @@ tracking actually succeed.
 | site-landing-light.png | Mini-site landing page | captured |
 | site-landing-dark.png | Mini-site landing page | captured |
 
-Regenerate: `npm run screenshots`
+## Demo build (`demo-*.png`)
+
+These come from a DIFFERENT script — `npm run verify:demo`
+(`scripts/verify-demo.mjs`) — not from this one, so `npm run screenshots` neither
+produces nor refreshes them. They are captured at 1000×640, an iframe-shaped
+viewport rather than a desktop one, against `dist-demo/` served under the real
+`/products/wibbly/play/` sub-path with the production CSP applied, and with
+ANGLE/SwiftShader enabled so TFJS gets a real (software) WebGL backend.
+
+| File | Surface |
+|------|---------|
+| demo-intro.png | The whole of demo onboarding — camera explainer and handedness on one card |
+| demo-play.png | Demo tennis with the camera live, "Demo" marker in the HUD |
+| demo-magnetite-cta.png | The dismissible magnetite panel, including the "does not work yet" warning |
+| demo-spacebar.png | The camera-denied path — still playable on the spacebar |
+| demo-iframe.png | The demo inside a 420px same-origin iframe |
+
+Regenerate: `npm run screenshots` (app) · `npm run verify:demo` (demo)

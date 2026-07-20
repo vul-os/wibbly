@@ -47,7 +47,7 @@ vendor to receive one. Games run in a browser tab with zero install. Pose infere
 locally on the machine holding the camera, so in networked play the wire carries
 gesture events — not video.
 
-[Spec](WIBBLY.md) · [Quick start](#quick-start) · [Architecture](#architecture--the-seams) · [Model selection](#model-selection) · [Docs](site/docs/)
+[Spec](WIBBLY.md) · [Quick start](#quick-start) · [Demo mode](#demo-mode) · [Architecture](#architecture--the-seams) · [Model selection](#model-selection) · [Docs](site/docs/)
 
 ---
 
@@ -57,7 +57,7 @@ Audited against the tree, not against the pitch.
 
 | Capability | Status | Reality |
 |---|---|---|
-| `packages/wibbly-input` library | **Built** | TypeScript, zero DOM injection, 86 unit tests passing without a camera |
+| `packages/wibbly-input` library | **Built** | TypeScript, zero DOM injection, 96 unit tests passing without a camera |
 | `FrameSource` → `WebcamFrameSource` | **Built** | `getUserMedia`, owns its own capture loop |
 | `PoseTracker` → `MoveNetMultiPoseTracker` | **Built** | MoveNet **MultiPose** Lightning, returns `Person[]`, injectable detector for tests |
 | `GestureRecognizer` → `SwingRecognizer` | **Built** | Pure `detectSwing()` over wrist-velocity history; unit-testable without a camera |
@@ -76,6 +76,8 @@ Audited against the tree, not against the pitch.
 | **A game that consumes gesture input over the wire** | *Planned* | Accepted events land in magnetite's per-connection queue and **nothing drains them** — no game in either repo reads gesture input yet. The pipe is proven; nothing is on the other end. |
 | **Tauri native shell** | *Planned (phase 2)* | Researched and specified; no Rust in this repo |
 | **RTMO / ONNX / WebGPU tracker** | *Planned (phase 3)* | No browser port exists to benchmark against |
+| **Vendored pose model** | **Built** | MoveNet MultiPose Lightning checked in at `public/models/` (~9.3 MiB) and served same-origin. Byte-verified against its own weight manifest by `npm run verify:model`. The TF Hub CDN is now an explicit opt-in, not the default. |
+| **Demo mode** (`VITE_WIBBLY_MODE=demo`) | **Built** | A separate single-surface build for embedding at `vulos.org/products/wibbly/play/`: instant start, no router, no persistent storage, magnetite hard-disabled, local model only. Verified end-to-end under the real production CSP by `npm run verify:demo` — **26/26 checks, zero external network requests**. |
 | Title screen, setup flow, in-game menu | **Built** | `src/pages/` is now four surfaces: title, first-run setup, play, 404. The marketing shell (`home`, `about`, `game-menu`, `game-container`) is deleted, along with the fabricated JSON-LD rating and play count that were still in `index.html`. Soccer and Boxing appear on the title screen as **Planned**, non-selectable, pointing at [`WIBBLY.md` §8](WIBBLY.md). The canonical public writing is `site/landing.html`. |
 
 ---
@@ -137,13 +139,137 @@ model fails to load, which is the correct degradation.
 ```bash
 npm run build          # production bundle → dist/
 npm run preview        # serve dist/
-npm test               # 77 unit tests, no camera required
+npm test               # 177 unit tests, no camera required
 npm run typecheck
 npm run screenshots    # requires: npm i -D playwright && npx playwright install chromium
 ```
 
-The MoveNet weights are fetched at runtime from Google's model host on first load. There
-is no offline bundle yet.
+### The embeddable demo
+
+```bash
+npm run build:demo     # → dist-demo/, based at /products/wibbly/play/
+npm run verify:demo    # builds it, serves it at that sub-path under the REAL
+                       # production CSP, and drives it with Chromium
+npm run verify:model   # re-check the vendored weights against their manifest
+```
+
+`build:demo` produces a self-contained single-surface build for embedding in a
+same-origin iframe. See [Demo mode](#demo-mode) below.
+
+### Where the model comes from
+
+The MoveNet MultiPose Lightning weights are **vendored into this repo** at
+`public/models/movenet-multipose-lightning/` (~9.3 MiB, Apache-2.0, provenance and
+hashes in [its README](public/models/movenet-multipose-lightning/README.md)) and served
+same-origin. This is the default in both builds.
+
+That is not a preference, it is a requirement: the demo is embedded on a page served
+under `connect-src 'self'`, where a fetch to `tfhub.dev` is refused outright and the
+detector would never initialise — silently, with no error and no 404, just a game that
+ignores you.
+
+To skip the vendored weights and pull from TF Hub at runtime instead:
+
+```bash
+VITE_WIBBLY_MODEL=cdn npm run build
+```
+
+Demo builds reject that setting rather than producing a build that cannot work.
+
+---
+
+## Demo mode
+
+`VITE_WIBBLY_MODE=demo` builds a different shell, not the app with bits hidden. It exists
+for one deployment — a same-origin iframe on the marketing site — and that context has
+constraints the normal app does not.
+
+```bash
+npm run dev:demo       # http://localhost:5173
+npm run build:demo     # → dist-demo/, base /products/wibbly/play/
+npm run verify:demo    # the proof, below
+```
+
+Either build can be flipped at runtime by the host page with
+`window.__WIBBLY_MODE__ = 'demo' | 'full'`, which follows the same pattern
+`magnetiteConfig()` already used. All of it resolves in
+[`src/mode.js`](src/mode.js) through pure functions, so the gating is unit-tested
+rather than trusted.
+
+| | Full app | Demo |
+|---|---|---|
+| Surfaces | title → setup → play → 404, react-router | one component, **no router at all** |
+| Onboarding | 3 steps: permission → handedness → framing | one inline card: explainer + handedness, then tennis |
+| Camera explainer | yes | **yes — deliberately kept** |
+| Handedness | `Calibration` on `localStorage` | `Calibration` on `MemoryStorage` |
+| Settings | persisted to `localStorage` | React state only |
+| Pose model | vendored, same-origin | vendored, same-origin; **CDN opt-in refused** |
+| TFJS backend | WebGL preferred | WebGL preferred, and a hostile fallback is **said out loud** |
+| magnetite | off unless configured | **hard-disabled** — `resolveMagnetiteConfig` returns null before reading any config, and `assertNoMagnetite()` throws on the construction path |
+| Outbound links | in-app navigation | `target="_blank" rel="noopener"` only — never navigates the frame |
+
+**What demo mode does not do.** It does not skip the camera explanation. A cold
+`getUserMedia` prompt with no context is the worst moment in this UX, and inside an
+iframe it is worse: the prompt names the *embedding* origin, so the visitor sees a
+permission dialog from a site they were reading rather than the game they were looking
+at. Explain, then ask — the handedness pick shares that card so it costs no extra step.
+
+It also does not hide what this is. There is a permanent "Demo" marker, a link to this
+repo, and a line stating that this is one game driven by one gesture from one player
+against a local AI.
+
+### The magnetite step
+
+After a few swings — or 90 seconds, whichever comes first — a dismissible panel appears
+in the corner. It never blocks play, and it says this:
+
+> **In progress, plainly: wibbly multiplayer does not work yet.** The input path is
+> proven — wibbly signs gesture events and a live magnetite node returns
+> `attested_ack`. The game side is not built: nothing in either repo reads those events
+> back out. Run magnetite for what it already does, not for wibbly matches.
+
+That warning is the point of the panel, not a disclaimer bolted to it. The pitch above
+it is only that solo tennis needed no server, that two people would need one, and that
+[magnetite](https://github.com/vul-os/magnetite) is a game server you run yourself —
+useful today for its authoritative runtime, WASM sandbox, replay verification and
+bring-any-box hosting. Not for wibbly matches, because those do not exist.
+
+### What `npm run verify:demo` actually proves
+
+It builds the demo, serves `dist-demo/` **under `/products/wibbly/play/`** (not at the
+root, and not through `vite preview`, which knows the base and would hide a base
+mistake), applies the **real production CSP** copied verbatim from
+`vulos-management/pkg/cproutes/spa.go`, and drives it with Chromium using a synthetic
+camera. 26 checks, all passing:
+
+- **Zero external network requests.** Every request in the run, in full:
+
+  ```
+  /products/wibbly/play/
+  /products/wibbly/play/assets/index-*.js
+  /products/wibbly/play/assets/index-*.css
+  /products/wibbly/play/assets/pose-detection.esm-*.js
+  /products/wibbly/play/assets/shared-*.js
+  /products/wibbly/play/models/court.glb
+  /products/wibbly/play/models/TennisCourt_BaseColor.png
+  /products/wibbly/play/models/movenet-multipose-lightning/model.json
+  /products/wibbly/play/models/movenet-multipose-lightning/group1-shard{1,2,3}of3.bin
+  ```
+
+- the detector initialises **from the local model**, on the **WebGL** backend
+- no CSP violations with any consequence, and no 4xx
+- **no localStorage key and no cookie survives** the page
+- the spacebar path still produces swings with the camera denied
+- it renders in a 420px-wide iframe with no horizontal overflow
+
+Two real bugs were found by running this rather than assuming it:
+`court.glb` was loaded from a hardcoded `/models/court.glb` that 404s under any
+sub-path, and its 2 MB base-colour texture was embedded in the `.glb`, so
+GLTFLoader loaded it through a `blob:` URL that `connect-src 'self'` refuses —
+the court rendered untextured in production with no error and no failed request.
+Both are fixed; the texture is now an external same-origin file
+(`scripts/externalize-glb-textures.mjs`), which also shrank `court.glb` from
+2,086,144 to 26,452 bytes.
 
 ---
 
@@ -294,7 +420,7 @@ Today the two repos do not talk to each other at all.
 ## Repository layout
 
 ```
-packages/wibbly-input/   the seams — TypeScript library, no DOM injection, 77 tests
+packages/wibbly-input/   the seams — TypeScript library, no DOM injection, 96 tests
 src/game/                tennis: court, ball physics, player rig, AI opponent, camera rig
 src/pages/               title, setup, play, 404 — the whole app shell
 site/                    house-style static mini-site + docs (the honest surface)
@@ -317,5 +443,7 @@ WIBBLY.md                the spec and the program backlog
 
 The models wibbly loads are separately licensed, and both are permissive: MoveNet ships
 under **Apache-2.0** via [tfjs-models](https://github.com/tensorflow/tfjs-models), and
-MediaPipe under **Apache-2.0**. That was a selection criterion, not luck — see
+MediaPipe under **Apache-2.0**. The MoveNet weights are **vendored into this repo** under
+`public/models/movenet-multipose-lightning/`, which carries its own `LICENSE` (Apache-2.0,
+Google LLC) and provenance — those files are **not** covered by this repo's MIT licence. That was a selection criterion, not luck — see
 [Model selection](#model-selection) for the alternatives ruled out on licensing alone.

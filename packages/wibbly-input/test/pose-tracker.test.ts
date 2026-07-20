@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { MoveNetMultiPoseTracker, normalizePose } from '../src/pose-tracker';
+import {
+  MOVENET_MULTIPOSE_LIGHTNING_CDN_URL,
+  MOVENET_MULTIPOSE_LIGHTNING_VENDORED_PATH,
+  MoveNetMultiPoseTracker,
+  normalizePose,
+  selectBackend,
+} from '../src/pose-tracker';
 import type { Frame } from '../src/types';
 
 function fakeFrame(width: number, height: number): Frame {
@@ -57,6 +63,104 @@ describe('MoveNetMultiPoseTracker', () => {
     expect(config).toHaveProperty('minPoseScore');
     // Not a real MoveNetModelConfig key — the old code passed it and it was ignored.
     expect(config).not.toHaveProperty('minPartScore');
+  });
+
+  describe('modelUrl — where the weights come from', () => {
+    async function configFor(cfg: object) {
+      const createDetector = vi.fn().mockResolvedValue({ estimatePoses: async () => [] });
+      await new MoveNetMultiPoseTracker({ createDetector, ...cfg }).init();
+      return createDetector.mock.calls[0][1] as Record<string, unknown>;
+    }
+
+    it('defaults to the vendored same-origin copy, NOT the TF Hub CDN', async () => {
+      const config = await configFor({});
+      // `modelUrl` is the package's own key (movenet/types.d.ts), not one
+      // invented here. Getting this wrong is silent: an unknown key is simply
+      // ignored and the model loads from tfhub.dev anyway.
+      expect(config.modelUrl).toBe(MOVENET_MULTIPOSE_LIGHTNING_VENDORED_PATH);
+      expect(String(config.modelUrl)).not.toContain('tfhub.dev');
+    });
+
+    it('passes an explicit URL through verbatim', async () => {
+      const config = await configFor({ modelUrl: 'https://mirror.example/model.json' });
+      expect(config.modelUrl).toBe('https://mirror.example/model.json');
+    });
+
+    it('opts back into the CDN when asked, for a build with no vendored weights', async () => {
+      const config = await configFor({ modelUrl: MOVENET_MULTIPOSE_LIGHTNING_CDN_URL });
+      // The package tests this string for `https://tfhub.dev` to decide
+      // `fromTFHub`, which is why the constant has to stay exactly this.
+      expect(config.modelUrl).toContain('https://tfhub.dev');
+    });
+
+    it('omits the key entirely on null, deferring to the package default', async () => {
+      const config = await configFor({ modelUrl: null });
+      expect(config).not.toHaveProperty('modelUrl');
+    });
+  });
+
+  describe('selectBackend — CSP-driven backend choice', () => {
+    /**
+     * The production embed is served under
+     * `script-src 'self' 'unsafe-inline'` with no `'wasm-unsafe-eval'`, so the
+     * TFJS WASM backend cannot instantiate there. These cases cover the
+     * combinations that a browser test on a developer machine never would.
+     */
+    function fakeTf(available: Record<string, boolean>, initial = 'cpu') {
+      let current = initial;
+      return {
+        ready: async () => {},
+        setBackend: async (name: string) => {
+          if (!(name in available)) throw new Error(`backend "${name}" is not registered`);
+          if (!available[name]) return false;
+          current = name;
+          return true;
+        },
+        getBackend: () => current,
+      };
+    }
+
+    it('takes the preferred backend when it is available', async () => {
+      const info = await selectBackend(fakeTf({ webgl: true }), ['webgl']);
+      expect(info).toEqual({ backend: 'webgl', preferred: true, cspHostile: false, warning: null });
+    });
+
+    it('falls back in order', async () => {
+      const info = await selectBackend(fakeTf({ webgpu: false, webgl: true }), ['webgpu', 'webgl']);
+      expect(info.backend).toBe('webgl');
+      expect(info.preferred).toBe(true);
+    });
+
+    it('warns — but does not throw — when it lands on the slow CPU backend', async () => {
+      const info = await selectBackend(fakeTf({ webgl: false }, 'cpu'), ['webgl']);
+      expect(info.backend).toBe('cpu');
+      expect(info.preferred).toBe(false);
+      // CPU is legal under the CSP: pure JS, no eval, no wasm. Slow, not broken.
+      expect(info.cspHostile).toBe(false);
+      expect(info.warning).toMatch(/slow/i);
+    });
+
+    it('flags a WASM fallback as CSP-hostile, because the embed forbids it', async () => {
+      const info = await selectBackend(fakeTf({ webgl: false }, 'wasm'), ['webgl']);
+      expect(info.backend).toBe('wasm');
+      expect(info.cspHostile).toBe(true);
+      expect(info.warning).toMatch(/wasm-unsafe-eval/);
+      expect(info.warning).toMatch(/will not work/i);
+    });
+
+    it('survives an unregistered backend name rather than throwing out', async () => {
+      const info = await selectBackend(fakeTf({}, 'cpu'), ['webgpu', 'webgl']);
+      expect(info.backend).toBe('cpu');
+      expect(info.preferred).toBe(false);
+      expect(info.warning).toContain('not registered');
+    });
+
+    it('defaults to preferring webgl', async () => {
+      const tf = fakeTf({ webgl: true });
+      const spy = vi.spyOn(tf, 'setBackend');
+      await selectBackend(tf);
+      expect(spy).toHaveBeenCalledWith('webgl');
+    });
   });
 
   it('caps maxPeople at the model ceiling of 6', () => {

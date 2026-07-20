@@ -10,6 +10,7 @@ import {
 } from '@vulos/wibbly-input';
 import { MagnetiteSession } from '@vulos/wibbly-magnetite';
 import CameraPreview from './camera-preview.jsx';
+import { assertNoMagnetite, currentMode, modelUrl, resolveMagnetiteConfig } from '../mode.js';
 
 // Import game modules
 import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment, toggleHitBoxVisibility } from './player.js';
@@ -25,29 +26,15 @@ import {
 } from './game-logic.js';
 
 /**
- * Optional magnetite networking config. **OFF unless explicitly configured.**
- *
- * The default experience is the whole pitch: zero install, local play, no
- * server, no account, camera frames never leaving the device. So this returns
- * null unless someone sets `VITE_MAGNETITE_URL` at build time (or
- * `window.__WIBBLY_MAGNETITE__` at runtime, which is how a host page can opt a
- * single session in without a rebuild). Nothing below runs otherwise.
- *
- * ── What gets sent, honestly ────────────────────────────────────────────────
- * GestureEvents, never video — camera frames still never leave the device. But
- * those events are CLIENT-ATTESTED: magnetite classes them `InputClass::Attested`,
- * which is explicitly *not* replay-verifiable. The host screens them for
- * implausibility and remains authoritative, and a signature (when Ed25519 is
- * available) proves only that this key sent them. A determined cheater can
- * synthesise plausible events and nothing here or upstream detects that. This
- * is not anti-cheat; see packages/wibbly-magnetite/README.md.
+ * Optional magnetite networking config. **OFF unless explicitly configured,
+ * and null unconditionally in demo mode.** The resolution rules, and why demo
+ * mode can never reach a node, live in ../mode.js.
  */
 function magnetiteConfig() {
-    const runtime = typeof window !== 'undefined' ? window.__WIBBLY_MAGNETITE__ : null;
-    if (runtime && runtime.url) return runtime;
-    const url = import.meta.env?.VITE_MAGNETITE_URL;
-    if (!url) return null;
-    return { url, token: import.meta.env?.VITE_MAGNETITE_TOKEN || undefined };
+    return resolveMagnetiteConfig(
+        import.meta.env ?? {},
+        typeof window !== 'undefined' ? window : null,
+    );
 }
 
 /**
@@ -63,8 +50,20 @@ function magnetiteConfig() {
  *   calibration   shared Calibration instance, so setup and the in-game menu
  *                 write to the same object the recogniser reads.
  *   onInputState  reports 'live' | 'keyboard' once the camera resolves.
+ *   onSwing       fired on every swing the player makes, however it was
+ *                 triggered — gesture or spacebar. The demo shell uses it
+ *                 to time its "run your own node" prompt to a moment the
+ *                 player has already been playing, rather than blocking them
+ *                 with an interstitial first.
  */
-function TennisGame({ paused = false, settings = null, calibration = null, onInputState = null }) {
+function TennisGame({
+    paused = false,
+    settings = null,
+    calibration = null,
+    onInputState = null,
+    onSwing = null,
+    onTrackerBackend = null,
+}) {
     const containerRef = useRef(null);
     const playersRef = useRef([]);
     const ballRef = useRef(null);
@@ -85,6 +84,18 @@ function TennisGame({ paused = false, settings = null, calibration = null, onInp
     useEffect(() => {
         pausedRef.current = paused;
     }, [paused]);
+
+    // Held in a ref because the setup effect runs once with [] deps; reading
+    // the prop directly there would pin whatever was passed at mount.
+    const onSwingRef = useRef(onSwing);
+    useEffect(() => {
+        onSwingRef.current = onSwing;
+    }, [onSwing]);
+
+    const onBackendRef = useRef(onTrackerBackend);
+    useEffect(() => {
+        onBackendRef.current = onTrackerBackend;
+    }, [onTrackerBackend]);
 
     // Exposed to the preview component so it can render video + skeletons.
     const [input, setInput] = useState(null);
@@ -243,6 +254,30 @@ function TennisGame({ paused = false, settings = null, calibration = null, onInp
 
             const wibbly = new WibblyInput({
                 calibration,
+                // Point the DEFAULT tracker at the vendored, same-origin model.
+                // The game still names no model and no vendor — it hands the
+                // seam a URL and the seam decides what to do with it. Without
+                // this the weights come from tfhub.dev, which a page served
+                // under `default-src 'self'` cannot fetch at all.
+                trackerConfig: {
+                    modelUrl: modelUrl(),
+                    // WebGL explicitly, not TFJS auto-selection. The embedded
+                    // build runs under `script-src 'self' 'unsafe-inline'` with
+                    // no 'wasm-unsafe-eval', so the WASM backend cannot
+                    // instantiate there; auto-selection would be a decision
+                    // made by whatever happened to register first.
+                    preferredBackends: ['webgl'],
+                    onBackend: (info) => {
+                        // Surfaced to the shell so a degraded or unusable
+                        // backend can be said out loud rather than looking
+                        // like a game that ignores the player.
+                        try {
+                            onBackendRef.current?.(info);
+                        } catch (err) {
+                            console.warn('onTrackerBackend handler threw:', err);
+                        }
+                    },
+                },
                 // Two claim zones so a second player on the couch can join by
                 // standing in the right half of the frame. Tennis only drives
                 // player 1 today, but the binder is already multi-player.
@@ -320,6 +355,12 @@ function TennisGame({ paused = false, settings = null, calibration = null, onInp
             const cfg = magnetiteConfig();
             if (!cfg) return; // default: pure local play, no server involved.
 
+            // Belt to the brace above. `magnetiteConfig()` already returns null
+            // in demo mode, so reaching here at all would mean that gate broke;
+            // throwing makes that a loud bug rather than a silent outbound
+            // WebSocket from an embedded demo. Held by test/mode.test.js.
+            assertNoMagnetite(currentMode());
+
             const session = new MagnetiteSession({
                 url: cfg.url,
                 token: cfg.token,
@@ -355,6 +396,18 @@ function TennisGame({ paused = false, settings = null, calibration = null, onInp
         // Function to handle swings (from pose detection or spacebar)
         function handleSwing(swingDirection = 'right') {
             console.log("Handling swing!", swingDirection);
+
+            // Reported for EVERY swing the player makes, before the animation
+            // gate below. The gate is about whether the racket is mid-swing,
+            // not about whether the player is playing — counting only the
+            // swings that pass it would make a shell's "has this person been
+            // playing?" question depend on ball position and AI timing.
+            // Never allowed to break the game if a handler throws.
+            try {
+                onSwingRef.current?.(swingDirection);
+            } catch (err) {
+                console.warn('onSwing handler threw:', err);
+            }
             const gameState = gameStateRef.current;
             const player1 = players[0];
             const playerData1 = playerDataRef.current[0];
@@ -365,7 +418,7 @@ function TennisGame({ paused = false, settings = null, calibration = null, onInp
                 playerData1.swingTime = 0;
                 
                 console.log("Player 1 swinging racket!");
-                
+
                 // Try to hit the ball
                 handleBallHit(ballGroup, gameState, player1, 0, swingDirection);
             }

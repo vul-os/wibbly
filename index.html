@@ -29,10 +29,12 @@
     <meta name="theme-color" content="#0D0A10" />
     <meta name="color-scheme" content="dark" />
 
+    <!-- Only files that actually exist are linked. The three PNG icon sizes and
+         the apple-touch-icon that used to be listed here had no source in the
+         repo, so every load requested four URLs that could only 404 — visible
+         noise in any network trace, and wrong-path requests once the app is
+         served from a sub-path. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
     <style>

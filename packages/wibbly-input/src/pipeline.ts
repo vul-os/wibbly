@@ -2,13 +2,20 @@ import { SpatialBinder, type PlayerBinder, type SpatialBinderConfig } from './bi
 import { Calibration } from './calibration';
 import { WebcamFrameSource, type FrameSource, type FrameSourceOptions } from './frame-source';
 import { AdaptivePacer, type PacerConfig } from './pacer';
-import { MoveNetMultiPoseTracker, type PoseTracker } from './pose-tracker';
+import { MoveNetMultiPoseTracker, type MoveNetTrackerConfig, type PoseTracker } from './pose-tracker';
 import { SwingRecognizer, type GestureRecognizer } from './recognizers/swing';
 import type { BoundPerson, GestureEvent, Person } from './types';
 
 export interface WibblyInputConfig {
   source?: FrameSource;
   tracker?: PoseTracker;
+  /**
+   * Config for the DEFAULT tracker. Ignored when `tracker` is supplied — you
+   * configured that one yourself. This exists so a consumer can point the
+   * model at a same-origin copy (`modelUrl`) without having to name
+   * MoveNet, which would defeat the seam.
+   */
+  trackerConfig?: MoveNetTrackerConfig;
   binder?: PlayerBinder;
   recognizers?: GestureRecognizer[];
   calibration?: Calibration;
@@ -58,7 +65,7 @@ export class WibblyInput {
 
   constructor(config: WibblyInputConfig = {}) {
     this.source = config.source ?? new WebcamFrameSource();
-    this.tracker = config.tracker ?? new MoveNetMultiPoseTracker();
+    this.tracker = config.tracker ?? new MoveNetMultiPoseTracker(config.trackerConfig);
     this.calibration = config.calibration ?? new Calibration();
     this.binder = config.binder ?? new SpatialBinder(config.binderConfig);
     this.pacer = new AdaptivePacer(config.pacer);
