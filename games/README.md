@@ -64,11 +64,25 @@ fires on a noisy sensor reading, and your game has to survive a bad one.
 
 | Gesture | Source | Status |
 |---|---|---|
-| `swing` | body pose (MoveNet) | **built** — `packages/wibbly-input/src/recognizers/swing.ts` |
-| `pinch` | hands (MediaPipe) | planned |
-| `point` | hands (MediaPipe) | planned |
+| `swing` | body pose (MoveNet) | **built** — `recognizers/swing.ts` |
+| `pinch` | hands (MediaPipe) | **built** — `recognizers/pinch.ts`. Emits `detail.phase` of `start`/`hold`/`release` plus `detail.delta`, so it supports drag, not just a tap. |
+| `point` | hands (MediaPipe) | **built** — `recognizers/point.ts`. `vector` is a unit aim direction and `detail.origin` is the ray origin, for hit-testing. |
 | `punch` | body pose, per-arm | planned |
 | `kick` | body pose, lower body | planned |
+
+> **Before you build on `pinch` or `point`, read this.** Both recognisers are
+> implemented and unit-tested — including distance-from-camera invariance and
+> rotation invariance — but **their thresholds were derived from geometry, not
+> measured against a real hand**, and no hand-tracking session has yet run
+> against a live camera. Expect to tune them.
+>
+> Two further gaps, stated plainly because they will bite you: `WibblyInput`
+> (`packages/wibbly-input/src/pipeline.ts`) does not yet compose the hand
+> tracker — it still wires body pose and `SwingRecognizer` only — and the
+> MediaPipe hand model and Wasm runtime (~25 MB) are **not vendored in this
+> repo**. Both asset paths are injectable with no CDN default, so nothing
+> reaches the network behind your back; it also means hands do not run until
+> someone supplies them.
 
 Need a gesture that isn't listed? Propose it as a recogniser PR against
 `packages/wibbly-input` **first**, separately from your game. Recognisers are
