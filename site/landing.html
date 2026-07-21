@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <title>wibbly — your camera is the controller</title>
-<meta name="description" content="wibbly is a camera-gesture input layer and game shell for the browser: a gesture is an input event like any other, and frames never leave the device. Early — today it is a single-player, one-gesture tennis demo you can play in a tab; multi-person tracking and networked play are specified, not built." />
+<meta name="description" content="wibbly is a camera-gesture game built on magnetite, the decentralized self-hostable games platform: a gesture is an input event like any other, and frames never leave the device. Free, MIT OR Apache-2.0, no payments anywhere. Early — today it is a single-player, one-gesture tennis demo you can play in a tab; multi-person tracking and peer-to-peer networked play are specified, not built." />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
 <link rel="icon" href="/product-logos/wibbly.svg" />
@@ -753,14 +753,14 @@
         <div>
           <span class="eyebrow">
             <span class="rule" aria-hidden="true"></span>
-            Camera-gesture input · MIT · early
+            Camera-gesture game on magnetite · MIT OR Apache-2.0 · free · early
           </span>
 
           <h1>Your camera is the <span class="trail">controller</span></h1>
 
           <p class="tagline">A gesture is an input event like any other — and the frames it came from never leave the device.</p>
 
-          <p class="blurb">wibbly is an input layer plus a shell that makes camera-controlled games cheap to build, with one reference game to prove it. Pose estimation runs in a plain browser tab: no console, no download, no dongle. <code>@vulos/wibbly-input</code> implements all four seams behind 86 unit tests that run without a camera, and tennis consumes it like any third-party game would. Everything is <a class="link" href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">MIT on GitHub</a>.</p>
+          <p class="blurb">wibbly is a camera-gesture game built on <a class="link" href="/products/magnetite" target="_top">magnetite</a>, the decentralized, self-hostable Rust games platform — magnetite is the platform, wibbly is what building on it looks like when your controller is a webcam. Pose estimation runs in a plain browser tab: no console, no download, no dongle. <code>@vulos/wibbly-input</code> implements all four seams behind 86 unit tests that run without a camera, and tennis consumes it like any third-party game would. Free and dual-licensed, everything is <a class="link" href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">MIT OR Apache-2.0 on GitHub</a> — no wagers, no tournament pools, no ads.</p>
 
           <div class="cta-row">
             <a class="btn btn-primary btn-lg" href="/products/magnetite/wibbly/play/" target="_top">▶ Play it in your browser</a>
@@ -910,11 +910,11 @@
             <tr><td><code>SpatialBinder</code></td><td class="note">Durable <code>PlayerId</code>s across frames, claim zones, occlusion timeout</td><td class="st"><span class="sig sig-unval">Fixtures only</span></td></tr>
             <tr><td>Verified multi-person play</td><td class="note">Several real people, a real camera, a real room</td><td class="st"><span class="sig sig-unval">Never validated</span></td></tr>
             <tr><td>2-player tennis</td><td class="note">The binder is multi-player; the game drives <code>player_1</code> only</td><td class="st"><span class="sig sig-unval">Next up</span></td></tr>
-            <tr><td>Magnetite integration</td><td class="note"><code>packages/wibbly-magnetite</code> — sessions, lobbies, payments</td><td class="st"><span class="sig sig-unval">Unproven</span></td></tr>
+            <tr><td>Magnetite integration</td><td class="note"><code>packages/wibbly-magnetite</code> — attested gesture events reach a live node and return <code>attested_ack</code>; nothing on either side consumes them yet</td><td class="st"><span class="sig sig-unval">Proven wire, no consumer</span></td></tr>
             <tr><td>Tauri desktop shell</td><td class="note">Rust-side capture and inference</td><td class="st"><span class="sig sig-spec">Phase 3</span></td></tr>
             <tr><td>Soccer, Boxing</td><td class="note">Second and third reference games — tracked backlog, §8</td><td class="st"><span class="sig sig-spec">No code</span></td></tr>
-            <tr><td>Hand landmarks</td><td class="note">MediaPipe HandLandmarker, 21 points per hand</td><td class="st"><span class="sig sig-spec">Not started</span></td></tr>
-            <tr><td>Networked play</td><td class="note">Gesture events over magnetite sessions</td><td class="st"><span class="sig sig-spec">No network code</span></td></tr>
+            <tr><td>Hand landmarks</td><td class="note">MediaPipe HandLandmarker, pinch and point recognizers, 21 points per hand; not composed by <code>WibblyInput</code>'s pipeline, not wired to any game, thresholds unvalidated against a real camera</td><td class="st"><span class="sig sig-unval">Built, not wired</span></td></tr>
+            <tr><td>Networked play</td><td class="note">Peer-to-peer: host-authoritative browser tab, <code>GestureEvent</code>s over WebRTC, no backend. Transport built and unit-tested, wired into tennis off by default — no lobby UI</td><td class="st"><span class="sig sig-unval">Transport built, no lobby</span></td></tr>
             <tr><td>Release build</td><td class="note">Installer, image or hosted deployment</td><td class="st"><span class="sig sig-spec">Source only</span></td></tr>
           </tbody>
         </table>
@@ -922,7 +922,7 @@
 
       <div class="callout warn">
         <span class="tag">The one thing to take away</span>
-        <p>Phase 1 has landed: the old 480-line detector that injected its own DOM is gone, replaced by <code>@vulos/wibbly-input</code> — MoveNet <em>MultiPose</em>, a spatial player binder, handedness as a sign flip, and an adaptive frame pacer, under 86 passing tests. What those tests prove is the logic, not a room: every multi-person test runs against synthetic skeleton fixtures, so <b>the tracker and binder have never seen two real people</b>. Tennis drives one player, with one gesture. Hand tracking, networked play, a desktop shell and a release build do not exist.</p>
+        <p>Phase 1 has landed: the old 480-line detector that injected its own DOM is gone, replaced by <code>@vulos/wibbly-input</code> — MoveNet <em>MultiPose</em>, a spatial player binder, handedness as a sign flip, and an adaptive frame pacer, under 86 passing tests. What those tests prove is the logic, not a room: every multi-person test runs against synthetic skeleton fixtures, so <b>the tracker and binder have never seen two real people</b>. Tennis drives one player, with one gesture. Hand tracking exists as a standalone, unit-tested library but is not composed into the pipeline or wired to any game; the peer-to-peer networked-play transport exists and is wired into tennis but has no lobby UI; a desktop shell and a release build do not exist.</p>
       </div>
     </div>
   </section>
@@ -932,8 +932,8 @@
     <div class="wrap">
       <div class="shead">
         <span class="num">02 / The demo</span>
-        <h2>One game runs. Two more are chosen, not written.</h2>
-        <p class="lead">Tennis exists to prove the seams carry a real game rather than a demo loop. It needs no server and no account — pose estimation and the model both run in your tab. Stand about two metres back, get your upper body in frame, and swing.</p>
+        <h2>One game runs by gesture. A fourth exists, waiting on hands.</h2>
+        <p class="lead">Tennis exists to prove the seams carry a real game rather than a demo loop. It needs no server and no account — pose estimation and the model both run in your tab. Stand about two metres back, get your upper body in frame, and swing. Soccer and Boxing are backlog with no code; Palmworks is folded-in, playable code with no gesture wiring yet.</p>
       </div>
 
       <div class="split wide-left">
@@ -952,7 +952,7 @@
           <div class="cta-row">
             <a class="btn btn-primary btn-lg" href="/products/magnetite/wibbly/play/" target="_top">▶ Launch the demo</a>
           </div>
-          <p class="note">Solo only. There is no second player in it, because networked play does not exist — see <a class="link" href="#gaps">the gaps</a>.</p>
+          <p class="note">Solo only. The peer-to-peer transport for a second player is built and wired in behind the scenes, but there is no lobby screen to turn it into a button — see <a class="link" href="#gaps">the gaps</a>.</p>
         </div>
       </div>
 
@@ -978,6 +978,13 @@
           <p style="margin-top:12px">Chosen third because it needs <em>two independent gesture streams from one player</em> — left and right hand, tracked separately with per-arm cooldowns.</p>
           <div class="breaks"><span class="tag">Assumption it breaks</span><code>Calibration.handedness</code> models a single dominant hand. Boxing contradicts that outright, and — being head-to-head by nature — is also the natural first test of two-player local play.</div>
         </div>
+        <div class="game">
+          <span class="tag">Folded in</span>
+          <h3>Palmworks</h3>
+          <span class="sig sig-unval">Playable, no hands</span>
+          <p style="margin-top:12px">An industrial factory-building game folded into <code>games/palmworks</code> with its full history and its own build. Real, playable code — but <b>hands are not wired to it</b>: no <code>game.json</code>, no gesture recognizer, no camera control yet.</p>
+          <div class="breaks"><span class="tag">What it's waiting on</span><code>HandLandmarkTracker</code> plus pinch/point recognizers now exist in <code>packages/wibbly-input</code>, but nothing wires them into Palmworks yet. Until then it plays like any other web app, by mouse and keyboard.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -987,8 +994,8 @@
     <div class="wrap">
       <div class="shead">
         <span class="num">03 / Architecture</span>
-        <h2>An input layer, not a tennis game</h2>
-        <p class="lead">Game code never names a model, a runtime or a vendor — it sees four interfaces, and every seam ships a working default. Read left to right and the story is a <em>reduction</em>: pixels narrow into landmarks, landmarks narrow into identity, identity narrows into a few dozen bytes of intent. That reduction is the architecture and the privacy guarantee at once.</p>
+        <h2>Four seams, one game — not a platform</h2>
+        <p class="lead">Game code never names a model, a runtime or a vendor — it sees four interfaces, and every seam ships a working default. Read left to right and the story is a <em>reduction</em>: pixels narrow into landmarks, landmarks narrow into identity, identity narrows into a few dozen bytes of intent. That reduction is the architecture and the privacy guarantee at once — and it is wibbly's own input pipeline, not something it sells to other developers. The platform underneath is <a class="link" href="/products/magnetite" target="_top">magnetite</a>.</p>
       </div>
 
       <div class="diagram">
@@ -1161,7 +1168,7 @@
           <thead><tr><th>Model</th><th>Licence</th><th>Why it lost</th></tr></thead>
           <tbody>
             <tr class="pick"><td>MoveNet MultiPose Lightning<br /><span class="sig sig-live" style="margin-top:6px">Chosen · in use</span></td><td><span class="lic ok">Apache 2.0</span></td><td class="note">Bottom-up, flat cost, up to 6 people, published in-browser FPS. Not the most accurate — the only one that meets the actual requirement.</td></tr>
-            <tr class="pick"><td>MediaPipe HandLandmarker<br /><span class="sig sig-spec" style="margin-top:6px">Chosen · not built</span></td><td><span class="lic ok">Apache 2.0</span></td><td class="note">21 landmarks per hand, multi-hand, first-class web support. The only realistic browser hand option. Its 8 canned gestures are too thin for games, so we would classify from raw landmarks.</td></tr>
+            <tr class="pick"><td>MediaPipe HandLandmarker<br /><span class="sig sig-unval" style="margin-top:6px">Chosen · built, not wired</span></td><td><span class="lic ok">Apache 2.0</span></td><td class="note">21 landmarks per hand, multi-hand, first-class web support. The only realistic browser hand option. Its 8 canned gestures were too thin for games, so <code>PinchRecognizer</code>/<code>PointRecognizer</code> classify from raw landmarks instead.</td></tr>
             <tr><td>RTMO<br /><span class="tag">bottom-up · CVPR 2024</span></td><td><span class="lic ok">Apache 2.0</span></td><td class="note">Architecturally the right answer — 0.677–0.724 COCO AP at 8.9–19.1&nbsp;ms. But those are <b>V100</b> numbers, and there is no browser port and no WebGPU benchmark. Unproven engineering, not a drop-in. Kept as the documented phase-3 upgrade behind <code>PoseTracker</code>.</td></tr>
             <tr><td>YOLOv8 / YOLO11-pose</td><td><span class="lic bad">AGPL-3.0</span></td><td class="note">Browser demos exist and it is fast. But AGPL-3.0 compliance requires open-sourcing the entire derivative work; a commercial non-starter without an Enterprise licence. <b>A licence trap, not a technical one.</b></td></tr>
             <tr><td>WiLoR<br /><span class="tag">best hand model</span></td><td><span class="lic bad">CC BY-NC-ND 4.0</span></td><td class="note">Non-commercial <em>and</em> no-derivatives — unusable twice over. Also depends on Ultralytics, which drags AGPL back in anyway.</td></tr>
@@ -1308,7 +1315,7 @@
         <div>
           <ul class="gapstack">
             <li><span class="sig sig-live">Today</span><div><b>Local inference</b><span>Every frame is captured by <code>getUserMedia</code>, run through MoveNet in the tab, and dropped. No frame is uploaded, stored or proxied. True of the code as it exists now, not of a future version.</span></div></li>
-            <li><span class="sig sig-spec">Later</span><div><b>Events on the wire</b><span>Networked play is designed, not built. When it lands, each client tracks its own camera and transmits gesture events; hosting, discovery and lobbies come from magnetite via an integration that is in progress and unproven against a live node.</span></div></li>
+            <li><span class="sig sig-spec">Later</span><div><b>Events on the wire</b><span>Networked play is designed, not built. When it lands, it is peer-to-peer: one player's browser tab is authoritative, and each client tracks its own camera and transmits only gesture events over a WebRTC <code>DataChannel</code> — no backend wibbly runs. Magnetite's <code>InputProvider</code> seam is a separate, optional path for a hosted node, and the wire side of that has been proven against a live node already; nothing consumes it yet.</span></div></li>
             <li><span class="sig sig-unval">Caveat</span><div><b>What we won't hide</b><span>The build used to initialise Firebase Analytics — central tracking, in a product whose thesis is the opposite. The SDK and its dependency are gone. Hosting is still Firebase, so the claim holds for your camera and your page views but not your DNS lookups. And TensorFlow.js fetches MoveNet weights from a CDN on first load: a download, once, not an upload.</span></div></li>
           </ul>
         </div>
@@ -1316,7 +1323,7 @@
 
       <div class="callout warn">
         <span class="tag">The cost of this design, stated plainly</span>
-        <p>Local inference buys privacy and gives up verifiability. Magnetite's replay verification assumes deterministic input; a camera is a nondeterministic sensor stream and <b>cannot be replay-verified</b>. So when networked play arrives, gesture games will run <b>client-attested</b>: the host simulates authoritatively over received events, and events are rate-limited and plausibility-checked against human-reachable velocities and cooldowns — but a determined cheater can synthesise them. That is a real limitation of putting the tracker on the player's machine, and it is the honest price of frames never leaving the device.</p>
+        <p>Local inference buys privacy and gives up verifiability. Magnetite's replay verification assumes deterministic input; a camera is a nondeterministic sensor stream and <b>cannot be replay-verified</b>. So when networked play arrives, gesture games will run <b>client-attested</b>: whoever holds authority — a host's browser tab, or in principle a dedicated server — simulates over received events, and events are rate-limited and plausibility-checked against human-reachable velocities and cooldowns — but a determined cheater can synthesise them. Centralizing authority would not buy back that guarantee, since the cheat surface sits upstream, at the sensor — which is also the case for running wibbly's own multiplayer host-in-browser instead of on a server. That is a real limitation of putting the tracker on the player's machine, and it is the honest price of frames never leaving the device.</p>
       </div>
     </div>
   </section>
@@ -1333,9 +1340,9 @@
       <ul class="gapstack">
         <li><span class="sig sig-unval">Unvalidated</span><div><b>Multi-person play</b><span>The tracker returns six skeletons and the binder assigns stable ids, both under unit test — but neither has been validated against real cameras and real people. Fixtures are not a living room. Treat couch multiplayer as implemented and unproven, which is not the same as working.</span></div></li>
         <li><span class="sig sig-unval">Unvalidated</span><div><b>Two-player tennis</b><span>The binder is configured for two claim zones; the game reads gestures for <code>player_1</code> and ignores the rest. Nobody can currently join by standing in the right half of the frame.</span></div></li>
-        <li><span class="sig sig-unval">Unvalidated</span><div><b>Magnetite integration</b><span>Sessions, lobbies and payments come from <a class="link" href="https://github.com/vul-os/magnetite" target="_blank" rel="noopener noreferrer">magnetite</a> through an <code>InputProvider</code> seam. A <code>packages/wibbly-magnetite</code> integration is being written now, and signed attested input events do reach a live node and come back <code>attested_ack</code> — but nothing consumes them on the far side.</span></div></li>
-        <li><span class="sig sig-spec">Spec</span><div><b>Hand tracking</b><span>The name says gestures and the code does body pose. MediaPipe HandLandmarker is chosen and licence-cleared; no tracker, no pinch and no point recognizer exists.</span></div></li>
-        <li><span class="sig sig-spec">Spec</span><div><b>Networked play</b><span>There is no network code in wibbly's shipping path at all — no client, no transport, no session. Running a magnetite node does not get you multiplayer wibbly today.</span></div></li>
+        <li><span class="sig sig-unval">Unvalidated</span><div><b>Magnetite integration</b><span>Optional session hosting through <a class="link" href="https://github.com/vul-os/magnetite" target="_blank" rel="noopener noreferrer">magnetite</a>'s <code>InputProvider</code> seam. A <code>packages/wibbly-magnetite</code> integration exists, and signed attested input events do reach a live node and come back <code>attested_ack</code> — but nothing consumes them on the far side, and it is not required for wibbly's own multiplayer (below).</span></div></li>
+        <li><span class="sig sig-unval">Built, not wired</span><div><b>Hand tracking</b><span>MediaPipe HandLandmarker is chosen, licence-cleared, and now implemented: <code>HandLandmarkTracker</code>, <code>PinchRecognizer</code> and <code>PointRecognizer</code> exist and are unit-tested, including distance-from-camera and rotation invariance. Two things are still not true: their thresholds are derived from geometry, not measured against a real hand, since no hand-tracking session has run against a live camera yet; and <code>WibblyInput</code>'s pipeline does not compose the hand tracker, so nothing — including <a class="link" href="#play">Palmworks</a> — is gesture-driven by hands yet.</span></div></li>
+        <li><span class="sig sig-unval">Transport built, no lobby</span><div><b>Peer-to-peer networked play</b><span>The settled design — host authority in one player's browser tab, guest <code>GestureEvent</code>s over a WebRTC <code>DataChannel</code>, copy-paste/QR signalling (Trystero optional), zero backend wibbly runs — is implemented and unit-tested in <code>packages/wibbly-magnetite</code> (<code>PeerSession</code>, offer/answer helpers, a link-sized codec), and tennis wires an optional <code>PeerSession</code> in already, off unless a host page supplies a transport. What is not built: a lobby screen. Nothing turns the transport into a button a visitor can click. Free STUN, but <b>no free TURN</b>: peers behind symmetric NAT or CGNAT will not connect, with no workaround. Same-network play is unaffected. Two more things worth knowing ahead of time: WebRTC hands your IP address to the peer you connect to (and to the STUN server) by design — normal for any direct peer connection, and only a TURN relay hides it, which is exactly the infrastructure this design avoids running. Running a magnetite node does not get you multiplayer wibbly today, and does not need to.</span></div></li>
         <li><span class="sig sig-spec">Spec</span><div><b>Soccer and Boxing</b><span>Both are tracked backlog items with a stated rationale, not works in progress. No soccer code and no boxing code exists. Where the app surfaces them as “coming soon”, that label now points at real backlog entries rather than at nothing — which is the most that can honestly be said for it.</span></div></li>
         <li><span class="sig sig-spec">Spec</span><div><b>A desktop shell</b><span>Tauri with Rust-side capture and inference is phase 3. Nothing has been started.</span></div></li>
         <li><span class="sig sig-spec">Spec</span><div><b>A release build</b><span>No installer, no Docker image, no hosted deployment beyond the browser demo. Clone it and run the dev server. Hosting is still configured for Firebase, though the analytics SDK is gone.</span></div></li>
@@ -1394,7 +1401,7 @@
             <li class="done"><code>SpatialBinder</code> — highest risk, done early</li>
             <li class="done"><code>SwingRecognizer</code> as a pure, testable function</li>
             <li class="done">Handedness fixed; adaptive pacing replaces the throttle</li>
-            <li><code>HandLandmarkTracker</code> + pinch / point recognizers</li>
+            <li class="done"><code>HandLandmarkTracker</code> + pinch / point recognizers — built, not yet composed by the pipeline</li>
           </ul>
         </div>
         <div class="phase">
@@ -1403,20 +1410,20 @@
           <ul>
             <li class="done">Firebase Analytics removed</li>
             <li class="done">Playable browser demo, no server, no account</li>
+            <li class="done">Magnetite <code>InputProvider</code> integration, proven live — wire only, nothing consumes it yet</li>
             <li>Tennis on the seam with 2-player local, one camera</li>
+            <li>Palmworks folded in, not yet gesture-driven</li>
             <li>Soccer — first non-swing, lower-body gesture</li>
             <li>Boxing — two gesture streams from one player</li>
-            <li>Magnetite <code>InputProvider</code> integration, proven live</li>
           </ul>
         </div>
         <div class="phase">
           <span class="tag">Phase 3 — depth</span>
-          <h3>Not started</h3>
+          <h3>Partly started</h3>
           <ul>
-            <li><code>RtmoOnnxTracker</code> on ONNX Runtime Web + WebGPU, benchmarked against MoveNet</li>
-            <li>Tauri shell with <code>nokhwa</code> capture and <code>ort</code> inference</li>
-            <li>Networked play over magnetite</li>
-            <li>Incentive rails — host-earns, non-custodial paid games, tournament pools</li>
+            <li><code>RtmoOnnxTracker</code> on ONNX Runtime Web + WebGPU, benchmarked against MoveNet — not started</li>
+            <li>Tauri shell with <code>nokhwa</code> capture and <code>ort</code> inference — not started</li>
+            <li class="done">Peer-to-peer networked play — host-authoritative browser, WebRTC <code>DataChannel</code>, no backend; transport built and wired into tennis, no lobby UI yet</li>
           </ul>
         </div>
       </div>
@@ -1435,8 +1442,8 @@
         <img src="/brand/icon-128.png" alt="Vulos logo" width="50" height="50" />
         <div>
           <h3>Listed alongside the Vulos suite</h3>
-          <p><a href="/products" target="_top" style="color:var(--ink);font-weight:600">Vulos</a> is a family of open, self-hostable software. wibbly is fully independent — it runs on a machine you control, needs no Vulos account and no Vulos infrastructure — and shares the suite's posture that computation should happen where the data already is. Its planned platform layer (sessions, discovery, payments) comes from <a class="link" href="/products/magnetite" target="_top">magnetite</a>, which is itself standalone.</p>
-          <p style="margin-top:14px"><b style="color:var(--ink)">Where magnetite fits.</b> The demo needs no server at all — solo play is entirely local. The path <em>out</em> of wibbly to a server is partly real: signed attested input events reach a live magnetite node and come back <code>attested_ack</code>, proven end-to-end. What does not exist is the far side — <b style="color:var(--ink)">no game in either repo reads gesture input off that queue</b>, so running a magnetite node does not get you multiplayer wibbly today. Magnetite is worth running on its own terms: a deterministic authoritative runtime, a WASM sandbox, replay verification, and bring-any-server hosting.</p>
+          <p><a href="/products" target="_top" style="color:var(--ink);font-weight:600">Vulos</a> is a family of open, self-hostable software. wibbly is fully independent — it runs on a machine you control, needs no Vulos account and no Vulos infrastructure, and needs no payment of any kind — and shares the suite's posture that computation should happen where the data already is. Magnetite is the platform underneath it, providing identity, discovery, lobbies and hosting to whoever wants them; wibbly is a game built on top, not a second platform.</p>
+          <p style="margin-top:14px"><b style="color:var(--ink)">Where magnetite fits.</b> The demo needs no server at all — solo play is entirely local, and wibbly's own multiplayer is peer-to-peer in the browser (see <a class="link" href="#gaps">the gaps</a>) — no magnetite node required. The optional path to a hosted, always-on node is partly real: signed attested input events reach a live magnetite node and come back <code>attested_ack</code>, proven end-to-end. What does not exist is the far side — <b style="color:var(--ink)">no game in either repo reads gesture input off that queue</b>. Magnetite is worth running on its own terms regardless: a deterministic authoritative runtime, a WASM sandbox, replay verification, and bring-any-server hosting.</p>
           <a class="more" href="/products/magnetite" target="_top">See magnetite →</a>
           <a class="more" href="/products" target="_top">Explore Vulos →</a>
         </div>
@@ -1449,7 +1456,7 @@
   <div class="wrap foot">
     <div class="left">
       <img src="/brand/icon-32.png" alt="" aria-hidden="true" width="18" height="18" />
-      <span>Listed on <a href="/products" target="_top">Vulos</a> — open, self-hostable software. wibbly is standalone, MIT and early.</span>
+      <span>Listed on <a href="/products" target="_top">Vulos</a> — open, self-hostable software. wibbly is standalone, free, MIT OR Apache-2.0, and early.</span>
     </div>
     <div class="links">
       <a href="/products/magnetite/wibbly/play/" target="_top">Play</a>

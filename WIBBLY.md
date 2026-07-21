@@ -1,20 +1,25 @@
-# Wibbly → Camera Gesture Game Platform (Redesign Spec + Program Backlog)
+# Wibbly — a Camera-Gesture Game Built on Magnetite (Spec + Program Backlog)
 
-> **Status:** ACTIVE redesign. This document is the single source of truth for the Wibbly
-> program. Every agent/wave builds against the seams defined here. Do not invent parallel
-> abstractions — implement the seams below.
+> **Status:** ACTIVE. This document is the single source of truth for the Wibbly program. Every
+> agent/wave builds against the seams defined here. Do not invent parallel abstractions —
+> implement the seams below.
 >
 > Companion doc: `magnetite/DECENTRALIZATION.md`. Wibbly is a **client** of magnetite's seams,
-> not a fork of them.
+> not a fork of them, and not a platform in its own right — see §2.
 
 ## 0. Vision (one sentence)
 
-**Your camera is the controller. A gesture is an input event like any other. Games are portable
-objects that run in a browser tab with zero install, and the platform underneath them is
-decentralized — no cloud required to play, host, or get paid.**
+**Your camera is the controller. A gesture is an input event like any other. Wibbly is a
+camera-gesture game — one built on [magnetite](https://github.com/vul-os/magnetite), the
+decentralized, self-hostable Rust games platform — that runs in a browser tab with zero install
+and needs no cloud to play or host.**
 
-Wibbly is not a tennis game. Wibbly is the input layer + shell that makes camera-controlled games
-cheap to build, plus one reference game (tennis) that proves it.
+Magnetite is the platform. Wibbly is what building on it looks like when your controller is a
+webcam: one reference game today (tennis), soccer and boxing specified in the backlog, and
+[Palmworks](games/palmworks) — an industrial factory-building game — folded into `games/` with its
+full history, not yet wired to any gesture. Wibbly is free and dual-licensed **MIT OR Apache-2.0**.
+There is no payment path anywhere in it: no wagers, no tournament pools, no revenue share, no ads.
+That is not an oversight to fix later — it is the position. See §7's removal note.
 
 ## 1. Where we are today (grounded audit, 2026-07-20 @ `67482e6`)
 
@@ -35,23 +40,50 @@ cheap to build, plus one reference game (tennis) that proves it.
 **Read:** the tennis game is worth keeping. The input layer needs to be rebuilt as a library. The
 marketing shell is oversized for one game and should shrink into the house-style static site.
 
-## 2. Merge into magnetite? No.
+> **Update, 2026-07-21.** The above is a snapshot at `67482e6`, kept verbatim because it is what
+> was true then, not because it is what is true now. Phase 1 has since landed —
+> `@vulos/wibbly-input` exists, is unit-tested, and tennis is ported onto it. This document's own
+> §8 tracks what has shipped since; the up-to-date, audited-against-the-tree table lives in
+> [`README.md`](README.md#status--what-is-actually-built) and should be treated as the current
+> source of truth over this section.
 
-**Decision: Wibbly stays its own repo and integrates with magnetite through seams.**
+## 2. How wibbly relates to magnetite
 
-Against merging:
-- Magnetite is Rust and its thesis is *deterministic authoritative simulation with replay
-  verification*. Camera input is a noisy, nondeterministic, un-replayable sensor stream. It is the
-  one input class that cannot be replay-verified. Merging blurs the property magnetite sells.
-- Magnetite is mid-redesign against `DECENTRALIZATION.md`. Dropping a JS game engine into that
-  monorepo pollutes a codebase currently converging on seams.
+**Decision: wibbly stays its own repo and consumes magnetite through seams — a client, not a
+fork of it, and not a merge candidate.**
 
-Against pure standalone:
-- Identity, payments, discovery, lobbies, and hosting are all solved in `magnetite-seams`.
-  Rebuilding them in JS would be a straight waste.
+The reasoning here has changed since the previous pass, so it is rewritten rather than patched.
 
-**Therefore:** Wibbly consumes magnetite as its platform. Magnetite gains an `InputProvider` seam.
-Anti-cheat treats gesture input as **client-attested**, not replay-verified — see §6.
+**The old case for staying separate has partly expired.** It used to argue that merging would
+"blur the property magnetite sells," because camera input is a noisy, nondeterministic,
+un-replayable sensor stream — the one input class that cannot be replay-verified. That is still
+true as a fact about cameras, but it is no longer the reason to keep two repos: magnetite now
+defines `InputClass::{Deterministic, Attested}`, a `PlausibilityGate`, and a signed wire ingress
+(`ClientNet::AttestedEvent` → `magnetite_runtime::attested::AttestedIngress` →
+`ServerNet::AttestedAck`/`AttestedReject`) in its own code — see `DECENTRALIZATION.md` §3.7 / IN1,
+marked **Done**. The boundary between verifiable and attested input is now enforced by a type that
+fails closed, not by which repository a file happens to live in. Putting wibbly's TypeScript
+inside the magnetite tree would not weaken that boundary; the type does the work regardless of
+directory layout.
+
+**The reason that still holds: staying a separate repo is a conformance test, not a fence.**
+Wibbly can only reach magnetite through whatever magnetite decided to publish — its crates, its
+wire format, its `InputProvider` seam — because a repo boundary is the one thing that makes
+reaching past that impossible by accident. A game living inside magnetite's own tree could import
+an internal type or an unexported helper and nobody would notice until the next refactor broke it.
+Wibbly cannot do that by construction. Every place wibbly talks to magnetite is therefore evidence
+that magnetite's *published* surface is sufficient for a real consumer — not merely an assertion
+that it should be.
+
+Against pure standalone: identity, discovery, lobbies, and hosting are already solved in
+`magnetite-seams`. Rebuilding them in JavaScript would be a straight waste — and wibbly does not;
+see §6 for where wibbly's own multiplayer draws that line even when it isn't leaning on magnetite
+at all.
+
+**Therefore:** wibbly consumes magnetite as an optional platform through the `InputProvider` seam
+magnetite already ships. Gesture input is, and stays, **client-attested** — never
+replay-verified — regardless of who is authoritative for a given match. See §6 for why that is
+true even in wibbly's own peer-to-peer multiplayer, with no magnetite node involved at all.
 
 ## 3. THE SEAMS
 
@@ -205,58 +237,119 @@ Two distinct problems; do not conflate them.
 
 **Local (same camera, 2–4 players).** Solved by `PoseTracker.maxPeople` + `PlayerBinder` (§3.4).
 MoveNet MultiPose's flat cost curve makes this cheap. This is the differentiated, fun case and
-should ship first.
+should ship first. *Status: implemented, unvalidated against real people — see §8.*
 
-**Networked (different cameras).** Each client runs its own tracker locally and transmits
-**GestureEvents, not video**. This is a privacy property worth stating loudly: *camera frames
-never leave the device.* Session hosting, discovery, and lobbies come from magnetite.
+**Networked (different cameras) — peer-to-peer, no backend.** This is the settled design, and
+nothing below exists in code yet; it is spec, not shipped.
 
-**Anti-cheat boundary — be honest about this.** Magnetite's replay verification assumes
-deterministic input. Gesture input is a nondeterministic sensor stream and **cannot be
-replay-verified**. Gesture games therefore run as **client-attested**: the host simulates
-authoritatively over received GestureEvents, and events are rate-limited and
-plausibility-checked (human-reachable velocities, cooldowns), but a determined cheater can
-synthesise events. Document this rather than implying a guarantee we do not have.
+- **Host authority in the browser.** One player's tab runs the authoritative simulation — the
+  same role a dedicated server would play, just running on a participant's machine instead of
+  infrastructure wibbly operates.
+- **Guest → host: GestureEvents over a WebRTC `RTCDataChannel`.** Not video. A guest's tab runs
+  its own `FrameSource` → `PoseTracker` → `GestureRecognizer` locally and sends only the resulting
+  events — tens of bytes each — to the host.
+- **Host → guests: state broadcast back over the same channel(s).** The host is the only
+  simulation; everyone else renders what it says happened.
+- **Signalling has zero required infrastructure.** WebRTC peers still need to exchange one session
+  description each before a `DataChannel` can open, and wibbly does not run a signalling server
+  for that. Two options, both workable today:
+  - **Copy-paste or QR code.** One player generates a connection blob (or its QR encoding), sends
+    it to the other by any channel they already use — chat, a screenshot, reading it aloud — and
+    the other pastes it back. Zero infrastructure, works offline-adjacent, and is the default.
+  - **Trystero (MIT), optional.** Signals over public BitTorrent trackers or Nostr relays instead
+    of copy-paste — smoother, still no server wibbly runs or operates.
+- **STUN: free public STUN servers.** Needed for most NAT traversal and free to use; this part
+  works for the large majority of home and mobile connections.
+- **Honest limitation, stated plainly: WebRTC reveals your IP address to the other peer.** ICE
+  candidate exchange — how two browsers find a path to each other at all — surfaces each peer's
+  public IP; the STUN server sees it too, for the same reason. This is not a wibbly-specific
+  leak, it is what a direct peer connection *is*, same as any two-party WebRTC call. The one
+  mitigation is forcing all traffic through a TURN relay, which hides both peers' IPs behind the
+  relay's instead — but that needs a TURN server, and as below, wibbly does not provide one for
+  free. Nothing here is built yet; this is a disclosure ahead of the design.
+- **Honest limitation, stated plainly: there is no free TURN.** A relay is the only thing that
+  gets two peers connected when at least one sits behind symmetric NAT or carrier-grade NAT
+  (CGNAT) — common on some mobile networks and behind some routers — and running a TURN relay
+  costs real bandwidth, which is exactly the infrastructure this design exists to avoid. **Peers
+  in that situation will fail to connect, with no workaround, and this doc will not pretend
+  otherwise.** Same-network play (same Wi-Fi/LAN) always works, because it needs no NAT traversal
+  at all.
 
-## 7. Developer incentives
+**Why an authoritative server buys nothing here.** Magnetite's `InputClass::Attested` — see §2 —
+is, by construction, never replay-verifiable: there is no canonical recording of "what the camera
+actually saw" to check a claimed `GestureEvent` against, no matter who is doing the checking. A
+rented server that received the exact same `GestureEvent` stream would face the exact same
+problem the host's browser tab faces: it cannot tell a real swing from a synthesised one that
+respects rate limits and plausible velocities. Centralizing authority moves *where* the simulation
+runs; it does not move the cheat surface, because the cheat surface is upstream of authority, at
+the sensor. This is the argument for running wibbly's own multiplayer host-in-browser rather than
+standing up a server for it — not a cost shortcut, a statement that the server would not have
+bought anything.
 
-**Ads are the wrong lever, and we should say why.** Ad SDKs are central tracking brokers, which
-contradicts both the decentralization thesis and Vulos's privacy posture. Web-game CPMs are low
-and need scale we do not have. And an interstitial in a game where the player is standing up
-waving their arms is hostile. Shipping an ad beacon inside a desktop binary is worse still.
+**Anti-cheat boundary — be honest about this, regardless of who is authoritative.** Gesture input
+is a nondeterministic sensor stream and **cannot be replay-verified**, on a host browser tab or on
+a dedicated server alike. Gesture games therefore run as **client-attested**: whoever is
+authoritative simulates over received `GestureEvent`s, and events are rate-limited and
+plausibility-checked (human-reachable velocities, cooldowns) — magnetite calls this a
+`PlausibilityGate` — but a determined cheater can still synthesise events. Say this plainly rather
+than implying a guarantee that does not exist.
 
-The ladder, ordered by fit with what magnetite already has:
+**What this is and is not.** *Frames never leaving the device* is a **privacy** property: nobody
+downstream, host or guest, ever receives your video. It is not a **security** property — it says
+nothing about whether a given `GestureEvent` came from a real arm in front of a real camera, and
+nothing here should be read as implying otherwise.
 
-1. **Host-earns.** Magnetite already pays capacity providers. A popular gesture game generates
-   sessions; devs who also host earn from them.
-2. **Non-custodial paid games and cosmetics.** The crypto payment seam exists. A 0%-to-low
-   platform cut is a real differentiator against Steam's 30%.
-3. **Tournaments with entry pools.** Camera games are inherently spectator-friendly and
-   competitive. The pool *is* the prize — no advertiser required.
-4. **Bounty/patronage pool** for the first N games shipped against the SDK. The cheapest way to
-   seed a library from zero.
+## 7. Removed: developer incentives
 
-If ads are still wanted: an `AdProvider` seam defaulting to `none`, opt-in per game, so no
-developer is forced to ship a tracking beacon.
+This section used to sketch host-earns payouts, non-custodial paid games, tournament entry pools,
+and an opt-in ad seam. **All of it is dead**, not softened — wibbly is free and there is no
+payment path anywhere in this repo: no wagers, no tournaments with pools, no revenue share, no
+ads. Nothing in §0 or §2 depends on any of it existing.
 
 ## 8. Backlog
 
-### Phase 1 — the library (blocks everything)
-- [ ] `packages/wibbly-input` scaffold; move `poseDetection.js` in, **strip all DOM injection**.
-- [ ] `MoveNetMultiPoseTracker` — replace SinglePose; return `Person[]`.
-- [ ] `PlayerBinder` + `SpatialBinder` default. Highest risk; do it early.
-- [ ] `SwingRecognizer` extracted as a pure function over landmark history + unit tests.
-- [ ] Fix handedness — kill `isRightHanded = true`, implement the empty left-handed branch.
-- [ ] Remove the 15fps/every-3rd-frame throttle; make it adaptive to measured frame time.
-- [ ] `HandLandmarkTracker` (MediaPipe) + `PinchRecognizer` / `PointRecognizer`.
+### Phase 1 — the library (blocks everything) — mostly landed
+- [x] `packages/wibbly-input` scaffold; `poseDetection.js` moved in, **all DOM injection
+      stripped**. Published as `@vulos/wibbly-input`, MIT.
+- [x] `MoveNetMultiPoseTracker` — SinglePose replaced; returns `Person[]`.
+- [x] `PlayerBinder` + `SpatialBinder` default. *(Highest risk; done early, as intended. Covered
+      by unit tests against **synthetic fixtures only** — never validated against two real
+      people. Implemented and unvalidated, not working — see the gate under Phase 2.)*
+- [x] `SwingRecognizer` extracted as a pure function over landmark history + unit tests.
+- [x] Fix handedness — `isRightHanded = true` is gone; handedness is a live per-player sign
+      flip, both cases tested.
+- [x] Remove the 15fps/every-3rd-frame throttle; `AdaptivePacer` adapts to measured frame time.
+- [x] `HandLandmarkTracker` (MediaPipe) + `PinchRecognizer` / `PointRecognizer`. Implemented and
+      unit-tested — including distance-from-camera and rotation invariance. **Two gaps remain,
+      stated plainly:** the thresholds are derived from geometry, not measured against a real
+      hand, since no hand-tracking session has yet run against a live camera; and `WibblyInput`
+      (`packages/wibbly-input/src/pipeline.ts`) does not yet compose the hand tracker into the
+      running pipeline — it still wires body pose and `SwingRecognizer` only. The MediaPipe hand
+      model and Wasm runtime (~25 MB) are also not vendored in this repo; both asset paths are
+      injectable with no CDN default, so nothing reaches the network behind anyone's back, but
+      hands do not run until someone supplies them.
 
 ### Phase 2 — the platform
-- [ ] Tennis ported onto the seam; 2-player local via one camera.
+- [x] Tennis ported onto the seams. Names no model, runtime, or vendor.
+- [ ] **Validate multi-person against real people and real cameras.** The tracker and binder are
+      implemented and unit-tested on fixtures only; neither has met a living room. This gates
+      every claim about couch multiplayer.
+- [ ] 2-player local via one camera — the binder already supports two claim zones, but tennis
+      still routes gestures for `player_1` only. **Next up.**
 - [x] Remove Firebase Analytics. *(Hosting migration off Firebase still open.)*
 - [x] Static site in the house style.
 - [x] Shrink `src/pages/` — the marketing shell is deleted; the app is now a title
       screen, a first-run camera setup flow, the play surface and a 404.
-- [x] Magnetite `InputProvider` seam + client-attested anti-cheat path.
+- [x] Magnetite `InputProvider` seam + client-attested anti-cheat path, via
+      `packages/wibbly-magnetite`. *(Proven end-to-end against a live `magnetite dev` node: a
+      signed event returns `attested_ack`, a tampered one is rejected. Off by default. This
+      proves the pipe — nothing on either side drains the queue yet; no game reads gesture
+      input back out of it.)*
+- [ ] **Palmworks** — folded into [`games/palmworks`](games/palmworks) with its full history and
+      its own build: an industrial factory-building game. **Hands are not wired to it yet.**
+      `HandLandmarkTracker` + `PinchRecognizer`/`PointRecognizer` now exist (Phase 1, above), but
+      nothing in Palmworks or `WibblyInput` calls them yet — getting it playable by gesture is
+      still open.
 - [ ] **Soccer** — second reference game. Proves the SDK generalises beyond tennis,
       and is the first game to need a gesture that is *not* a swing: a kick is a
       lower-body gesture, so it exercises leg keypoints the `SwingRecognizer` ignores
@@ -269,22 +362,36 @@ developer is forced to ship a tracking beacon.
 
 > The title screen (`src/pages/title.jsx`) shows Soccer and Boxing as **Planned** cards
 > that cannot be selected. They are listed here so that presentation points at tracked
-> work rather than at nothing. Neither exists.
+> work rather than at nothing. Neither exists as code. Palmworks exists as code but not
+> as a gesture game yet — see above.
 
 ### Phase 3 — depth
 - [ ] `RtmoOnnxTracker` (ONNX Runtime Web + WebGPU), benchmarked against MoveNet.
 - [ ] Tauri shell w/ `nokhwa` + `ort`.
-- [ ] Networked play over magnetite.
-- [ ] Incentive rails (§7, items 1–3).
+- [x] **Peer-to-peer networked play** (§6): host authority in the browser, guest `GestureEvent`s
+      over a `RTCDataChannel`, copy-paste/QR signalling by default with Trystero as an optional
+      zero-server alternative, free public STUN. The transport (`PeerSession`, WebRTC offer/answer
+      helpers, a codec that fits a connection description in a link) is built and unit-tested in
+      `packages/wibbly-magnetite`, and tennis (`src/game/game.jsx`) already wires an optional
+      `PeerSession` in — off unless a host page hands in a transport. **What is not true yet, said
+      as plainly as the rest:** there is no lobby screen anywhere in wibbly. Nothing turns that
+      transport into a button a visitor can click, so this is not "open a link and play with a
+      friend" today.
 
 ## 9. Open questions
 
-- **Wibbly repo is private.** Publishing under `vulos.org/products/magnetite/wibbly` makes it public-facing.
-  Founder call.
+- ~~**Wibbly repo is private.**~~ **Resolved — false as written.** The repo is public at
+  [github.com/vul-os/wibbly](https://github.com/vul-os/wibbly), MIT OR Apache-2.0. Publishing
+  under `vulos.org/products/magnetite/wibbly` needs no founder call; it already matches how the
+  repo is licensed.
 - **`navigator.gpu` in WKWebView on macOS 26** — unresolved in research; test empirically.
-- **Other contributors** (`declan*`, `IMRAN`, `CAMERA` branches). The seam refactor touches
-  `poseDetection.js`, which is shared ground. Coordinate before landing.
-- **Hands or body first?** The name says "hand gesture," the code does body pose. Tennis needs
-  body. Decide the flagship input modality.
+- **Other contributors** (`declan*`, `IMRAN`, `CAMERA` branches on origin, last known, not
+  independently reverified for this pass). The phase-1 refactor already deleted the old
+  `poseDetection.js` that those branches may have been built against. If any are still active,
+  they need to rebase onto the current history rather than expecting a clean merge.
+- **Hands or body first?** The name says "hand gesture," the shipped game does body pose.
+  Palmworks raises the stakes on this: it is a hands-first game, and while `HandLandmarkTracker` +
+  `PinchRecognizer`/`PointRecognizer` now exist as a library, nothing wires them to drive it yet.
+  Still undecided which modality is the flagship one.
 - **No in-browser benchmarks exist** for RTMO/YOLO-pose at any player count. If phase 3 proceeds,
   we benchmark it ourselves — there is no number to inherit.

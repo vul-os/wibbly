@@ -137,7 +137,9 @@ the rest, which is what blocked every multi-player capability downstream.
 - **Default — `MoveNetMultiPoseTracker`.** Pins `modelType: 'MultiPose.Lightning'`, returns up to six
   people at flat inference cost, and normalises every landmark to `[0,1]` in image space with the
   origin top-left. See [Model selection](/products/magnetite/wibbly/docs/models).
-- **Optional — `HandLandmarkTracker`.** MediaPipe, composable alongside the body tracker.
+- **Optional — `HandLandmarkTracker`.** MediaPipe, composable alongside the body tracker. Built and
+  unit-tested as a standalone tracker, but `WibblyInput`'s pipeline does not compose it yet — it
+  still wires body pose and `SwingRecognizer` only.
 - **Future — `RtmoOnnxTracker`.** Same interface, ONNX Runtime Web, phase 3.
 
 ## 3. `GestureRecognizer` — skeletons to game events
@@ -192,17 +194,26 @@ check, and a lighting warning. Persisted locally, keyed to `PlayerId`.
 ## Relationship to magnetite
 
 wibbly is a **client** of [magnetite](https://github.com/vul-os/magnetite)'s seams, not a fork of
-them. Identity, payments, discovery, lobbies and hosting are solved there; rebuilding them in
-JavaScript would be a straight waste. magnetite gains an `InputProvider` seam so gesture input has a
-defined entry point.
+them, and not a platform in its own right — magnetite is the platform. Identity, discovery,
+lobbies and hosting are solved there; rebuilding them in JavaScript would be a straight waste.
+magnetite ships an `InputProvider` seam so gesture input has a defined entry point.
 
-The boundary is anti-cheat. magnetite's replay verification assumes deterministic input; gesture
-input is not deterministic and cannot be replay-verified. Gesture games therefore run
-**client-attested** — spelled out in [Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer).
+Staying a separate repo used to be argued on anti-cheat grounds: magnetite's replay verification
+assumes deterministic input, and gesture input cannot be replay-verified, so merging would "blur
+the property magnetite sells." That argument has expired — magnetite now enforces the boundary
+itself, in code, with `InputClass::{Deterministic, Attested}` and a `PlausibilityGate`, so the line
+between verifiable and attested input no longer depends on which repository a file lives in. What
+still justifies two repos is different: it is a **conformance test**. wibbly can only reach
+magnetite through whatever magnetite decided to publish, because a repo boundary is the one thing
+that makes reaching past that impossible by accident — every place wibbly talks to magnetite is
+evidence that the published surface is enough for a real consumer. Gesture games still run
+**client-attested**, on a host browser tab or a dedicated server alike — spelled out in
+[Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer).
 
-A `packages/wibbly-magnetite` integration is being written now. It has **not** been proven against a
-live magnetite node, so nothing in wibbly's shipping path talks to magnetite today — treat the
-integration as in progress, not available.
+A `packages/wibbly-magnetite` integration exists and has been proven end-to-end against a live
+`magnetite dev` node: a signed event returns `attested_ack`. What is **not** built is a consumer —
+accepted events sit in a queue that nothing on either side drains, and wibbly's own peer-to-peer
+multiplayer (see Multiplayer) does not require a magnetite node at all.
 
 ## What phase 1 actually changed
 

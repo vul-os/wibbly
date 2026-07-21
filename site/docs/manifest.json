@@ -114,12 +114,6 @@
       "title": "The project",
       "pages": [
         {
-          "slug": "incentives",
-          "file": "INCENTIVES.md",
-          "title": "Developer incentives",
-          "blurb": "Why not ads, and the four-rung ladder that replaces them."
-        },
-        {
           "slug": "roadmap",
           "file": "ROADMAP.md",
           "title": "Roadmap",
@@ -177,13 +171,6 @@
       "title": "Runtime targets",
       "group": "Run it",
       "blurb": "Browser-first, why Tauri-with-webview-ML was rejected, and what the desktop shell will look like."
-    },
-    {
-      "slug": "incentives",
-      "file": "INCENTIVES.md",
-      "title": "Developer incentives",
-      "group": "The project",
-      "blurb": "Why not ads, and the four-rung ladder that replaces them."
     },
     {
       "slug": "roadmap",

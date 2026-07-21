@@ -3,9 +3,10 @@
 > **Status, split two ways.** The *local* half is implemented: the tracker returns up to six
 > skeletons and `SpatialBinder` gives them durable ids, under 29 unit tests — but nothing has been
 > validated against real people in a real room, and tennis still drives one player. The *networked*
-> half does not exist: there is no client, no transport and no session code in wibbly at all. The
-> anti-cheat section is written down before it is built, deliberately, so the boundary is agreed
-> rather than discovered.
+> half does not exist as code at all: no client, no transport, no signalling. What follows is the
+> settled design — peer-to-peer, no backend wibbly runs — written down before it is built, so the
+> boundary and its real limitations (no free TURN, and a peer sees your IP address by design) are
+> agreed rather than discovered later.
 
 There are two distinct problems here. Conflating them is the usual mistake.
 
@@ -40,7 +41,7 @@ Two honest caveats. First, the binder has 18 passing tests and zero minutes in f
 game is configured with two claim zones but reads gestures for `player_1` only, so a second person
 cannot actually play yet. Wiring that up is the next task.
 
-## Networked — different cameras
+## Networked — different browsers, peer-to-peer, no backend
 
 Each client runs its own tracker locally and transmits **`GestureEvent`s, not video**.
 
@@ -49,59 +50,90 @@ device*. Not because of a policy, but because there is no code path that would s
 latency budget that would tolerate one. A gesture event is a player id, a string, a float, a vector
 and a timestamp — tens of bytes at gesture rate, versus roughly 250 MB/s for raw 1080p at 30 fps.
 
+**The design, in full, is this:**
+
+- **Host authority in the browser.** One player's tab is the authoritative simulation — the same
+  role a dedicated server plays elsewhere, running instead on a participant's own machine.
+- **Guest → host over a WebRTC `RTCDataChannel`.** A guest's tab runs its own `FrameSource` →
+  `PoseTracker` → `GestureRecognizer` and sends only the resulting `GestureEvent`s to the host.
+- **Host → guests, same channel.** The host broadcasts the resulting state back; guests render it.
+- **Signalling costs nothing to run.** WebRTC peers still need to exchange one connection
+  description each before a `DataChannel` opens, and wibbly runs no server to broker that exchange.
+  Default: **copy-paste or a QR code** — one player generates a connection blob, sends it to the
+  other by whatever channel they already have open, the other pastes it back. Optional:
+  **[Trystero](https://github.com/dmotz/trystero)** (MIT), which signals over public BitTorrent
+  trackers or Nostr relays instead of copy-paste — smoother, and still no server wibbly operates.
+- **STUN is free and does most of the work.** Public STUN servers handle NAT traversal for the
+  large majority of home and mobile connections at no cost.
+- **WebRTC reveals your IP address to the other peer — plainly, by design.** ICE candidate
+  exchange is how two browsers find a path to each other at all, and the candidates it gathers
+  include your public IP. The STUN server sees it for the same reason, and so does the other
+  player — the same as on any two-party WebRTC call, video chat included. This is not a
+  wibbly-specific leak; it is what a direct peer connection *is*. The one mitigation is forcing
+  all traffic through a TURN relay, which hides both peers' IPs behind the relay's instead — but
+  that needs a TURN server to run, and, as above, wibbly does not provide one for free. Nothing
+  here is built yet, so this is a disclosure ahead of the design, not a description of shipped
+  behaviour.
+
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 260" width="900" role="img" aria-label="On-device pipeline: camera captures a frame, MoveNet turns it into landmarks, the frame is discarded, and a recognizer emits a GestureEvent of about 64 bytes. Only that event is eligible to cross the network boundary. On the other side of the boundary is a dashed box labelled NOT BUILT, because no client, transport or session code exists in wibbly today.">
+<svg viewBox="0 0 900 300" width="900" role="img" aria-label="Peer-to-peer multiplayer design: two browser tabs, host and guest, each running a local camera pipeline that produces GestureEvents. A WebRTC DataChannel carries guest events to the host and host state back, opened after a one-time signalling exchange via copy-paste, QR code, or Trystero over public trackers. Free public STUN servers handle most NAT traversal. A separate warning box states that there is no free TURN relay, so peers behind symmetric NAT or carrier-grade NAT cannot connect, with no workaround, while same-network play always works.">
   <defs>
-    <marker id="m-mp-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="m-p2p-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="var(--ln)"/>
     </marker>
-    <marker id="m-mp-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="var(--am)"/>
+    <marker id="m-p2p-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--a)"/>
     </marker>
   </defs>
   <g font-family="ui-monospace, monospace">
-    <rect x="8" y="16" width="572" height="200" rx="10" fill="none" stroke="var(--a)" stroke-width="1.2" stroke-dasharray="6 6" opacity=".6"/>
-    <text x="20" y="34" font-size="10" font-weight="700" fill="var(--a)" letter-spacing="1.3">YOUR DEVICE — IMPLEMENTED, SHIPPED</text>
-    <rect x="26" y="70" width="140" height="70" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="40" y="92" font-size="11" font-weight="700" fill="var(--tx)">Camera</text>
-    <text x="40" y="110" font-size="9.5" fill="var(--tx2)">getUserMedia</text>
-    <text x="40" y="124" font-size="9.5" fill="var(--tx2)">frame ~8 MB</text>
-    <rect x="200" y="70" width="150" height="70" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="214" y="92" font-size="11" font-weight="700" fill="var(--tx)">MoveNet</text>
-    <text x="214" y="110" font-size="9.5" fill="var(--tx2)">MultiPose tracker</text>
-    <text x="214" y="124" font-size="9.5" fill="var(--tx2)">→ Person[]</text>
-    <rect x="200" y="150" width="150" height="30" rx="6" fill="none" stroke="var(--ln)" stroke-dasharray="4 4"/>
-    <text x="214" y="169" font-size="9.5" fill="var(--tx2)">frame discarded here</text>
-    <path d="M275 140 V148" stroke="var(--ln)" stroke-width="1.4" marker-end="url(#m-mp-1)"/>
-    <rect x="374" y="70" width="150" height="70" rx="8" fill="none" stroke="var(--a)" stroke-width="1.4"/>
-    <text x="388" y="92" font-size="11" font-weight="700" fill="var(--tx)">Recognizer</text>
-    <text x="388" y="110" font-size="9.5" fill="var(--tx2)">detectSwing()</text>
-    <text x="388" y="124" font-size="9.5" font-weight="700" fill="var(--a)">→ GestureEvent</text>
-    <g stroke="var(--ln)" stroke-width="1.6" fill="none" marker-end="url(#m-mp-1)">
-      <path d="M166 105 H196"/>
-      <path d="M350 105 H370"/>
-    </g>
-    <line x1="595" y1="12" x2="595" y2="230" stroke="var(--tx2)" stroke-width="1.4" stroke-dasharray="3 5"/>
-    <text x="595" y="10" font-size="9" fill="var(--tx2)" text-anchor="middle" letter-spacing="1.2">NETWORK BOUNDARY</text>
-    <path d="M524 105 H605" stroke="var(--am)" stroke-width="1.8" fill="none" stroke-dasharray="5 4" marker-end="url(#m-mp-2)"/>
-    <text x="524" y="94" font-size="9.5" font-weight="700" fill="var(--am)">GestureEvent ≈64 B</text>
-    <text x="524" y="150" font-size="9" fill="var(--tx2)">the only thing eligible to cross</text>
-    <rect x="620" y="46" width="270" height="128" rx="10" fill="none" stroke="var(--am)" stroke-width="1.4" stroke-dasharray="6 6"/>
-    <text x="640" y="76" font-size="13" font-weight="700" fill="var(--am)">NOT BUILT</text>
-    <text x="640" y="98" font-size="10" fill="var(--tx2)">no client</text>
-    <text x="640" y="116" font-size="10" fill="var(--tx2)">no transport</text>
-    <text x="640" y="134" font-size="10" fill="var(--tx2)">no session code</text>
-    <text x="640" y="156" font-size="9.5" fill="var(--tx2)">this side of the line does not exist yet</text>
+    <text x="14" y="20" font-size="10" font-weight="700" fill="var(--am)" letter-spacing="1.3">DESIGN — no networked play exists yet, this is the spec</text>
+
+    <rect x="8" y="34" width="270" height="150" rx="10" fill="var(--sf)" stroke="var(--ln)" stroke-width="1.2"/>
+    <text x="22" y="56" font-size="10.5" font-weight="700" fill="var(--tx)">HOST — authoritative</text>
+    <text x="22" y="76" font-size="9.5" fill="var(--tx2)">Camera → tracker → recognizer</text>
+    <text x="22" y="92" font-size="9.5" fill="var(--tx2)">runs the simulation</text>
+    <text x="22" y="108" font-size="9.5" fill="var(--tx2)">applies its own +</text>
+    <text x="22" y="122" font-size="9.5" fill="var(--tx2)">received GestureEvents</text>
+    <text x="22" y="146" font-size="9" fill="var(--tx2)">broadcasts state back</text>
+    <text x="22" y="160" font-size="9" fill="var(--tx2)">over the same channel</text>
+
+    <rect x="622" y="34" width="270" height="150" rx="10" fill="var(--sf)" stroke="var(--ln)" stroke-width="1.2"/>
+    <text x="636" y="56" font-size="10.5" font-weight="700" fill="var(--tx)">GUEST — renders only</text>
+    <text x="636" y="76" font-size="9.5" fill="var(--tx2)">Camera → tracker → recognizer</text>
+    <text x="636" y="92" font-size="9.5" fill="var(--tx2)">sends only GestureEvents</text>
+    <text x="636" y="108" font-size="9.5" fill="var(--tx2)">— never video</text>
+    <text x="636" y="132" font-size="9" fill="var(--tx2)">receives state from host,</text>
+    <text x="636" y="146" font-size="9" fill="var(--tx2)">does not simulate itself</text>
+
+    <rect x="322" y="52" width="256" height="56" rx="8" fill="none" stroke="var(--a)" stroke-width="1.4"/>
+    <text x="336" y="74" font-size="11" font-weight="700" fill="var(--a)">RTCDataChannel</text>
+    <text x="336" y="92" font-size="9" fill="var(--tx2)">GestureEvent ↔ state, ≈64 B/event</text>
+    <path d="M278 76 H318" stroke="var(--a)" stroke-width="1.8" fill="none" marker-end="url(#m-p2p-2)"/>
+    <path d="M582 76 H618" stroke="var(--a)" stroke-width="1.8" fill="none" marker-end="url(#m-p2p-2)"/>
+
+    <rect x="322" y="122" width="256" height="62" rx="8" fill="var(--sf)" stroke="var(--ln)" stroke-dasharray="4 4"/>
+    <text x="336" y="142" font-size="9.5" font-weight="700" fill="var(--tx2)">Signalling, once, to open it —</text>
+    <text x="336" y="158" font-size="9" fill="var(--tx2)">copy-paste / QR (default) or</text>
+    <text x="336" y="172" font-size="9" fill="var(--tx2)">Trystero (public trackers) — no server run</text>
+
+    <rect x="150" y="204" width="600" height="34" rx="7" fill="var(--sf)" stroke="var(--ok)" stroke-width="1.3"/>
+    <text x="450" y="226" font-size="10.5" font-weight="700" fill="var(--ok)" text-anchor="middle">FREE PUBLIC STUN — resolves most NAT traversal</text>
+
+    <rect x="150" y="248" width="600" height="44" rx="7" fill="var(--am)" fill-opacity="0.08" stroke="var(--am)" stroke-width="1.4" stroke-dasharray="5 5"/>
+    <text x="450" y="268" font-size="10.5" font-weight="700" fill="var(--am)" text-anchor="middle">NO FREE TURN — symmetric NAT / CGNAT peers cannot connect, no workaround</text>
+    <text x="450" y="284" font-size="9.5" fill="var(--tx2)" text-anchor="middle">Same-network (same Wi-Fi/LAN) play is unaffected and always works</text>
   </g>
 </svg>
 </div>
-<figcaption><b>Camera frames never leave the device</b> — not as policy, but because nothing downstream of the discard point can send them. The dashed amber arrow is the only thing that could cross today's boundary, and there is nowhere on the other side for it to go: <b>no networked play exists.</b></figcaption>
+<figcaption><b>Host authority sits in a browser tab, not a server.</b> A guest's `GestureEvent`s cross a `DataChannel` opened by a one-time, zero-infrastructure signalling exchange. Free STUN resolves most NAT situations; there is no free TURN, so the one honest gap — symmetric NAT or CGNAT on either side — has no workaround today.</figcaption>
 </figure>
 
-Session hosting, discovery and lobbies come from [magnetite](https://github.com/vul-os/magnetite)
-through an `InputProvider` seam. That seam has not been added to magnetite, and no wibbly code talks
-to magnetite today.
+**Why this doesn't need a server, or a magnetite node, to be "real" multiplayer.** Session hosting
+through [magnetite](https://github.com/vul-os/magnetite)'s `InputProvider` seam is still a valid
+path for someone who wants a persistent, always-on host — but it is not a requirement for wibbly's
+own multiplayer, because a rented server does not do anything for anti-cheat that a host's own
+browser tab doesn't. See the next section for why.
 
 ## The anti-cheat boundary — be honest about this
 
@@ -113,12 +145,21 @@ magnetite sells.
 same model over the same camera will not necessarily agree, and there is no canonical "input" to
 replay in the first place — only what one client's tracker happened to report.
 
-So gesture games run **client-attested**:
+**This is why a rented, authoritative server buys nothing here.** A dedicated server receiving the
+exact same `GestureEvent` stream faces the exact same problem a host's browser tab faces: neither
+has a canonical recording of "what the camera actually saw" to check a claimed event against.
+Centralizing authority moves *where* the simulation runs; it does not move the cheat surface,
+because the cheat surface is upstream of authority, at the sensor. That is the argument for
+running wibbly's own multiplayer host-in-browser (previous section) rather than standing up a
+server for it — the server would not have bought anything.
 
-- The host simulates authoritatively over the `GestureEvent`s it receives.
+So gesture games run **client-attested**, whoever is authoritative:
+
+- Whoever holds authority — a host's browser tab, or in principle a dedicated server — simulates
+  over the `GestureEvent`s it receives.
 - Events are **rate-limited** — you cannot swing forty times a second.
 - Events are **plausibility-checked** — human-reachable velocities, respected cooldowns, positions
-  inside a calibrated reach envelope.
+  inside a calibrated reach envelope. Magnetite calls this a `PlausibilityGate`.
 - **A determined cheater can still synthesise events.** Nothing in the pipeline proves that a
   `GestureEvent` came from a real arm in front of a real camera.
 
@@ -126,6 +167,12 @@ That last bullet is the point of this page. It is documented rather than implied
 guarantee wibbly cannot keep is worse than an honest limit. Competitive formats that need stronger
 assurance need a different input class — or a referee, or in-person play, which camera games are
 unusually well suited to anyway.
+
+**One more distinction worth being precise about.** *Frames never leaving the device* is a
+**privacy** property — nobody downstream, host or guest, ever receives your video. It is not a
+**security** property: it says nothing about whether a given `GestureEvent` came from a real arm
+in front of a real camera. Nothing on this page should be read as claiming gesture input provides
+anti-cheat or verification of any kind — it provides privacy, and only privacy.
 
 <figure class="wbf">
 <div class="sc">

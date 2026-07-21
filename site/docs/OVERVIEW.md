@@ -1,11 +1,15 @@
 # Overview
 
-**wibbly is a camera-gesture input layer and game shell for the browser.** Your camera is the
-controller, a gesture is an input event like any other, and games are portable objects that run in a
-tab with zero install.
+**wibbly is a camera-gesture game built on [magnetite](https://github.com/vul-os/magnetite)**, the
+decentralized, self-hostable Rust games platform. Your camera is the controller, a gesture is an
+input event like any other, and the game runs in a tab with zero install.
 
-wibbly is not a tennis game. wibbly is the input layer plus shell that makes camera-controlled games
-cheap to build — plus one reference game, tennis, that proves it.
+Magnetite is the platform; wibbly is what building on it looks like when your controller is a
+webcam. Concretely, wibbly today is one reference game — tennis — with soccer and boxing specified
+in the backlog, and [Palmworks](https://github.com/vul-os/wibbly/tree/main/games/palmworks), an
+industrial factory-building game, folded into `games/` with its full history and not yet wired to
+any gesture. wibbly is free and dual-licensed **MIT OR Apache-2.0** — there is no payment path
+anywhere in it: no wagers, no tournament pools, no revenue share, no ads.
 
 <style>
 .wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
@@ -65,9 +69,9 @@ way — using the three states below.
 | Multi-person play validated with real people | **Not validated** — fixtures are not a living room |
 | 2-player tennis | **Next** — the binder is multi-player, the game is not |
 | Soccer, Boxing reference games | **Planned** — tracked backlog, no code |
-| Hand landmarks, pinch, point | **Not started** |
+| Hand landmarks, pinch, point | **Implemented**, unit-tested — not wired into the pipeline or any game, thresholds unvalidated against a real camera |
 | magnetite integration (`packages/wibbly-magnetite`) | **In progress** — unproven against a live node |
-| Networked play, lobbies, payments | **Not started** — no network code at all |
+| Networked play (peer-to-peer, browser-hosted) | **Transport implemented**, unit-tested, wired into tennis (off by default) — no lobby UI, so nothing turns it into a click-to-play flow |
 | Tauri desktop shell | **Phase 3** |
 | Release build | **Source only** |
 | Firebase Hosting | **Still Firebase** — migration queued |
@@ -123,10 +127,11 @@ provides — which is why v1 is browser-first and non-negotiable. See
 [Runtime targets](/products/magnetite/wibbly/docs/runtime-targets).
 
 **Camera frames never leave the device.** Inference runs in your tab because it has to; there is
-nowhere fast enough to send frames. The networked design preserves that property by transmitting
-`GestureEvent`s — tens of bytes — rather than video. Networked play is not built yet, so treat that
-half as a design commitment rather than a shipped feature. The local half is real: the analytics SDK
-that used to contradict it has been removed, though hosting is still Firebase.
+nowhere fast enough to send frames. The networked design — peer-to-peer, one player's browser
+authoritative, no backend — preserves that property by transmitting `GestureEvent`s — tens of
+bytes — rather than video. Networked play is not built yet, so treat that half as a design
+commitment rather than a shipped feature. The local half is real: the analytics SDK that used to
+contradict it has been removed, though hosting is still Firebase.
 
 **Games see interfaces, never vendors.** Game code names no model, no runtime and no vendor. It
 consumes four seams, each of which ships a working default. This one is now demonstrable rather than
@@ -136,16 +141,25 @@ aspirational — `src/game/game.jsx` imports `WibblyInput`, `SpatialBinder`, `Sw
 
 ## What wibbly is not
 
-- **Not a fork of magnetite.** magnetite is Rust, and its thesis is deterministic authoritative
-  simulation with replay verification. Camera input is a noisy, nondeterministic, un-replayable
-  sensor stream — the one input class that *cannot* be replay-verified. Merging them would blur the
-  property magnetite sells. wibbly consumes magnetite through seams instead, and treats gesture
-  input as client-attested. See [Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer).
-- **Not ad-supported.** Ad SDKs are central tracking brokers, web-game CPMs need scale wibbly does
-  not have, and an interstitial aimed at somebody standing up waving their arms is hostile. See
-  [Developer incentives](/products/magnetite/wibbly/docs/incentives).
+- **Not a platform.** magnetite is the platform — a decentralized, self-hostable Rust games
+  runtime. wibbly is a game (a small suite of them) that consumes it. Calling wibbly "the input
+  layer and shell" made one game look like infrastructure it isn't.
+- **Not a fork of magnetite, and not a merge candidate.** magnetite is Rust; its thesis is
+  deterministic authoritative simulation with replay verification, and camera input is a noisy,
+  nondeterministic sensor stream that cannot be replay-verified. That used to be the argument for
+  keeping two repos, but it has partly expired: magnetite now enforces the verifiable/attested
+  boundary itself, in code, with `InputClass::{Deterministic, Attested}` and a `PlausibilityGate` —
+  see [Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer). The reason two repos
+  still make sense is different: staying separate is a **conformance test**. wibbly can only reach
+  magnetite through whatever magnetite chose to publish, because a repo boundary is the one thing
+  that makes reaching past that impossible by accident.
+- **Not monetized, in any form.** No wagers, no tournament pools, no revenue share, no host-earns
+  split, no ads. wibbly is free and dual-licensed **MIT OR Apache-2.0**. This was previously a
+  backlog item (an incentive ladder); it has since been deleted outright rather than deprioritized.
 - **Not a privacy product.** It is an agency product. Your camera stays yours because of where the
-  computation happens, not because of a policy page.
+  computation happens, not because of a policy page. That is a privacy property, not a security
+  one — it says nothing about whether a gesture can be verified, only about who gets to see the
+  camera feed it came from.
 
 ## Where to go next
 

@@ -9,7 +9,48 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-No unreleased changes.
+### Changed
+
+- **Documentation reframed: wibbly is a game, not a platform.** `WIBBLY.md`, `site/docs/`, and
+  `site/landing.html` no longer describe wibbly as "the input layer and shell" for camera-controlled
+  games in general — that framing made one game look like infrastructure it isn't. wibbly is now
+  consistently described as a camera-gesture game (tennis today; soccer, boxing and the folded-in
+  [Palmworks](games/palmworks) in the backlog) built on [magnetite](https://github.com/vul-os/magnetite),
+  which is the actual platform.
+- **§2 of `WIBBLY.md` rewritten as "How wibbly relates to magnetite."** The old argument for staying
+  a separate repo — that merging would "blur the property magnetite sells" because gesture input
+  can't be replay-verified — no longer holds: magnetite now enforces the verifiable/attested
+  boundary itself, in code (`InputClass::{Deterministic, Attested}`, `PlausibilityGate`, the signed
+  wire ingress). The reason that still holds is reframed: staying separate is a conformance test —
+  wibbly can only reach magnetite through its published surface, by construction.
+- **Multiplayer design rewritten as peer-to-peer, no backend.** `WIBBLY.md` §6, `site/docs/MULTIPLAYER.md`,
+  and the corresponding sections of `site/landing.html` now specify host authority in one player's
+  browser tab, guest `GestureEvent`s over a WebRTC `RTCDataChannel`, and zero-infrastructure
+  signalling (copy-paste/QR by default, optional Trystero over public BitTorrent trackers/Nostr).
+  Free public STUN is used for NAT traversal; there is **no free TURN**, so peers behind symmetric
+  NAT or CGNAT cannot connect, with no workaround — stated plainly rather than glossed over.
+  Same-network play is unaffected. The accompanying rationale: gesture input is
+  `InputClass::Attested` and can never be replay-verified, so a rented authoritative server would
+  not buy back anything a host's own browser tab doesn't already have — the cheat surface sits
+  upstream, at the sensor, regardless of who is authoritative.
+- **Corrected the privacy/security distinction throughout.** Frames never leaving the device is
+  called out explicitly as a **privacy** property, not a **security** one — it says nothing about
+  whether a `GestureEvent` came from a real arm in front of a real camera, and no page should be
+  read as implying gesture input provides anti-cheat or verification.
+- **Corrected stale claims:** the repo has been public and MIT OR Apache-2.0 licensed for a while;
+  `WIBBLY.md` §9 and `site/docs/ROADMAP.md` no longer carry that as an open question. `WIBBLY.md`
+  §8 and the docs backlog now mark what phase 1 actually shipped, and add
+  [Palmworks](games/palmworks) — folded in with its full history, not yet wired to any gesture.
+  A later entry below covers `HandLandmarkTracker`/`PinchRecognizer`/`PointRecognizer` landing
+  after this reframe was drafted — the docs were updated again to match rather than left stale.
+
+### Removed
+
+- **`site/docs/INCENTIVES.md` deleted, and `WIBBLY.md` §7 rewritten to a removal note.** Wibbly is
+  free. There is no payment path anywhere in this repo: no host-earns split, no non-custodial paid
+  games, no tournament entry pools, no `AdProvider` seam. This is not a deprioritization — the
+  content was deleted, not softened. `site/docs/manifest.json` and every internal link to the
+  incentives page have been removed accordingly.
 
 ---
 
