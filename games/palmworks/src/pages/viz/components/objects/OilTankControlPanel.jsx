@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -9,7 +9,7 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning] = useState(false);
   const { camera, gl } = useThree();
 
   // Define connection ports for the oil tank control panel
@@ -85,7 +85,7 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
     return Math.round(value / gridSize) * gridSize;
   };
 
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       if (isSelected) {
         meshRef.current.material.emissive.setHex(0x444444);

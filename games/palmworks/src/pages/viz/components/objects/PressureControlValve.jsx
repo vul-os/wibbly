@@ -8,13 +8,13 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
-  const [currentPressure, setCurrentPressure] = useState(8.5);
-  const [setpoint, setSetpoint] = useState(10.0);
+  const [, setCurrentPressure] = useState(8.5);
+  const [setpoint] = useState(10.0);
   const [valvePosition, setValvePosition] = useState(45); // 0-100% open
   const [highAlarm, setHighAlarm] = useState(false);
   const [lowAlarm, setLowAlarm] = useState(false);
   const [controlActive, setControlActive] = useState(true);
-  const [manualMode, setManualMode] = useState(false);
+  const [manualMode] = useState(false);
   const { camera, gl } = useThree();
 
   // Industrial pressure control valve configuration

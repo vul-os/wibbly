@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -136,12 +136,6 @@ const Valve = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, g
     
     // Prevent default to avoid text selection
     event.preventDefault?.();
-  };
-
-  const handleClick = (event) => {
-    if (!isDragging) {
-      onClick?.(event);
-    }
   };
 
   const handlePortClick = (port, event) => {

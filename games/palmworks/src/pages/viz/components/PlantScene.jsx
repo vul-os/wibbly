@@ -1,6 +1,4 @@
 import React, { forwardRef, useImperativeHandle, useState, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
 import Boiler from './objects/Boiler';
 import ControlUnit from './objects/ControlUnit';
 import Valve from './objects/Valve';
@@ -37,7 +35,6 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
   const [connections, setConnections] = useState([]);
   const [connectionStart, setConnectionStart] = useState(null); // Will store { object, port }
   const [editingConnection, setEditingConnection] = useState(null);
-  const scene = useThree((state) => state.scene);
   const objectIdRef = useRef(0);
   const connectionIdRef = useRef(0);
   const cameraControlsRef = useRef();
@@ -85,41 +82,6 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
   const getObjectGroundPosition = (basePosition, objectType) => {
     const offset = OBJECT_GROUND_OFFSETS[objectType] || 0;
     return [basePosition[0], GROUND_LEVEL + offset, basePosition[2]];
-  };
-
-  // Get component class by type for accessing connection ports
-  const getComponentClass = (type) => {
-    switch (type) {
-      case 'boiler': return Boiler;
-      case 'controlUnit': return ControlUnit;
-      case 'valve': return Valve;
-      case 'sensor': return Sensor;
-      case 'pump': return Pump;
-      case 'conveyorBelt': return ConveyorBelt;
-      case 'powerBox': return PowerBox;
-      case 'storageTank': return StorageTank;
-      case 'heatExchanger': return HeatExchanger;
-      case 'oilTankControlPanel': return OilTankControlPanel;
-      case 'temperatureSwitch': return TemperatureSwitch;
-      case 'pressureSensor': return PressureSensor;
-      case 'pressureControlValve': return PressureControlValve;
-      case 'motorStarter': return MotorStarter;
-      case 'pressureVessel': return PressureVessel;
-      case 'dayTank': return DayTank;
-      case 'distillationColumn': return DistillationColumn;
-      case 'mixerAgitator': return MixerAgitator;
-      case 'centrifugalCompressor': return CentrifugalCompressor;
-      case 'coolingTower': return CoolingTower;
-      case 'stirredTankReactor': return StirredTankReactor;
-      case 'extruder': return Extruder;
-      case 'rackSystem': return RackSystem;
-      case 'pipelineSystem': return PipelineSystem;
-      case 'waterSupply': return WaterSupply;
-      case 'waterDrain': return WaterDrain;
-      case 'waterPump': return WaterPump;
-      case 'heatPump': return HeatPump;
-      default: return null;
-    }
   };
 
   // Verify if two specific ports can be connected

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
@@ -26,7 +26,7 @@ const WaterPump = ({
   const waterJetRef = useRef();
   const bubbleEffectRef = useRef();
 
-  const [isDragging, setIsDragging] = useState(false);
+  const [, setIsDragging] = useState(false);
   const [hasMovedMouse, setHasMovedMouse] = useState(false);
   const { camera, gl } = useThree();
 

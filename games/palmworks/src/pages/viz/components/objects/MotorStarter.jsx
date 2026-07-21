@@ -9,7 +9,7 @@ const MotorStarter = ({ position, onClick, onDrag, isSelected, isDraggable, grid
   const [hovered, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
   const [motorRunning, setMotorRunning] = useState(false);
-  const [motorCurrent, setMotorCurrent] = useState(0);
+  const [, setMotorCurrent] = useState(0);
   const [overloadTripped, setOverloadTripped] = useState(false);
   const [faultCondition, setFaultCondition] = useState(false);
   const [manualMode, setManualMode] = useState(false);
@@ -117,7 +117,7 @@ const MotorStarter = ({ position, onClick, onDrag, isSelected, isDraggable, grid
   // Simulate realistic motor starter operation
   React.useEffect(() => {
     const interval = setInterval(() => {
-      setMotorCurrent(prev => {
+      setMotorCurrent(() => {
         if (!motorRunning) return 0;
         
         // Simulate motor startup current surge and normal operation

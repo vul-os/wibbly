@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -9,7 +9,7 @@ const ConveyorBelt = ({ position, onClick, onDrag, isSelected, isDraggable, grid
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
-  const [dragStartPos, setDragStartPos] = useState(null);
+  const [, setDragStartPos] = useState(null);
   const { camera, gl } = useThree();
 
   // Define connection ports for the conveyor belt

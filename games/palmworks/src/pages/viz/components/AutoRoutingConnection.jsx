@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -10,11 +10,13 @@ const AutoRoutingConnection = ({
   type = 'liquid', 
   onClick,
   objects = [],
-  isEditing = false,
-  onEditComplete
+  isEditing = false
 }) => {
   const groupRef = useRef();
-  const [editWaypoints, setEditWaypoints] = useState(null);
+  // Waypoint editing (drag a routed pipe to reshape it) is not implemented
+  // yet — this always stays null and the route falls back to the
+  // auto-router below. `isEditing` only controls the highlight indicator.
+  const [editWaypoints] = useState(null);
 
   // Connection type configurations
   const connectionTypes = {
@@ -56,11 +58,6 @@ const AutoRoutingConnection = ({
       endPortPos.add(new THREE.Vector3(...endPort.offset));
     }
 
-    console.log('🔌 SIMPLE ROUTING WITH COLLISION START');
-    console.log('📍 Start port pos:', startPortPos.toArray());
-    console.log('📍 End port pos:', endPortPos.toArray());
-    console.log('🎯 Start port direction:', startPort?.direction);
-    console.log('🎯 End port direction:', endPort?.direction);
 
     const GROUND_LEVEL = 0.0;
     const MIN_SEGMENT = 0.15;
@@ -138,7 +135,6 @@ const AutoRoutingConnection = ({
         if (excludeObjects.includes(obj)) continue;
         
         if (obj.blocksGroundPath(fromPos, toPos)) {
-          console.log('  ❌ Ground path blocked by', obj.type, 'at', obj.position.toArray());
           return false;
         }
       }
@@ -166,11 +162,9 @@ const AutoRoutingConnection = ({
     const endDirection = endPort ? new THREE.Vector3(...endPort.direction).normalize() : new THREE.Vector3(-1, 0, 0);
     
     const startIsUp = startDirection.y > 0.6;
-    const startIsDown = startDirection.y < -0.6;
     const endIsUp = endDirection.y > 0.6;
     const endIsDown = endDirection.y < -0.6;
     
-    console.log('📊 Port analysis - Start: up=' + startIsUp + ', down=' + startIsDown + ' | End: up=' + endIsUp + ', down=' + endIsDown);
     
     // PHASE 1: Start from port
     routePoints.push(startPortPos.clone());
@@ -179,7 +173,6 @@ const AutoRoutingConnection = ({
     // PHASE 2: Move out from start port, then descend to ground
     if (startIsUp) {
       // Upward port: Move up a bit more, then out horizontally
-      console.log('⬆️ Upward start port');
       currentPos.y += 1.0;
       routePoints.push(currentPos.clone());
       
@@ -189,21 +182,18 @@ const AutoRoutingConnection = ({
       routePoints.push(currentPos.clone());
     } else {
       // Horizontal or downward port: Move out in port direction
-      console.log('➡️ Horizontal/downward start port');
       const portDir = startDirection.clone().setY(0).normalize();
       currentPos.add(portDir.multiplyScalar(PORT_APPROACH_DISTANCE));
       routePoints.push(currentPos.clone());
     }
     
     // PHASE 3: Always descend to ground level for main routing
-    console.log('⬇️ Descending to ground level for main routing');
     if (Math.abs(currentPos.y - GROUND_LEVEL) > MIN_SEGMENT) {
       currentPos.y = GROUND_LEVEL;
       routePoints.push(currentPos.clone());
     }
     
     // PHASE 4: Route horizontally to destination area with collision avoidance
-    console.log('🚶 Ground-level routing with collision avoidance');
     
     // Calculate destination ground position
     const destGroundPos = new THREE.Vector3(endPortPos.x, GROUND_LEVEL, endPortPos.z);
@@ -213,7 +203,6 @@ const AutoRoutingConnection = ({
     const directPathClear = isGroundPathClear(currentPos, destGroundPos, excludeObjects);
     
     if (directPathClear) {
-      console.log('✅ Direct ground path is clear');
       // Simple L-shaped routing at ground level
       const deltaX = destGroundPos.x - currentPos.x;
       const deltaZ = destGroundPos.z - currentPos.z;
@@ -233,10 +222,8 @@ const AutoRoutingConnection = ({
         }
       }
     } else {
-      console.log('⚠️ Ground path blocked - using elevated routing');
       // Elevated routing over obstacles
       const safeHeight = findSafeHeight(currentPos, destGroundPos);
-      console.log('📈 Safe height:', safeHeight.toFixed(2));
       
       // Go up to safe height
       currentPos.y = safeHeight;
@@ -264,7 +251,6 @@ const AutoRoutingConnection = ({
     
     // PHASE 5: Approach destination port with object clearance
     if (endIsUp) {
-      console.log('⬆️ Approaching upward destination port');
       
       // Check if we need to clear objects when approaching from below
       const approachStart = new THREE.Vector3(currentPos.x, GROUND_LEVEL, currentPos.z);
@@ -272,7 +258,6 @@ const AutoRoutingConnection = ({
       
       // If path to directly below port is blocked, go up early
       if (!isGroundPathClear(approachStart, approachEnd, [destObj])) {
-        console.log('🔄 Object blocking approach - using elevated approach');
         const clearanceHeight = findSafeHeight(approachStart, approachEnd);
         
         // Go up to clearance height
@@ -314,7 +299,6 @@ const AutoRoutingConnection = ({
       }
       
     } else if (endIsDown) {
-      console.log('⬇️ Approaching downward destination port');
       // Downward destination: Move to approach position, then connect
       const approachDir = endDirection.clone().negate();
       const approachPos = endPortPos.clone().add(approachDir.multiplyScalar(PORT_APPROACH_DISTANCE));
@@ -329,7 +313,6 @@ const AutoRoutingConnection = ({
       routePoints.push(endPortPos.clone());
       
     } else {
-      console.log('➡️ Approaching horizontal destination port');
       // Horizontal destination: Go up to port level, then approach and connect
       
       // Rise to port level
@@ -362,48 +345,101 @@ const AutoRoutingConnection = ({
       }
     }
     
-    console.log('🏁 COLLISION-AWARE ROUTE:');
-    cleanedPoints.forEach((point, i) => {
-      console.log(`  ${i}: [${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)}]`);
-    });
-    console.log('📊 Total points:', cleanedPoints.length);
-    console.log('🔌 ROUTING WITH COLLISION END\n');
-    
     return cleanedPoints;
   }, [startPosition, endPosition, startPort, endPort, objects]);
 
-  // Create pipe segments from route points
+  // Create pipe segments from route points.
+  //
+  // The geometry and (for animated types) the flow shader material are
+  // built here, once per recalculated route, instead of inline in JSX.
+  // They are plain `new THREE.*` objects passed in via a `geometry`/
+  // `material` prop rather than declared as `<cylinderGeometry>` JSX
+  // children, so react-three-fiber's automatic dispose-on-unmount does
+  // NOT cover them — building them fresh on every render (as this used
+  // to do) leaked a geometry + a compiled shader per segment per render,
+  // which on a route being dragged around adds up fast. The effect below
+  // disposes the previous batch whenever this memo produces a new one.
   const segments = useMemo(() => {
     const points = editWaypoints || calculateOptimalRoute;
     const segments = [];
-    
+
     for (let i = 0; i < points.length - 1; i++) {
       const start = points[i];
       const end = points[i + 1];
       const direction = new THREE.Vector3().subVectors(end, start);
       const length = direction.length();
-      
+
       if (length > 0.01) {
         direction.normalize();
         const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
         const quaternion = new THREE.Quaternion().setFromUnitVectors(
-          new THREE.Vector3(0, 1, 0), 
+          new THREE.Vector3(0, 1, 0),
           direction
         );
-        
+
+        const geometry = new THREE.CylinderGeometry(
+          config.radius,
+          config.radius,
+          length,
+          12 // Same resolution for all connection types
+        );
+
+        const flowMaterial = config.animated
+          ? new THREE.ShaderMaterial({
+              uniforms: {
+                time: { value: 0 },
+                color: { value: new THREE.Color(config.flowColor) },
+                segmentIndex: { value: i }
+              },
+              vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                  vUv = uv;
+                  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+              `,
+              fragmentShader: `
+                uniform float time;
+                uniform vec3 color;
+                uniform float segmentIndex;
+                varying vec2 vUv;
+
+                void main() {
+                  float flow = sin(vUv.y * 10.0 - time * 3.0 + segmentIndex) * 0.5 + 0.5;
+                  vec3 finalColor = color * (0.5 + flow * 0.5);
+                  gl_FragColor = vec4(finalColor, 0.8);
+                }
+              `,
+              transparent: true
+            })
+          : null;
+
         segments.push({
           start: start.clone(),
           end: end.clone(),
           midPoint,
           quaternion,
           length,
-          direction: direction.clone()
+          direction: direction.clone(),
+          geometry,
+          flowMaterial
         });
       }
     }
-    
+
     return segments;
-  }, [calculateOptimalRoute, editWaypoints]);
+  }, [calculateOptimalRoute, editWaypoints, config.radius, config.animated, config.flowColor]);
+
+  // Dispose the previous batch of manually-created geometries/materials
+  // whenever `segments` is recomputed, and on unmount.
+  useEffect(() => {
+    return () => {
+      segments.forEach((segment) => {
+        segment.geometry?.dispose();
+        segment.flowMaterial?.dispose();
+      });
+    };
+  }, [segments]);
 
   // Flow animation
   useFrame((state) => {
@@ -426,37 +462,6 @@ const AutoRoutingConnection = ({
     });
   });
 
-  // Create flow material for animated segments - UNIFIED FOR ALL TYPES
-  const createFlowMaterial = (segmentIndex) => {
-    return new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 },
-        color: { value: new THREE.Color(config.flowColor) },
-        segmentIndex: { value: segmentIndex }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float time;
-        uniform vec3 color;
-        uniform float segmentIndex;
-        varying vec2 vUv;
-        
-        void main() {
-          float flow = sin(vUv.y * 10.0 - time * 3.0 + segmentIndex) * 0.5 + 0.5;
-          vec3 finalColor = color * (0.5 + flow * 0.5);
-          gl_FragColor = vec4(finalColor, 0.8);
-        }
-      `,
-      transparent: true
-    });
-  };
-
   const handleClick = (event) => {
     event.stopPropagation();
     onClick?.(event);
@@ -465,44 +470,35 @@ const AutoRoutingConnection = ({
   return (
     <group ref={groupRef} onClick={handleClick}>
       {/* Main pipe segments */}
-      {segments.map((segment, index) => {
-        const segmentGeometry = new THREE.CylinderGeometry(
-          config.radius, 
-          config.radius, 
-          segment.length, 
-          12  // Same resolution for all connection types
-        );
-        
-        return (
-          <group key={`segment-${index}`}>
-            {/* Main pipe segment */}
+      {segments.map((segment, index) => (
+        <group key={`segment-${index}`}>
+          {/* Main pipe segment */}
+          <mesh
+            position={segment.midPoint}
+            quaternion={segment.quaternion}
+            geometry={segment.geometry}
+            castShadow
+            receiveShadow
+          >
+            <meshLambertMaterial
+              color={config.color}
+              emissive={isEditing ? config.color : '#000000'}
+              emissiveIntensity={isEditing ? 0.2 : 0}
+            />
+          </mesh>
+
+          {/* Flow animation segment */}
+          {config.animated && segment.flowMaterial && (
             <mesh
               position={segment.midPoint}
               quaternion={segment.quaternion}
-              geometry={segmentGeometry}
-              castShadow
-              receiveShadow
-            >
-              <meshLambertMaterial 
-                color={config.color}
-                emissive={isEditing ? config.color : '#000000'}
-                emissiveIntensity={isEditing ? 0.2 : 0}
-              />
-            </mesh>
-            
-            {/* Flow animation segment */}
-            {config.animated && (
-              <mesh
-                position={segment.midPoint}
-                quaternion={segment.quaternion}
-                geometry={segmentGeometry}
-                material={createFlowMaterial(index)}
-                userData={{ isFlow: true }}
-              />
-            )}
-          </group>
-        );
-      })}
+              geometry={segment.geometry}
+              material={segment.flowMaterial}
+              userData={{ isFlow: true }}
+            />
+          )}
+        </group>
+      ))}
       
       {/* Connection joints at bends */}
       {segments.length > 1 && segments.slice(0, -1).map((segment, index) => {

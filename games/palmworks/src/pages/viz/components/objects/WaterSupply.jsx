@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
@@ -16,8 +16,7 @@ const WaterSupply = ({
 }) => {
   const groupRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [positionStart, setPositionStart] = useState([0, 0, 0]);
+  const [, setDragStart] = useState({ x: 0, y: 0 });
 
   // Animation states - Professional grade equipment
   const pump1ImpellerRef = useRef();
@@ -87,7 +86,6 @@ const WaterSupply = ({
     
     // Realistic water level animation
     if (waterRef.current) {
-      const level = 0.6 + Math.sin(time * 0.8) * 0.05; // Realistic water level variation
       waterRef.current.material.opacity = 0.4 + Math.sin(time * 2) * 0.1;
     }
     

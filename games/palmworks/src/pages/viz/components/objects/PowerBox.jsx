@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -8,7 +8,7 @@ const PowerBox = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
-  const [dragStartPos, setDragStartPos] = useState(null);
+  const [, setDragStartPos] = useState(null);
   const { camera, gl } = useThree();
 
   // Define connection ports for the power box
@@ -88,7 +88,7 @@ const PowerBox = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap
     return texture;
   };
 
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       if (isSelected) {
         meshRef.current.children.forEach(child => {

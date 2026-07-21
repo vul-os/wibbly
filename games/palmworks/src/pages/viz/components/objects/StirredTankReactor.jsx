@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -9,10 +9,9 @@ const StirredTankReactor = ({ position, onClick, onDrag, isSelected, isDraggable
   const { gl, camera } = useThree();
   
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState([0, 0, 0]);
-  const [hovered, setHovered] = useState(false);
+  const [, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
-  const [dragStartPos, setDragStartPos] = useState(null);
+  const [, setDragStartPos] = useState(null);
 
   // Connection ports for the reactor
   const connectionPorts = [

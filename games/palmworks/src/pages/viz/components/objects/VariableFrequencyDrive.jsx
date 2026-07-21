@@ -12,8 +12,8 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
   const [currentFrequency, setCurrentFrequency] = useState(50.0);
   const [targetFrequency, setTargetFrequency] = useState(50.0);
   const [motorCurrent, setMotorCurrent] = useState(0);
-  const [motorSpeed, setMotorSpeed] = useState(0);
-  const [outputVoltage, setOutputVoltage] = useState(0);
+  const [, setMotorSpeed] = useState(0);
+  const [, setOutputVoltage] = useState(0);
   const [faultCondition, setFaultCondition] = useState(false);
   const [overloadAlarm, setOverloadAlarm] = useState(false);
   const [remoteMode, setRemoteMode] = useState(true);
@@ -153,19 +153,19 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
         });
         
         // Motor parameters based on frequency
-        setMotorCurrent(prev => {
+        setMotorCurrent(() => {
           const expectedCurrent = (currentFrequency / 50.0) * vfdSettings.ratedCurrent * 0.85;
           const noise = (Math.random() - 0.5) * 2.0;
           return Math.max(0, expectedCurrent + noise);
         });
-        
-        setMotorSpeed(prev => {
+
+        setMotorSpeed(() => {
           const expectedSpeed = (currentFrequency / 50.0) * vfdSettings.ratedSpeed;
           const slip = Math.random() * 20; // Motor slip variation
           return Math.max(0, expectedSpeed - slip);
         });
-        
-        setOutputVoltage(prev => {
+
+        setOutputVoltage(() => {
           const expectedVoltage = (currentFrequency / 50.0) * vfdSettings.inputVoltage;
           return Math.max(0, Math.min(vfdSettings.inputVoltage, expectedVoltage));
         });
@@ -322,16 +322,6 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
       case 'liquid': return '#4A90E2';
       case 'gas': return '#F7DC6F';
       default: return '#666666';
-    }
-  };
-
-  const getDisplayValue = () => {
-    switch (displayMode) {
-      case 0: return `${currentFrequency.toFixed(1)} Hz`;
-      case 1: return `${motorCurrent.toFixed(1)} A`;
-      case 2: return `${outputVoltage.toFixed(0)} V`;
-      case 3: return `${motorSpeed.toFixed(0)} RPM`;
-      default: return '---';
     }
   };
 

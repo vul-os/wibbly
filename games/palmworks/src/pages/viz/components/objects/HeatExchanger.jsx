@@ -8,7 +8,7 @@ const HeatExchanger = ({ position, onClick, onDrag, isSelected, isDraggable, gri
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
-  const [dragStartPos, setDragStartPos] = useState(null);
+  const [, setDragStartPos] = useState(null);
   const { camera, gl } = useThree();
 
   // Define connection ports for the heat exchanger
@@ -143,12 +143,6 @@ const HeatExchanger = ({ position, onClick, onDrag, isSelected, isDraggable, gri
     
     // Prevent default to avoid text selection
     event.preventDefault?.();
-  };
-
-  const handleClick = (event) => {    
-    if (!isDragging) {
-      onClick?.(event);
-    }
   };
 
   const handlePortClick = (port, event) => {

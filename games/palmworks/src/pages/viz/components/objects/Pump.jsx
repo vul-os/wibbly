@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -44,7 +44,7 @@ const Pump = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gr
     return Math.round(value / gridSize) * gridSize;
   };
 
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       if (isSelected) {
         meshRef.current.material.emissive.setHex(0x444444);
@@ -142,12 +142,6 @@ const Pump = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gr
     
     // Prevent default to avoid text selection
     event.preventDefault?.();
-  };
-
-  const handleClick = (event) => {
-    if (!isDragging) {
-      onClick?.(event);
-    }
   };
 
   const handlePortClick = (port, event) => {

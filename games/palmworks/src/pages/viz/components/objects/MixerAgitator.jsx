@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -9,7 +9,7 @@ const MixerAgitator = ({ position, onClick, onDrag, isSelected, isDraggable, gri
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [hoveredPort, setHoveredPort] = useState(null);
-  const [dragStartPos, setDragStartPos] = useState(null);
+  const [, setDragStartPos] = useState(null);
   const { camera, gl } = useThree();
 
   // Define connection ports for the mixer/agitator
@@ -80,7 +80,7 @@ const MixerAgitator = ({ position, onClick, onDrag, isSelected, isDraggable, gri
     return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       if (isSelected) {
         meshRef.current.material.emissive.setHex(0x444444);
@@ -181,12 +181,6 @@ const MixerAgitator = ({ position, onClick, onDrag, isSelected, isDraggable, gri
     
     // Prevent default to avoid text selection
     event.preventDefault?.();
-  };
-
-  const handleClick = (event) => {    
-    if (!isDragging) {
-      onClick?.(event);
-    }
   };
 
   const handlePortClick = (port, event) => {

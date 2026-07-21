@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
@@ -11,12 +11,11 @@ const HeatPump = ({
   isSelected = false, 
   isDraggable = false,
   gridSnap = false,
-  gridSize = 1.0,
-  showCoordinates = false
+  gridSize = 1.0
 }) => {
   const groupRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStartPos, setDragStartPos] = useState(null);
+  const [, setDragStartPos] = useState(null);
   const { camera, gl } = useThree();
 
   // Animation references for ultra-realistic heat pump operation
@@ -97,7 +96,6 @@ const HeatPump = ({
     
     // Professional temperature display animation (28°C setpoint with realistic variation)
     if (temperatureDisplayRef.current) {
-      const currentTemp = 28.0 + Math.sin(time * 0.5) * 2.0; // 26-30°C variation around setpoint
       const intensity = 0.85 + Math.sin(time * 3) * 0.08; // Realistic LCD flicker
       temperatureDisplayRef.current.material.emissiveIntensity = intensity;
     }

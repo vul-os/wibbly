@@ -3,14 +3,12 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
 import { Button } from '../../components/ui/button';
 import PlantScene from './components/PlantScene';
-import { 
-  Zap, 
-  Cog, 
-  Move, 
-  Eye, 
-  Settings, 
-  Truck, 
-  Battery, 
+import {
+  Zap,
+  Cog,
+  Move,
+  Truck,
+  Battery,
   Cylinder,
   Box,
   Trash2,
@@ -21,8 +19,6 @@ import {
   Flame,
   MousePointer,
   Layout,
-  ChevronDown,
-  ChevronUp,
   Factory,
   Cpu,
   Gauge,

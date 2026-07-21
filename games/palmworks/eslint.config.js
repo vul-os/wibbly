@@ -33,6 +33,30 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
+      // This scene is built with @react-three/fiber: <mesh>, <group>,
+      // <boxGeometry> etc. are r3f-managed Three.js objects, not DOM
+      // elements. Their props (args, castShadow, metalness, ...) are not
+      // real DOM/SVG attributes, so this rule is 100% false positives here.
+      'react/no-unknown-property': 'off',
+      // No component in this codebase uses the prop-types package (it
+      // isn't even a dependency) — every prop on every component would
+      // otherwise be flagged, which drowns out real lint signal.
+      'react/prop-types': 'off',
+    },
+  },
+  {
+    // Config files run under Node, not the browser.
+    files: ['*.config.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
+    // tailwind.config.js is the one config file still on CommonJS
+    // (module.exports / require), loaded by Tailwind's own resolver.
+    files: ['tailwind.config.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
     },
   },
 ]
