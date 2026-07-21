@@ -1,0 +1,104 @@
+# .github/workflows/release.yml — build and publish a GitHub Release
+#
+# wibbly is a static browser app (Vite + React) with no server binary — the
+# canonical deploy is vulos.org/products/wibbly, served from the vulos-cloud
+# repo. There is nothing to cross-compile, so a tagged release instead builds
+# both real bundles this repo produces (the standalone app and the
+# embeddable demo), proves them with the same verification scripts the repo
+# already defines (unit tests, typechecks, model-integrity check, and a
+# same-origin/zero-external-request CSP check on the exact demo bundle being
+# shipped), and attaches the built bundles as release assets so a deploy
+# target (Firebase, vulos-cloud, or anything else) can consume a known-good,
+# checksummed build rather than re-running the pipeline itself.
+#
+# Triggers on: push of a tag matching v* (e.g. v0.1.0, v0.2.0-rc.1)
+#
+# Maintainer flow: bump VERSION + package.json, push a matching tag.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write   # create GitHub Releases + upload assets
+
+jobs:
+  build-and-release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # ── Verify tag matches VERSION and package.json ──────────────────────────
+      - name: Verify tag matches VERSION and package.json
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          FILE_VERSION="$(tr -d '[:space:]' < VERSION)"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "tag=${TAG} VERSION=${FILE_VERSION} package.json=${PKG_VERSION}"
+          if [ "$TAG" != "$FILE_VERSION" ] || [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "ERROR: VERSION (${FILE_VERSION}) and package.json (${PKG_VERSION}) must both equal the tag (${TAG})"
+            exit 1
+          fi
+          echo "Version check passed: ${TAG}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      # ── Build both real bundles ───────────────────────────────────────────────
+      - name: Build standalone app (dist/)
+        run: npm run build
+
+      - name: Verify vendored pose model
+        run: npm run verify:model
+
+      - name: Build embeddable demo (dist-demo/)
+        run: npm run build:demo
+
+      # verify:demo drives the built dist-demo/ bundle with a real Chromium
+      # under the production CSP and asserts zero external network requests —
+      # this is the one check that proves the bundle actually being shipped
+      # keeps wibbly's "frames never leave the device" promise, so it runs
+      # against the exact artifact this workflow is about to publish.
+      - name: Install Playwright (chromium)
+        run: |
+          npm i -D playwright
+          npx playwright install --with-deps chromium
+
+      - name: Verify demo bundle (CSP + zero external requests)
+        run: npm run verify:demo
+
+      # ── Package release assets ────────────────────────────────────────────────
+      - name: Archive bundles
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          tar -czf "wibbly-${TAG}-dist.tar.gz" -C dist .
+          tar -czf "wibbly-${TAG}-dist-demo.tar.gz" -C dist-demo .
+          sha256sum "wibbly-${TAG}-dist.tar.gz" "wibbly-${TAG}-dist-demo.tar.gz" > checksums.txt
+          cat checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            wibbly-${{ github.ref_name }}-dist.tar.gz
+            wibbly-${{ github.ref_name }}-dist-demo.tar.gz
+            checksums.txt
