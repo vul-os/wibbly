@@ -157,10 +157,23 @@ export function updatePlayerMovement(player, data, delta) {
         }
     }
     
-    // Compensate for very low frame rates (< 20 FPS) to maintain responsiveness
+    // Compensate for very low frame rates (< 20 FPS) to maintain responsiveness.
+    //
+    // Position is integrated below as `velocity * effectiveDelta`, and
+    // effectiveDelta is capped at 1/20s. Below 20 FPS that cap makes the
+    // integration step smaller than the real elapsed time, so without
+    // correction a stutter would move the player LESS than it should for
+    // the wall-clock time that actually passed.
+    //
+    // The fix is the ratio of real time to the clamped step, not a flat
+    // `60 * delta`: that used to turn "on" the instant delta exceeded 1/60s
+    // (i.e. below 60 FPS, not below 20 FPS as the comment always claimed),
+    // doubling movement speed at an ordinary, unremarkable 30 FPS. Using the
+    // ratio keeps speed untouched for delta <= 1/20 (effectiveDelta === delta,
+    // ratio === 1) and only compensates once the cap actually engages.
     const effectiveDelta = Math.min(delta, 1/20); // Cap at 20 FPS minimum
-    const frameRateMultiplier = Math.max(1.0, 60 * delta); // Boost for low frame rates
-    
+    const frameRateMultiplier = Math.max(1.0, delta / effectiveDelta); // Boost only once the cap engages
+
     const speed = baseSpeed * Math.min(frameRateMultiplier, 2.0); // Cap multiplier at 2x
     
     // Initialize velocity if it doesn't exist (for momentum)

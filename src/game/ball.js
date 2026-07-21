@@ -174,7 +174,15 @@ function getRacketHeadTransform(player, playerIndex) {
     };
 }
 
-export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDirection = 'right', playerData = null) {
+export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDirection = 'right', confidence = 1) {
+    // GestureEvent.confidence is 0..1 and the input contract is explicit that
+    // games MUST NOT treat it as a clean signal — an Attested gesture is
+    // never replay-verifiable and never certain (see wibbly-input's
+    // GestureEvent doc). AI-driven hits (game-logic.js) and the spacebar
+    // fallback never pass one, so they stay at full, deterministic power;
+    // only a real camera-detected swing can come in under 1. Clamped and
+    // NaN-guarded since it crosses a library boundary.
+    const swingConfidence = Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 1;
     const rightArm = player.userData.rightArm;
     const racketGroup = player.userData.racketGroup;
     
@@ -248,8 +256,14 @@ export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDi
         const racketRight = new THREE.Vector3(1, 0, 0);
         racketRight.applyMatrix3(racketTransform.rotation);
         
-        // Base speed with some variation
-        const baseSpeed = 12 + Math.random() * 3;
+        // Base speed with some variation, tempered by how sure the input
+        // pipeline is that this was actually a swing. The recognizer only
+        // ever emits an event once its own thresholds are cleared (so this
+        // never drops below ~0.85x here), but a marginal detection still
+        // reads as a softer, less committed shot rather than the same
+        // full-power swing as a clean one.
+        const powerFactor = THREE.MathUtils.lerp(0.7, 1.0, swingConfidence);
+        const baseSpeed = (12 + Math.random() * 3) * powerFactor;
         const arcHeight = 5 + Math.random() * 3;
         
         // Calculate hit direction based on swing direction and racket orientation
