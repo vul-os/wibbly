@@ -8,9 +8,10 @@ import {
     WibblyInput,
     equalClaimZones,
 } from '@vulos/wibbly-input';
-import { PeerSession } from '@vulos/wibbly-magnetite';
+import { PeerSession } from '@vulos/wibbly-p2p';
 import CameraPreview from './camera-preview.jsx';
-import { assertNoPeerSession, currentMode, modelUrl, resolvePeerTransport } from '../mode.js';
+import { assertNoPeerSession, currentMode, isDemo, modelUrl, resolvePeerTransport } from '../mode.js';
+import { startMagnetiteAuthority } from './magnetite-authority.js';
 
 // Import game modules
 import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment, toggleHitBoxVisibility } from './player.js';
@@ -89,6 +90,7 @@ function TennisGame({
     onInputState = null,
     onSwing = null,
     onTrackerBackend = null,
+    onAuthority = null,
 }) {
     const containerRef = useRef(null);
     const playersRef = useRef([]);
@@ -97,6 +99,10 @@ function TennisGame({
     // Optional peer session (networked play). Null unless a transport was
     // handed in — see `peerTransport()` above. Local play never touches this.
     const peerRef = useRef(null);
+    // The magnetite authority: a real magnetite AuthoritativeGame (wasm) run as
+    // a SingleRoom match in this tab, stepped from the animation loop below.
+    // Full app only — never started in demo mode (the demo CSP blocks wasm).
+    const authorityRef = useRef(null);
     const gameStateRef = useRef(createGameState());
     const playerDataRef = useRef(createPlayerData());
 
@@ -122,6 +128,14 @@ function TennisGame({
     useEffect(() => {
         onBackendRef.current = onTrackerBackend;
     }, [onTrackerBackend]);
+
+    // Same ref-pinning reasoning as onSwingRef: the setup effect runs once, so
+    // the authority telemetry callback is read through a ref that later renders
+    // can update without re-running setup.
+    const onAuthorityRef = useRef(onAuthority);
+    useEffect(() => {
+        onAuthorityRef.current = onAuthority;
+    }, [onAuthority]);
 
     // Same reasoning as onSwingRef above. This one was previously read
     // directly off the closed-over prop, which happened to be harmless only
@@ -491,10 +505,14 @@ function TennisGame({
             } catch (err) {
                 console.warn('onSwing handler threw:', err);
             }
+            // One authoritative `attack` pulse per swing, consumed by the
+            // magnetite authority step in the animation loop.
+            pendingMagnetiteSwing = true;
+
             const gameState = gameStateRef.current;
             const player1 = players[0];
             const playerData1 = playerDataRef.current[0];
-            
+
             // Swing racket animation
             if (!playerData1.swinging) {
                 playerData1.swinging = true;
@@ -531,6 +549,14 @@ function TennisGame({
         let currentFps = 60;
         
         let animationFrameId = null;
+
+        // Set on every swing, consumed by the magnetite authority step below so
+        // each swing becomes exactly one authoritative `attack` input pulse.
+        let pendingMagnetiteSwing = false;
+        // Telemetry is pushed to the HUD at most a few times a second, not every
+        // frame — the authority still steps every frame, this only throttles the
+        // React state update.
+        let authorityTelemetryTimer = 0;
 
         function animate() {
             animationFrameId = requestAnimationFrame(animate);
@@ -572,7 +598,34 @@ function TennisGame({
             
             // Update ball physics
             updateBallPhysics(ballGroup, gameStateRef.current, delta, clock, players);
-            
+
+            // Step the magnetite authority: one authoritative tick per rendered
+            // frame, fed the match's own input (a swing → an `attack` pulse).
+            // This is the real magnetite simulation running in the tab — the
+            // bottom rung of the topology ladder. Guarded so a fault here can
+            // never take down the tennis render loop; on error the authority is
+            // dropped and tennis continues untouched.
+            if (authorityRef.current) {
+                try {
+                    const telemetry = authorityRef.current.step({ p1Swing: pendingMagnetiteSwing });
+                    pendingMagnetiteSwing = false;
+                    window.__WIBBLY_MAGNETITE__ = telemetry;
+                    authorityTelemetryTimer += delta;
+                    if (authorityTelemetryTimer >= 0.25) {
+                        authorityTelemetryTimer = 0;
+                        try {
+                            onAuthorityRef.current?.(telemetry);
+                        } catch (err) {
+                            console.warn('onAuthority handler threw:', err);
+                        }
+                    }
+                } catch (err) {
+                    console.warn('magnetite authority step failed; dropping it:', err);
+                    authorityRef.current = null;
+                    window.__WIBBLY_MAGNETITE__ = { ready: false, error: String(err && err.message ? err.message : err) };
+                }
+            }
+
             // Update player AI behavior
             updatePlayer1AI(players, gameStateRef.current, playerDataRef.current, ballGroup);
             updatePlayer2AI(players, gameStateRef.current, playerDataRef.current, ballGroup);
@@ -612,6 +665,28 @@ function TennisGame({
         // Optional, and deliberately not awaited: the game starts immediately
         // and the peer session joins it if and when it connects.
         setupPeerSession();
+
+        // Bring up the magnetite authority. Full app only — startMagnetiteAuthority
+        // refuses in demo mode, and we don't even call it there. Not awaited: the
+        // tennis match starts immediately and the authority attaches whenever its
+        // wasm finishes loading. Never allowed to break the game if it fails.
+        if (!isDemo()) {
+            startMagnetiteAuthority()
+                .then((runner) => {
+                    if (cancelled) return;
+                    authorityRef.current = runner;
+                    window.__WIBBLY_MAGNETITE__ = runner.telemetry();
+                    try {
+                        onAuthorityRef.current?.(runner.telemetry());
+                    } catch (err) {
+                        console.warn('onAuthority handler threw:', err);
+                    }
+                })
+                .catch((err) => {
+                    console.warn('magnetite authority failed to start:', err);
+                    window.__WIBBLY_MAGNETITE__ = { ready: false, error: String(err && err.message ? err.message : err) };
+                });
+        }
 
         // Start game
         startGame();
@@ -669,6 +744,14 @@ function TennisGame({
             if (peerRef.current) {
                 peerRef.current.close();
                 peerRef.current = null;
+            }
+
+            // Drop the magnetite authority. The wasm instance is owned by the
+            // runner; clearing the ref lets it be collected, and the diagnostic
+            // global is removed so a later mount cannot read a stale tick.
+            authorityRef.current = null;
+            if (typeof window !== 'undefined') {
+                delete window.__WIBBLY_MAGNETITE__;
             }
 
             containerRef.current?.removeChild(renderer.domElement);

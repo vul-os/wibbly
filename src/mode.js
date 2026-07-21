@@ -162,7 +162,7 @@ export function assetUrl(rel) {
  *
  * This used to be a build-time `VITE_MAGNETITE_URL` a client could dial —
  * that whole shape is gone along with the WebSocket client it configured.
- * wibbly's multiplayer is peer-to-peer now (`@vulos/wibbly-magnetite`'s
+ * wibbly's multiplayer is peer-to-peer now (`@vulos/wibbly-p2p`'s
  * `PeerSession` over an `RTCDataChannel`; see site/docs/MULTIPLAYER.md), and
  * a `PeerTransport` only exists *after* two browsers have already exchanged
  * an offer/answer out of band — a link, a QR code, a future lobby screen.
@@ -184,7 +184,7 @@ export function assetUrl(rel) {
  * But those events are CLIENT-ATTESTED: `InputClass::Attested`, explicitly
  * *not* replay-verifiable, host-in-browser authority or not. Whoever holds
  * authority rate-limits and plausibility-checks inbound events (see
- * wibbly-magnetite's `InboundGate`) but nothing proves a `GestureEvent` came
+ * wibbly-p2p's `InboundGate`) but nothing proves a `GestureEvent` came
  * from a real arm in front of a real camera — see site/docs/MULTIPLAYER.md.
  * There is deliberately no per-event signing: a signature would only prove
  * "this connection sent this", which the `RTCDataChannel` already gives for

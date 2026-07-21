@@ -1,6 +1,10 @@
 /**
- * @vulos/wibbly-magnetite — wibbly's peer-to-peer multiplayer: host authority
+ * @vulos/wibbly-p2p — wibbly's peer-to-peer multiplayer: host authority
  * in a browser tab, no backend, no accounts, no payments.
+ *
+ * (Renamed from @vulos/wibbly-magnetite: this package holds no magnetite code —
+ * it is pure WebRTC P2P. The magnetite integration lives in
+ * @vulos/wibbly-authority, which runs a real magnetite game module in the tab.)
  *
  *   message.ts       the wire envelope: GestureEvent <-> wire, opaque state,
  *                     per-connection sequence numbers

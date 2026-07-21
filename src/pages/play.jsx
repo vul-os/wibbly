@@ -26,6 +26,9 @@ export default function Play() {
   const [settings, setSettings] = useState(() => loadSettings());
   const [menuOpen, setMenuOpen] = useState(false);
   const [cameraStatus, setCameraStatus] = useState('unknown');
+  // Live telemetry from the magnetite authority running in the tab. Null until
+  // the wasm module has loaded and taken its first authoritative tick.
+  const [authority, setAuthority] = useState(null);
   // Remounting the game is how a settings change takes effect: the input
   // pipeline is built once, at mount, so a new pipeline means a new match.
   const [gameKey, setGameKey] = useState(0);
@@ -69,6 +72,7 @@ export default function Play() {
         settings={settings}
         calibration={calibrationRef.current}
         onInputState={setCameraStatus}
+        onAuthority={setAuthority}
       />
 
       {/* The score bug. Broadcast furniture: a brand block, a live input
@@ -91,6 +95,20 @@ export default function Play() {
           {cameraStatus === 'keyboard' && 'spacebar only'}
           {cameraStatus === 'unknown' && 'starting…'}
         </span>
+
+        {authority?.ready && (
+          <span
+            className="wb-hud__mag"
+            title={
+              'A real magnetite AuthoritativeGame (compiled to wasm) is running in this ' +
+              'tab as a SingleRoom authority — the bottom rung of magnetite’s topology ladder. ' +
+              'It is the authoritative simulation; it does not verify gesture input.'
+            }
+          >
+            <span className="wb-hud__dot" />
+            magnetite · tick {authority.tick}
+          </span>
+        )}
 
         <button type="button" className="wb-hud__menu" onClick={() => setMenuOpen(true)}>
           Menu <span className="wb-hud__key">Esc</span>
@@ -176,6 +194,27 @@ export default function Play() {
         }
         .wb-hud__status--keyboard { color: var(--planned, #FFB020); }
         @keyframes wb-hudpulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+        /* Live magnetite authority readout. Present only in the full app: the
+           demo embed cannot compile wasm under its CSP, so the authority never
+           runs there and this chip never appears. */
+        .wb-hud__mag {
+          display: inline-flex; align-items: center; gap: .4rem;
+          font-family: var(--mono, monospace); font-size: .62rem; font-weight: 600;
+          letter-spacing: .12em; text-transform: uppercase;
+          color: var(--accent, #FF4D9D);
+          cursor: help;
+        }
+        .wb-hud__mag .wb-hud__dot {
+          box-shadow: 0 0 8px currentColor;
+          animation: wb-hudpulse 2.2s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .wb-hud__mag .wb-hud__dot { animation: none; }
+        }
+        @media (max-width: 600px) {
+          .wb-hud__mag { display: none; }
+        }
 
         .wb-hud__menu {
           display: inline-flex; align-items: center; gap: .45rem;

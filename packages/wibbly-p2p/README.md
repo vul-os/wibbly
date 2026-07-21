@@ -1,17 +1,19 @@
-# @vulos/wibbly-magnetite
+# @vulos/wibbly-p2p
 
 Wibbly's peer-to-peer multiplayer: one browser tab holds authority and runs
 the simulation, a second tab's browser sends it gesture events over a WebRTC
 `DataChannel`, and there is no server anywhere in the path. See
 `site/docs/MULTIPLAYER.md` for the full design this package implements.
 
-**This package is not a magnetite bridge any more, and the package name is a
-historical artifact.** It began life adapting a wibbly `GestureEvent` to a
-magnetite node's `AttestedEvent` wire format over a WebSocket. That design is
-gone — see "What this used to be" below for why, and for what actually
-changed. Renaming the package is a decision for whoever owns the workspace
-root (`package.json`'s workspace wiring), not this package; consider this a
-flag that `wibbly-magnetite` no longer describes what is here.
+**Renamed from `@vulos/wibbly-magnetite`.** It began life adapting a wibbly
+`GestureEvent` to a magnetite node's `AttestedEvent` wire format over a
+WebSocket; that bridge is gone (see "What this used to be" below), the package
+became pure WebRTC P2P with no magnetite code at all, and the old name no
+longer described what was here. The rename fixes that. **The magnetite
+integration now lives in [`@vulos/wibbly-authority`](../wibbly-authority)**,
+which runs a real magnetite `AuthoritativeGame` compiled to wasm as a
+client-side authority in the tab — the thing "wibbly is built on magnetite"
+actually refers to. This package is not part of that path.
 
 ```ts
 import { createHostOffer, createGuestAnswer, PeerSession } from '@vulos/wibbly-magnetite';

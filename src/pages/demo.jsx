@@ -287,7 +287,7 @@ export default function Demo() {
  * Every sentence here has to survive being checked against the repo, because
  * the interesting part of this claim is the part that is NOT true yet. This
  * used to describe a magnetite-server path; that is gone — see
- * packages/wibbly-magnetite/README.md's "What this used to be" for why a
+ * packages/wibbly-p2p/README.md's "What this used to be" for why a
  * rented or self-hosted authoritative server was retired rather than wired
  * up (gesture input cannot be replay-verified, so a server buys nothing a
  * host's own browser tab doesn't). The design that replaced it:
@@ -301,7 +301,7 @@ export default function Demo() {
  *         server, ever, for anyone to run or rent. See
  *         site/docs/MULTIPLAYER.md for the full design.
  *   TRUE  the transport is built and unit-tested in isolation:
- *         packages/wibbly-magnetite has a working `PeerSession`, WebRTC
+ *         packages/wibbly-p2p has a working `PeerSession`, WebRTC
  *         offer/answer helpers, and a codec that fits a connection
  *         description in a link.
  *   NOT TRUE — and said so, in the same size type: there is no lobby screen
