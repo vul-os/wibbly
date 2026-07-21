@@ -1,6 +1,5 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import ProtectedRoute from './components/auth/protected-route';
 
 import { Progress as LoadingComponent } from './components/ui/progress';
 // Layouts
@@ -8,10 +7,8 @@ import BlankLayout from './components/layout/blank-layout';
 
 // Loading message mapping
 const getLoadingMessage = (pathname) => {
-  if (pathname.includes('/signin')) return 'Loading sign in...';
-  if (pathname.includes('/signup')) return 'Loading sign up...';
   if (pathname.includes('/viz')) return 'Loading 3D visualizer...';
-  if (pathname === '/') return 'Loading homepage...';
+  if (pathname === '/') return 'Loading plant...';
   return 'Loading...';
 };
 
@@ -19,7 +16,7 @@ const getLoadingMessage = (pathname) => {
 const CustomSuspense = ({ children }) => {
   const location = useLocation();
   const message = getLoadingMessage(location.pathname);
-  
+
   return (
     <Suspense fallback={<LoadingComponent message={message} />}>
       {children}
@@ -34,22 +31,10 @@ const lazyImport = (importFn) => {
 };
 
 // Lazy loaded components
-const SignIn = lazyImport(() => import('./pages/auth/signin'));
-const SignUp = lazyImport(() => import('./pages/auth/signup'));
-const ForgotPassword = lazyImport(() => import('./pages/auth/forgot-password'));
-const UpdatePassword = lazyImport(() => import('./pages/auth/update-password'));
-const VerifyEmail = lazyImport(() => import('./pages/auth/verify-email'));
 const NotFound = lazyImport(() => import('./pages/not-found'));
-
 
 // 3D Visualization
 const PlantVisualization = lazyImport(() => import('./pages/viz'));
-
-
-
-const Protected = ({ children }) => (
-  <ProtectedRoute>{children}</ProtectedRoute>
-);
 
 const AppRoutes = () => {
   return (
