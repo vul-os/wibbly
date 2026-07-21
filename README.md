@@ -24,9 +24,10 @@
 >
 > This README will not pretend otherwise. What **plays** today is one game —
 > single-camera tennis — driven by one gesture (swing) from one player. The input
-> library is real and unit-tested without a camera. Hand tracking is not built.
-> [Palmworks](games/palmworks) is folded in with its full history and builds, but
-> nothing drives it with gestures yet.
+> library is real and unit-tested without a camera. Hand tracking (pinch, point)
+> is built as a standalone, unit-tested library, but nothing composes it into the
+> running pipeline or a game yet. [Palmworks](games/palmworks) is folded in with
+> its full history and builds, but nothing drives it with gestures yet.
 >
 > Read [`WIBBLY.md`](WIBBLY.md) for the full spec and backlog. Read the
 > [status table](#status--what-is-actually-built) below for what is real.
@@ -67,7 +68,7 @@ Audited against the tree, not against the pitch.
 
 | Capability | Status | Reality |
 |---|---|---|
-| `packages/wibbly-input` library | **Built** | TypeScript, zero DOM injection, 150 unit tests passing without a camera |
+| `packages/wibbly-input` library | **Built** | TypeScript, zero DOM injection, 221 unit tests passing without a camera |
 | `FrameSource` → `WebcamFrameSource` | **Built** | `getUserMedia`, owns its own capture loop |
 | `PoseTracker` → `MoveNetMultiPoseTracker` | **Built** | MoveNet **MultiPose** Lightning, returns `Person[]`, injectable detector for tests |
 | `GestureRecognizer` → `SwingRecognizer` | **Built** | Pure `detectSwing()` over wrist-velocity history; unit-testable without a camera |
@@ -78,17 +79,19 @@ Audited against the tree, not against the pitch.
 | Tennis reference game | **Built** | Three.js court, ball physics, AI opponent, ported onto the seams |
 | Firebase Analytics | **Removed** | The central tracking beacon is deleted, not replaced |
 | **Multi-player on one camera** | **Partial** | The binder handles 2 players and the game requests 2 claim zones — but tennis still routes only `player_1` to the racket. **Untested with two humans.** |
-| **Gesture vocabulary beyond swing** | *Planned* | One gesture. No punch, pinch, or point. |
-| **Hand tracking** (MediaPipe HandLandmarker) | *Planned* | `capabilities.hands` is `false` on the only tracker that exists |
+| **Gesture vocabulary beyond swing** | **Partial** | `pinch` and `point` are built and unit-tested (`packages/wibbly-input/src/recognizers/`) — but not composed into `WibblyInput`'s pipeline and not driving any game yet. `punch` and `kick` remain unbuilt. |
+| **Hand tracking** (MediaPipe HandLandmarker) | **Built, not wired** | `HandLandmarkTracker` exists and is unit-tested, including distance-from-camera and rotation invariance — but thresholds are derived from geometry, not a real hand, since no hand-tracking session has run against a live camera yet, and the pipeline doesn't compose it in. |
 | **A second game** | *Planned* | Tennis is the only consumer of the SDK, so "generalises beyond tennis" is unproven |
-| **Networked play** | *Planned* | No transport, no lobby, no session code |
+| **Networked play** (peer-to-peer) | **Transport built, no lobby** | `packages/wibbly-magnetite`'s `PeerSession` + WebRTC offer/answer helpers are built and unit-tested, and tennis wires an optional `PeerSession` in (off unless a host page hands in a transport) — but there is no lobby screen anywhere in wibbly, so nothing turns it into a button a visitor can click. |
 | **magnetite integration** | **Built, ingested end-to-end** | `packages/wibbly-magnetite` maps a `GestureEvent` onto magnetite's §3.7 `InputProvider` seam. Proven against a live `magnetite dev` node running a real wasm game, driven by this repo's own `wire.ts` + WebCrypto Ed25519: a fresh signed event returns `attested_ack`, a tampered one `signature does not verify`, an unsigned one `missing field 'signed'`. The wire format is pinned to magnetite's Rust verifier by golden vectors, so the two sides cannot drift silently. **Off by default** — local play needs no server. |
 | **A game that consumes gesture input over the wire** | *Planned* | Accepted events land in magnetite's per-connection queue and **nothing drains them** — no game in either repo reads gesture input yet. The pipe is proven; nothing is on the other end. |
 | **Tauri native shell** | *Planned (phase 2)* | Researched and specified; no Rust in this repo |
 | **RTMO / ONNX / WebGPU tracker** | *Planned (phase 3)* | No browser port exists to benchmark against |
 | **Vendored pose model** | **Built** | MoveNet MultiPose Lightning checked in at `public/models/` (~9.3 MiB) and served same-origin. Byte-verified against its own weight manifest by `npm run verify:model`. The TF Hub CDN is now an explicit opt-in, not the default. |
 | **Demo mode** (`VITE_WIBBLY_MODE=demo`) | **Built** | A separate single-surface build for embedding at `vulos.org/products/magnetite/wibbly/play/`: instant start, no router, no persistent storage, magnetite hard-disabled, local model only. Verified end-to-end under the real production CSP by `npm run verify:demo` — **26/26 checks, zero external network requests**. |
-| Title screen, setup flow, in-game menu | **Built** | `src/pages/` is now four surfaces: title, first-run setup, play, 404. The marketing shell (`home`, `about`, `game-menu`, `game-container`) is deleted, along with the fabricated JSON-LD rating and play count that were still in `index.html`. Soccer and Boxing appear on the title screen as **Planned**, non-selectable, pointing at [`WIBBLY.md` §8](WIBBLY.md). The canonical public writing is `site/landing.html`. |
+| Title screen, setup flow, in-game menu | **Built** | `src/pages/` is now four surfaces: title, first-run setup, play, 404. The marketing shell (`home`, `about`, `game-menu`, `game-container`) is deleted, along with the fabricated JSON-LD rating and play count that were still in `index.html`. The canonical public writing is `site/landing.html`. |
+| **Soccer** | **In progress — reasoned, not coded** | Tracked backlog, not vague "someday": it's next because a kick is the first gesture below the waist, and `SwingRecognizer` ignores leg keypoints entirely — it forces `GestureRecognizer` to be genuinely plural. No code exists. Shows on the title screen as **Planned**, non-selectable. |
+| **Boxing** | **In progress — reasoned, not coded** | Tracked backlog: it's the first game needing two independent gesture streams from one player (left and right hand, per-arm cooldowns) rather than one dominant hand, which is what `Calibration.handedness` assumes today. No code exists. Shows on the title screen as **Planned**, non-selectable. See [`src/components/catalogue.js`](src/components/catalogue.js) for both entries verbatim. |
 
 ---
 
@@ -149,7 +152,7 @@ model fails to load, which is the correct degradation.
 ```bash
 npm run build          # production bundle → dist/
 npm run preview        # serve dist/
-npm test               # 177 unit tests, no camera required
+npm test               # 333 unit tests (input seams + wibbly-magnetite + app), no camera required
 npm run typecheck
 npm run screenshots    # requires: npm i -D playwright && npx playwright install chromium
 ```
@@ -430,7 +433,8 @@ Today the two repos do not talk to each other at all.
 ## Repository layout
 
 ```
-packages/wibbly-input/   the seams — TypeScript library, no DOM injection, 96 tests
+packages/wibbly-input/   the seams — TypeScript library, no DOM injection, 221 tests
+packages/wibbly-magnetite/ peer-to-peer multiplayer transport (WebRTC, no backend), 70 tests
 src/game/                tennis: court, ball physics, player rig, AI opponent, camera rig
 src/pages/               title, setup, play, 404 — the whole app shell
 site/                    house-style static mini-site + docs (the honest surface)
