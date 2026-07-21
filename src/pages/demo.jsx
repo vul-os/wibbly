@@ -46,11 +46,9 @@ import { clearOwnedStorage } from '../mode.js';
 
 const PLAYER_ID = 'player_1';
 const REPO_URL = 'https://github.com/vul-os/wibbly';
-const MAGNETITE_URL = 'https://github.com/vul-os/magnetite';
-const MAGNETITE_PRODUCT_URL = '/products/magnetite';
 
 /**
- * When the magnetite note is offered.
+ * When the multiplayer note is offered.
  *
  * Whichever comes first: a few swings, or a while spent on the court. The
  * timer exists because a visitor who is watching the AI rally rather than
@@ -272,11 +270,11 @@ export default function Demo() {
         </div>
       )}
 
-      {cta === 'open' && <MagnetiteNote onClose={() => setCta('dismissed')} />}
+      {cta === 'open' && <MultiplayerNote onClose={() => setCta('dismissed')} />}
 
       {cta === 'dismissed' && (
         <button type="button" className="wb-demo__reopen" onClick={() => setCta('open')}>
-          Host your own?
+          Play with a friend?
         </button>
       )}
     </div>
@@ -284,81 +282,70 @@ export default function Demo() {
 }
 
 /**
- * The magnetite step.
+ * The multiplayer step.
  *
- * Every sentence here has to survive being checked against the two repos,
- * because the interesting part of this claim is the part that is NOT true yet:
+ * Every sentence here has to survive being checked against the repo, because
+ * the interesting part of this claim is the part that is NOT true yet. This
+ * used to describe a magnetite-server path; that is gone — see
+ * packages/wibbly-magnetite/README.md's "What this used to be" for why a
+ * rented or self-hosted authoritative server was retired rather than wired
+ * up (gesture input cannot be replay-verified, so a server buys nothing a
+ * host's own browser tab doesn't). The design that replaced it:
  *
  *   TRUE  solo tennis runs entirely in this tab with no server. That is what
  *         the visitor just did.
- *   TRUE  playing against another person needs something to host the session,
- *         and magnetite is a game server you run yourself.
- *   TRUE  wibbly's side of that is wired and proven: packages/wibbly-magnetite
- *         delivers signed, attested gesture events to a live magnetite node
- *         and gets `attested_ack` back, pinned to magnetite's Rust verifier by
- *         golden vectors.
- *   NOT TRUE — and said so, in the same size type: nothing on the far side
- *         reads those events. No game in either repo consumes gesture input
- *         from that queue. So this is emphatically NOT "install magnetite and
- *         play with a friend", and it is not one install away.
- *
- * What magnetite genuinely does today — a deterministic authoritative runtime,
- * a WASM sandbox, replay verification, and hosting on any box you own — is
- * what the link is actually for. Leaning on that is honest. Leaning on wibbly
- * multiplayer is not.
+ *   TRUE  wibbly's plan for a second player is peer-to-peer: one player's
+ *         browser tab holds authority and simulates the match, a WebRTC
+ *         `DataChannel` carries the other player's gesture events across,
+ *         and the one-time connection handshake is a link or QR code — no
+ *         server, ever, for anyone to run or rent. See
+ *         site/docs/MULTIPLAYER.md for the full design.
+ *   TRUE  the transport is built and unit-tested in isolation:
+ *         packages/wibbly-magnetite has a working `PeerSession`, WebRTC
+ *         offer/answer helpers, and a codec that fits a connection
+ *         description in a link.
+ *   NOT TRUE — and said so, in the same size type: there is no lobby screen
+ *         anywhere in wibbly. Nothing turns that transport into a button a
+ *         visitor can click. So this is emphatically NOT "open a link and
+ *         play with a friend" today, and it is not one click away.
  *
  * It appears after ~6 swings, is dismissible, and never blocks play. A demo
  * that nags is a demo people close.
  */
-function MagnetiteNote({ onClose }) {
+function MultiplayerNote({ onClose }) {
   return (
-    <aside className="wb-demo__cta" role="complementary" aria-label="Run your own node">
+    <aside className="wb-demo__cta" role="complementary" aria-label="About multiplayer">
       <button type="button" className="wb-demo__ctaclose" onClick={onClose} aria-label="Dismiss">
         ×
       </button>
 
       <p className="wb-demo__ctaeyebrow">The ceiling of one browser tab</p>
-      <h2>What you are playing needs no server. A second player would.</h2>
+      <h2>What you are playing is solo. A second player is designed, not built.</h2>
 
       <p>
-        The pose model, the physics and the AI opponent all ran here. Nothing was hosted. But two
-        people in different rooms need something in the middle to hold the match — and we would
-        rather that be a box you own than a cloud account you rent.
+        The pose model, the physics and the AI opponent all ran here. Nothing was hosted. Playing
+        against a real person needs the two browsers to find each other — and wibbly's answer to
+        that is peer-to-peer, not a server. Nobody would run it, and nobody would need to.
       </p>
 
       <p>
-        That is <strong>magnetite</strong>: a self-hosted game server in Rust. Deterministic
-        authoritative simulation, a WASM sandbox, replay verification, bring-any-box hosting. No
-        cloud, no account.
+        One player's tab holds authority and simulates the match. A <strong>WebRTC DataChannel</strong>{' '}
+        would carry the other player's gesture events across, opened by a one-time exchange — a
+        link or a QR code — instead of a server in the middle.
       </p>
-
-      <pre className="wb-demo__code">
-        <code>
-          git clone https://github.com/vul-os/magnetite{'\n'}
-          cd magnetite{'\n'}
-          cargo run -p magnetite-cli -- dev
-        </code>
-      </pre>
 
       <p className="wb-demo__ctawarn">
-        <strong>In progress, plainly: wibbly multiplayer does not work yet.</strong> The input
-        path is proven — wibbly signs gesture events and a live magnetite node returns{' '}
-        <code>attested_ack</code>. The game side is not built: nothing in either repo reads those
-        events back out. Run magnetite for what it already does, not for wibbly matches.
+        <strong>In progress, plainly: wibbly multiplayer does not work yet.</strong> The transport
+        side is built and tested on its own — the peer session, the WebRTC offer/answer handshake,
+        a compact code for putting a connection in a link — with no code path that touches a
+        server anywhere in it. What is missing is a lobby: nothing in wibbly turns that into a
+        screen you can actually use, so there is no invite link and nothing to click yet.
       </p>
 
       <div className="wb-demo__ctalinks">
         <a
           className="wb-demo__btn wb-demo__btn--primary"
-          href={MAGNETITE_PRODUCT_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          About magnetite
-        </a>
-        <a
-          className="wb-demo__btn"
-          href={MAGNETITE_URL}
+          href={REPO_URL}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -585,7 +572,7 @@ function DemoStyles() {
         color: var(--accent, #FF4D9D);
       }
 
-      /* ── magnetite note ─────────────────────────────────────────────── */
+      /* ── multiplayer note ───────────────────────────────────────────── */
 
       .wb-demo__cta {
         position: absolute; z-index: 1200;
@@ -622,16 +609,6 @@ function DemoStyles() {
         font-size: 1.2rem; line-height: 1; cursor: pointer; padding: .2rem .35rem;
       }
       .wb-demo__ctaclose:hover { color: var(--text, #F4F0F8); }
-      .wb-demo__code {
-        margin: 0 0 .7rem; padding: .65rem .7rem; overflow-x: auto;
-        border-radius: 8px;
-        background: var(--bg-sunken, #080610);
-        border: 1px solid var(--border, #251E33);
-      }
-      .wb-demo__code code {
-        font-family: var(--mono, ui-monospace, monospace);
-        font-size: .71rem; color: var(--text-2, #A99FB8); white-space: pre;
-      }
       /* The "not built yet" block wears the blueprint language used everywhere
          else in the product for things that are specified and absent. */
       .wb-demo__ctawarn {

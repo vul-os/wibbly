@@ -8,16 +8,18 @@
  *
  *   STRICT CSP     the host page is served under `default-src 'self'`, so any
  *                  external fetch fails outright. The pose model must come
- *                  from this origin, and the magnetite transport — a WebSocket
- *                  to somebody else's node — cannot exist.
+ *                  from this origin, and a peer-to-peer `RTCDataChannel` —
+ *                  which would mean this embed silently becoming somebody's
+ *                  multiplayer session — cannot open.
  *   IFRAME         no fullscreen, no window.top, no navigation that would
  *                  break the visitor out of the embedding page.
  *   PUBLIC/SHARED  a stranger's calibration must not be waiting for the next
  *                  visitor, so demo mode writes nothing durable.
  *
- * Resolution follows the same shape `magnetiteConfig()` uses: a runtime
- * override on `window` (so a host page can flip a single session without a
- * rebuild) layered over a build-time env var.
+ * Resolution follows the same shape `resolvePeerTransport()` uses: a runtime
+ * override on `window` (so a host page can hand in a single already-negotiated
+ * connection without a rebuild) — see that function for why there is no
+ * build-time env var counterpart here the way there is for mode/model.
  *
  * Everything below is a pure function of its arguments so it can be tested
  * without a browser — see test/mode.test.js.
@@ -152,54 +154,59 @@ export function assetUrl(rel) {
   );
 }
 
-/* ── magnetite ────────────────────────────────────────────────────────────── */
+/* ── peer session (multiplayer) ──────────────────────────────────────────── */
 
 /**
- * Optional magnetite networking config. **OFF unless explicitly configured,
- * and IMPOSSIBLE in demo mode.**
+ * Optional peer-to-peer transport for wibbly's host-authority multiplayer.
+ * **OFF unless a host page hands one in, and IMPOSSIBLE in demo mode.**
  *
- * The default experience is the whole pitch: zero install, local play, no
- * server, no account, camera frames never leaving the device. So this returns
- * null unless someone sets `VITE_MAGNETITE_URL` at build time (or
- * `window.__WIBBLY_MAGNETITE__` at runtime, which is how a host page can opt a
- * single session in without a rebuild).
+ * This used to be a build-time `VITE_MAGNETITE_URL` a client could dial —
+ * that whole shape is gone along with the WebSocket client it configured.
+ * wibbly's multiplayer is peer-to-peer now (`@vulos/wibbly-magnetite`'s
+ * `PeerSession` over an `RTCDataChannel`; see site/docs/MULTIPLAYER.md), and
+ * a `PeerTransport` only exists *after* two browsers have already exchanged
+ * an offer/answer out of band — a link, a QR code, a future lobby screen.
+ * None of that signalling lives in this file or in the game itself, so there
+ * is nothing here to point a build-time env var at. The only way in is a
+ * runtime handoff: `window.__WIBBLY_PEER_TRANSPORT__`, set by whatever
+ * negotiated that connection before the game mounted.
  *
- * Demo mode returns null unconditionally, BEFORE reading either source. This
- * is not a default that a stray env var can flip: the demo is embedded on a
- * page under `default-src 'self'`, a WebSocket to a third-party node is
- * exactly what that CSP exists to prevent, and the demo's own pitch is that it
- * needs no server. `assertNoMagnetite()` below turns that into an assertion,
- * and test/mode.test.js holds it.
+ * Demo mode returns null unconditionally, BEFORE reading the runtime global.
+ * This is not a default that a stray global can flip: the demo is embedded
+ * on a page under `default-src 'self'`, and turning a marketing embed into
+ * somebody's ad-hoc multiplayer signalling target is exactly the kind of
+ * thing that CSP boundary exists to keep out — the demo's own pitch is a
+ * self-contained, backend-free experience. `assertNoPeerSession()` below
+ * turns that into an assertion, and test/mode.test.js holds it.
  *
- * ── What gets sent in the full app, honestly ────────────────────────────────
- * GestureEvents, never video — camera frames still never leave the device. But
- * those events are CLIENT-ATTESTED: magnetite classes them `InputClass::Attested`,
- * which is explicitly *not* replay-verifiable. The host screens them for
- * implausibility and remains authoritative, and a signature (when Ed25519 is
- * available) proves only that this key sent them. A determined cheater can
- * synthesise plausible events and nothing here or upstream detects that. This
- * is not anti-cheat; see packages/wibbly-magnetite/README.md.
+ * ── What crosses the wire in the full app, honestly ─────────────────────────
+ * GestureEvents, never video — camera frames still never leave the device.
+ * But those events are CLIENT-ATTESTED: `InputClass::Attested`, explicitly
+ * *not* replay-verifiable, host-in-browser authority or not. Whoever holds
+ * authority rate-limits and plausibility-checks inbound events (see
+ * wibbly-magnetite's `InboundGate`) but nothing proves a `GestureEvent` came
+ * from a real arm in front of a real camera — see site/docs/MULTIPLAYER.md.
+ * There is deliberately no per-event signing: a signature would only prove
+ * "this connection sent this", which the `RTCDataChannel` already gives for
+ * free — the only peer that can be on the other end is the one this side
+ * exchanged SDP with.
  */
-export function resolveMagnetiteConfig(env = {}, win = null) {
+export function resolvePeerTransport(env = {}, win = null) {
   if (resolveMode(env, win) === MODE_DEMO) return null;
-
-  const runtime = win?.__WIBBLY_MAGNETITE__;
-  if (runtime && runtime.url) return runtime;
-  const url = env?.VITE_MAGNETITE_URL;
-  if (!url) return null;
-  return { url, token: env?.VITE_MAGNETITE_TOKEN || undefined };
+  return win?.__WIBBLY_PEER_TRANSPORT__ ?? null;
 }
 
 /**
- * Hard gate, called on the path that would construct a MagnetiteSession.
- * Throwing here means "a demo build that tries to open a network session is a
- * bug that stops the build's own tests, not a runtime surprise for a visitor".
+ * Hard gate, called on the path that would construct a `PeerSession`.
+ * Throwing here means "a demo build that tries to open a peer connection is
+ * a bug that stops the build's own tests, not a runtime surprise for a
+ * visitor".
  */
-export function assertNoMagnetite(mode) {
+export function assertNoPeerSession(mode) {
   if (mode === MODE_DEMO) {
     throw new Error(
-      'wibbly: MagnetiteSession must never be constructed in demo mode — ' +
-        'the demo is self-contained and opens no network connections.',
+      'wibbly: PeerSession must never be constructed in demo mode — ' +
+        'the demo is self-contained and opens no peer connections.',
     );
   }
 }

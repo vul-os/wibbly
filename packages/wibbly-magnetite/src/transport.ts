@@ -1,95 +1,104 @@
 /**
- * The transport seam, and the default adapter over `magnetite-web-client`.
+ * The peer transport seam, and the default adapter over an `RTCDataChannel`.
  *
- * Why a seam rather than importing the client directly:
+ * Why a seam rather than talking to `RTCDataChannel` directly:
  *
- *  1. `magnetite-web-client` is not published to a registry and lives in a
- *     sibling repo (`magnetite/magnetite-web-client`). Wibbly is not going to
- *     hard-depend on a relative path outside its own tree.
- *  2. Tests must run in node with no live server, so the transport has to be
- *     replaceable. It is the whole mocking surface for this package.
- *  3. `MagnetiteClient`'s documented public API is `connect / disconnect /
- *     sendInput / onState / playerId / matchConfig / state`. **There is no
- *     public method for sending a frame that is not a `ClientNet::InputFrame`**,
- *     and an attested event is not one. Confining that awkwardness to one
- *     adapter is better than smearing it across the session.
+ *  1. Tests must run in node with no browser and no real WebRTC, so the
+ *     transport has to be replaceable — it is the whole mocking surface for
+ *     this package. (This is the same reason the seam existed in this
+ *     package's previous life bridging to a magnetite WebSocket client; the
+ *     shape below is kept close to that one on purpose.)
+ *  2. `webrtc.ts` is where an `RTCPeerConnection` and its `RTCDataChannel` get
+ *     created; this is where that channel gets handed off to `PeerSession`.
+ *
+ * One real difference from the shape this seam had before: it now needs
+ * `onMessage`, because the old version only ever *sent* to a server and let
+ * a separately-wrapped client push state back through its own `onState`. A
+ * peer connection is inherently two-way on the one channel, so this seam
+ * grew the one thing it structurally lacked rather than being replaced by a
+ * different abstraction.
  */
 
-/** Minimal transport contract the session needs. */
-export interface MagnetiteTransport {
+/** Minimal transport contract `PeerSession` needs. */
+export interface PeerTransport {
   connect(): void | Promise<void>;
   disconnect(): void;
-  /** Send a serialized frame. Returns false if the socket is not open. */
+  /** Send a serialized frame. Returns false if the channel is not open. */
   send(frame: string): boolean;
   readonly isConnected: boolean;
   /** Register an open handler. Called again on every reconnect. */
   onOpen(cb: () => void): void;
   onClose(cb: () => void): void;
   onError(cb: (err: unknown) => void): void;
-}
-
-/** The subset of `MagnetiteClient` this package touches. */
-export interface MagnetiteClientLike {
-  connect(): unknown;
-  disconnect(): void;
-  readonly playerId?: string | null;
-  /** Not in magnetite today — honoured first if a future version adds it. */
-  sendRaw?(frame: string): boolean;
-  /** `ConnectionManager`, reached only as documented in {@link clientTransport}. */
-  _conn?: {
-    send(frame: string): void;
-    readonly isConnected: boolean;
-    onOpen: (() => void) | null;
-    onClose: ((e?: unknown) => void) | null;
-    onError: ((e?: unknown) => void) | null;
-  };
+  /** Register a handler for frames arriving from the peer. */
+  onMessage(cb: (frame: string) => void): void;
 }
 
 /**
- * Adapt a `MagnetiteClient` (from `createClient`) to {@link MagnetiteTransport}.
- *
- * ── The one ugly part, stated plainly ───────────────────────────────────────
- * To put bytes on the wire we need `ConnectionManager.send`, which the client
- * owns as `_conn` and does not re-export. We prefer a public `sendRaw` if a
- * future magnetite adds one, then fall back to `_conn`, then fail loudly with
- * an actionable message rather than silently dropping every event.
- *
- * This is a genuine upstream gap, not cleverness: magnetite has no client→server
- * attested-event path at all (see `ATTESTED_FRAME_TYPE` in wire.ts). When one
- * lands, this fallback should be deleted.
+ * The subset of `RTCDataChannel` this package touches. Deliberately small and
+ * shaped like the real DOM interface so `new RTCPeerConnection(...).createDataChannel(...)`
+ * satisfies it with no adapter of its own — unlike the old magnetite client
+ * bridge, there is no public-API gap to route around here.
  */
-export function clientTransport(client: MagnetiteClientLike): MagnetiteTransport {
-  const conn = client._conn;
-  const sender: (frame: string) => boolean = client.sendRaw
-    ? (f) => client.sendRaw!(f)
-    : conn
-      ? (f) => {
-          if (!conn.isConnected) return false;
-          conn.send(f);
-          return true;
-        }
-      : () => {
-          throw new Error(
-            'magnetite client exposes neither sendRaw() nor a _conn ConnectionManager; ' +
-              'cannot send attested events. Pass an explicit `transport` to MagnetiteSession.',
-          );
-        };
+export interface DataChannelLike {
+  send(data: string): void;
+  close(): void;
+  readonly readyState: 'connecting' | 'open' | 'closing' | 'closed';
+  addEventListener(type: 'open', cb: () => void): void;
+  addEventListener(type: 'close', cb: () => void): void;
+  addEventListener(type: 'error', cb: (ev: unknown) => void): void;
+  addEventListener(type: 'message', cb: (ev: { data: unknown }) => void): void;
+}
+
+/** Adapt a `DataChannelLike` (real or faked) to {@link PeerTransport}. */
+export function dataChannelTransport(dc: DataChannelLike): PeerTransport {
+  let openCb: (() => void) | null = null;
+  let closeCb: (() => void) | null = null;
+  let errCb: ((e: unknown) => void) | null = null;
+  let msgCb: ((frame: string) => void) | null = null;
+
+  dc.addEventListener('open', () => openCb?.());
+  dc.addEventListener('close', () => closeCb?.());
+  dc.addEventListener('error', (e) => errCb?.(e));
+  dc.addEventListener('message', (ev) => {
+    if (typeof ev.data !== 'string') {
+      // A malicious or buggy peer could in principle send binary; refuse it
+      // rather than guessing at a decoding, and surface it rather than
+      // dropping silently.
+      errCb?.(new Error(`received a non-string DataChannel message (${typeof ev.data}); ignoring`));
+      return;
+    }
+    msgCb?.(ev.data);
+  });
 
   return {
-    connect: () => void client.connect(),
-    disconnect: () => client.disconnect(),
-    send: sender,
+    connect: () => {
+      // Nothing to do here: by the time a DataChannelLike exists, the
+      // surrounding RTCPeerConnection has already been wired up by webrtc.ts
+      // and the channel is already negotiating. `connect()` exists so this
+      // seam's shape stays uniform for any future non-WebRTC transport (e.g.
+      // a same-machine test transport) that does have setup work to do here.
+    },
+    disconnect: () => dc.close(),
+    send: (frame) => {
+      if (dc.readyState !== 'open') return false;
+      dc.send(frame);
+      return true;
+    },
     get isConnected() {
-      return conn ? conn.isConnected : false;
+      return dc.readyState === 'open';
     },
     onOpen(cb) {
-      if (conn) conn.onOpen = cb;
+      openCb = cb;
     },
     onClose(cb) {
-      if (conn) conn.onClose = () => cb();
+      closeCb = cb;
     },
     onError(cb) {
-      if (conn) conn.onError = (e) => cb(e);
+      errCb = cb;
+    },
+    onMessage(cb) {
+      msgCb = cb;
     },
   };
 }

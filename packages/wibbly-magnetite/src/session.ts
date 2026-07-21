@@ -1,333 +1,222 @@
 /**
- * `MagnetiteSession` — connect, stream gesture events, degrade, tear down.
+ * `PeerSession` — one host-authority connection to one other wibbly tab.
  *
- * HONESTY, restated here because this is the file a game author opens: every
- * event this session sends is **client-attested**. It is not verified, not
- * replay-checkable, and not anti-cheat. A determined cheater can synthesise
- * events that are indistinguishable from real ones — magnetite pins that
- * ceiling in its own test suite. The server remains the authority; this is a
- * client that makes claims to it.
+ * HONESTY, restated here because this is the file a game author opens: this
+ * package runs no server, and the host-authority design is not a downgrade
+ * from one — see site/docs/MULTIPLAYER.md's anti-cheat section. Camera
+ * gesture input cannot be replay-verified by anyone, host tab or rented
+ * server alike, so a rented authority buys nothing a host's own browser tab
+ * doesn't. Every event carried here is client-attested: rate-limited and
+ * sanity-checked (see inbound-gate.ts), never proven to have come from a real
+ * arm in front of a real camera.
+ *
+ * One player's tab holds authority and steps the simulation. That tab (the
+ * host) instantiates one `PeerSession` per guest connection, wires
+ * `onGestureEvent` into its sim step, and calls `broadcastState` once per
+ * tick. A guest instantiates one `PeerSession`, wires `onState` into its
+ * renderer, and calls `sendGesture` (or `attach`s a wibbly input pipeline
+ * directly) from its own local camera pipeline. This class does not know
+ * which side is "host" and which is "guest" — it only moves gesture events
+ * and opaque state across a `PeerTransport`, validating everything inbound.
+ *
+ * This package has no idea tennis, or any other game, exists: `state` is
+ * whatever JSON-serializable value the game hands it, opaque all the way
+ * through.
  */
 
 import type { GestureEvent } from '@vulos/wibbly-input';
-import { AttestedEventAdapter, type AdapterOptions } from './adapter';
-import { createEd25519Signer, type AttestedSigner } from './identity';
-import { PreflightGate, type PreflightLimits, type PreflightRejection } from './preflight';
-import { clientTransport, type MagnetiteClientLike, type MagnetiteTransport } from './transport';
-import {
-  ATTESTED_FRAME_TYPE,
-  bytesToHex,
-  signedAttestedSigningBytes,
-  type AttestedFrame,
-} from './wire';
+import { InboundGate, type InboundLimits, type InboundRejection } from './inbound-gate';
+import { gestureToWire, wireToGesture, type PeerMessage } from './message';
+import type { PeerTransport } from './transport';
 
-export type SessionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'closed';
+export type PeerSessionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'closed';
 
-/** Why a submitted gesture did not reach the wire. */
-export type SubmitFailure =
+export type SendFailure =
   | { kind: 'not_connected' }
-  | { kind: 'preflight'; reason: PreflightRejection; detail?: string }
   | { kind: 'send_failed' }
   | { kind: 'error'; error: unknown };
 
-export type SubmitResult = { sent: true; seq: number } | ({ sent: false } & SubmitFailure);
+export type SendResult = { sent: true; seq: number } | ({ sent: false } & SendFailure);
 
-export interface MagnetiteSessionOptions {
-  /** WebSocket URL of a magnetite node, e.g. `ws://127.0.0.1:9001`. */
-  url: string;
-  token?: string;
-  /** Passed to `createClient`. Default true. */
-  autoReconnect?: boolean;
+/** Why an inbound message never reached a game callback. */
+export type DropReason =
+  | ({ kind: 'rejected' } & { reason: InboundRejection; detail?: string })
+  | { kind: 'error'; error: unknown };
 
-  /**
-   * Builds the underlying client. Defaults to a dynamic import of
-   * {@link MagnetiteSessionOptions.clientModule} — magnetite-web-client is not
-   * on a registry, so the specifier is the integrator's to choose.
-   */
-  clientFactory?: (opts: {
-    url: string;
-    token?: string;
-    autoReconnect: boolean;
-  }) => MagnetiteClientLike | Promise<MagnetiteClientLike>;
-
-  /** Module specifier exporting `createClient`. Default `@magnetite/web-client`. */
-  clientModule?: string;
-
-  /** Bypass the client entirely — the seam tests use this. */
-  transport?: MagnetiteTransport;
-
-  /**
-   * Signer for attested events.
-   *   - omitted → try WebCrypto Ed25519, fall back to unsigned;
-   *   - a signer → use it;
-   *   - `false`  → do not sign, deliberately.
-   * When unsigned, {@link signed} is false and events carry no authorship
-   * binding whatsoever.
-   */
-  signer?: AttestedSigner | false;
-
-  /**
-   * Player public key, hex. Required only when running unsigned — with a signer
-   * it is taken from the signer, and must be, or the host's `verify()` refuses
-   * the event for naming a different player than the signing key.
-   */
-  playerKeyHex?: string;
-
-  /** Adapter tuning (speed scale, whether to claim a speed at all). */
-  adapter?: Omit<AdapterOptions, 'playerKeyHex'>;
-
-  /** Overrides for the local pre-flight. See preflight.ts on why it is not a defence. */
-  limits?: Partial<PreflightLimits>;
-
+export interface PeerSessionOptions {
+  transport: PeerTransport;
   /** Injectable clock, ms since epoch. Defaults to `Date.now`. */
   now?: () => number;
-
-  onStatusChange?: (status: SessionStatus) => void;
-  /** Called for every dropped event. Diagnostics only — never an accusation. */
-  onDrop?: (failure: SubmitFailure, event: GestureEvent) => void;
-  onError?: (err: unknown) => void;
+  /**
+   * Inbound validation limits for messages arriving from the peer. Pass
+   * `expectedPlayerIds` here when this session is a host's view of one guest
+   * connection — see inbound-gate.ts for why that check exists.
+   */
+  limits?: Partial<InboundLimits>;
+  /** Called with every accepted inbound `GestureEvent`. A host wires this into its sim. */
+  onGestureEvent?(event: GestureEvent): void;
+  /** Called with every accepted inbound state update. A guest wires this into its renderer. */
+  onState?(state: unknown): void;
+  onStatusChange?(status: PeerSessionStatus): void;
+  /** Called for every inbound message the gate rejected, or that threw while handling. Diagnostics only — never an accusation; see inbound-gate.ts. */
+  onDrop?(drop: DropReason, raw: string): void;
+  onError?(err: unknown): void;
 }
 
-export class MagnetiteSession {
-  private readonly opts: MagnetiteSessionOptions;
+export class PeerSession {
+  private readonly opts: PeerSessionOptions;
   private readonly now: () => number;
-  private readonly gate: PreflightGate;
+  private readonly gate: InboundGate;
+  private readonly transport: PeerTransport;
 
-  private transport: MagnetiteTransport | null = null;
-  private adapter: AttestedEventAdapter | null = null;
-  private signer: AttestedSigner | null = null;
-  private _status: SessionStatus = 'idle';
+  private _status: PeerSessionStatus = 'idle';
   private _closed = false;
-  /** Guards against a second connect() racing the first. */
-  private connecting: Promise<void> | null = null;
+  private outSeq = 0;
 
-  private _sent = 0;
+  private _sentGestures = 0;
+  private _sentStates = 0;
+  private _received = 0;
   private _dropped = 0;
 
-  constructor(opts: MagnetiteSessionOptions) {
+  constructor(opts: PeerSessionOptions) {
     this.opts = opts;
+    this.transport = opts.transport;
     this.now = opts.now ?? (() => Date.now());
-    this.gate = new PreflightGate(opts.limits ?? {});
+    this.gate = new InboundGate(opts.limits ?? {});
+
+    this.transport.onOpen(() => this.setStatus('connected'));
+    this.transport.onClose(() => {
+      // Not necessarily terminal — the caller may reopen a new transport, or
+      // (rarely) the same one may reconnect. Either way the game keeps
+      // running locally in the meantime; sends just start failing with
+      // `not_connected` until status flips back.
+      if (!this._closed) this.setStatus('disconnected');
+    });
+    this.transport.onError((err) => this.opts.onError?.(err));
+    this.transport.onMessage((raw) => this.handleMessage(raw));
   }
 
-  get status(): SessionStatus {
+  get status(): PeerSessionStatus {
     return this._status;
   }
 
-  /** True once connected and able to send. */
   get isConnected(): boolean {
-    return this._status === 'connected' && !!this.transport?.isConnected;
+    return this._status === 'connected' && this.transport.isConnected;
+  }
+
+  get stats(): { sentGestures: number; sentStates: number; received: number; dropped: number } {
+    return {
+      sentGestures: this._sentGestures,
+      sentStates: this._sentStates,
+      received: this._received,
+      dropped: this._dropped,
+    };
   }
 
   /**
-   * Whether events are being signed. **False means events carry no authorship
-   * binding at all** — anyone able to write to the socket could claim to be this
-   * player. Surface this rather than hiding it.
-   */
-  get signed(): boolean {
-    return this.signer !== null;
-  }
-
-  /** The player key events are attributed to, or null before connect. */
-  get playerKeyHex(): string | null {
-    return this.adapter?.player ?? null;
-  }
-
-  get stats(): { sent: number; dropped: number; lastSeq: number } {
-    return { sent: this._sent, dropped: this._dropped, lastSeq: this.adapter?.lastSeq ?? 0 };
-  }
-
-  /**
-   * Connect. Idempotent, and safe to call while a connect is in flight.
-   *
-   * Rejects only on a *configuration* failure (no usable player key, no
-   * transport). A node that is simply unreachable is not an error here — the
-   * transport reconnects in the background and {@link submit} reports
-   * `not_connected` meanwhile, which is what lets the game keep playing locally.
+   * Connect. Rejects only on a *configuration* failure — a transport that
+   * throws from `connect()`. A peer that is simply unreachable is not an
+   * error here: the game keeps playing locally and `sendGesture` /
+   * `broadcastState` report `not_connected` meanwhile.
    */
   async connect(): Promise<void> {
-    if (this._closed) throw new Error('MagnetiteSession is closed; construct a new one');
-    if (this._status === 'connected' || this._status === 'connecting') {
-      return this.connecting ?? Promise.resolve();
-    }
-    this.connecting = this.doConnect();
-    try {
-      await this.connecting;
-    } finally {
-      this.connecting = null;
-    }
-  }
-
-  private async doConnect(): Promise<void> {
+    if (this._closed) throw new Error('PeerSession is closed; construct a new one');
     this.setStatus('connecting');
-
-    // Identity first: without a player key there is no event to send, so
-    // failing here is better than failing on the first swing.
-    if (!this.signer && this.opts.signer !== false) {
-      this.signer = this.opts.signer ?? (await createEd25519Signer());
-    }
-    if (!this.adapter) {
-      const key = this.signer?.publicKeyHex ?? this.opts.playerKeyHex;
-      if (!key) {
-        this.setStatus('idle');
-        throw new Error(
-          'no player key: Ed25519 is unavailable in this engine and no `playerKeyHex` was ' +
-            'provided. AttestedEvent.player is required, so events cannot be built. ' +
-            'Supply playerKeyHex to run unsigned (events will carry no authorship binding).',
-        );
-      }
-      this.adapter = new AttestedEventAdapter({ ...(this.opts.adapter ?? {}), playerKeyHex: key });
-    }
-
-    if (!this.transport) {
-      this.transport = this.opts.transport ?? clientTransport(await this.buildClient());
-      // NOTE: these are set on the ConnectionManager, which magnetite's own
-      // client does not use — it registers message handlers instead. If that
-      // changes upstream we would be clobbering its handlers.
-      this.transport.onOpen(() => this.setStatus('connected'));
-      this.transport.onClose(() => {
-        // Not terminal: autoReconnect brings the socket back and onOpen fires
-        // again. Until then the game plays locally.
-        if (!this._closed) this.setStatus('disconnected');
-      });
-      this.transport.onError((err) => this.opts.onError?.(err));
-    }
-
     await this.transport.connect();
-    // Some transports (and the mock) are open synchronously; others fire
-    // onOpen later. Reflect reality rather than assuming either.
+    // Some transports (and the test fakes) are open synchronously; a real
+    // WebRTC one opens later via the onOpen event registered in the
+    // constructor. Reflect reality rather than assuming either.
     if (this.transport.isConnected) this.setStatus('connected');
   }
 
-  private async buildClient(): Promise<MagnetiteClientLike> {
-    const args = {
-      url: this.opts.url,
-      ...(this.opts.token !== undefined ? { token: this.opts.token } : {}),
-      autoReconnect: this.opts.autoReconnect !== false,
-    };
-    if (this.opts.clientFactory) return this.opts.clientFactory(args);
-
-    const specifier = this.opts.clientModule ?? '@magnetite/web-client';
-    const mod = (await import(/* @vite-ignore */ specifier)) as {
-      createClient?: (o: unknown) => MagnetiteClientLike;
-    };
-    if (typeof mod.createClient !== 'function') {
-      throw new Error(`module "${specifier}" does not export createClient`);
-    }
-    return mod.createClient(args);
+  /**
+   * Send a locally captured gesture to the peer. Never throws — a game loop
+   * calls this from a recognizer callback and a channel hiccup must not take
+   * the frame down with it.
+   */
+  sendGesture(event: GestureEvent): SendResult {
+    return this.sendMessage({ type: 'gesture', seq: this.nextSeq(), event: gestureToWire(event) }, 'gesture');
   }
 
   /**
-   * Adapt, pre-flight, sign and send one gesture.
-   *
-   * Never throws: a game loop calls this from a recognizer callback and a
-   * network hiccup must not take the frame down with it. Failures are returned
-   * and reported to `onDrop`.
-   *
-   * Note the ordering: a gesture rejected by the local pre-flight **still
-   * consumes a sequence number**, because the adapter allocates one when it
-   * builds the event. That is deliberate and harmless — the server requires
-   * sequence numbers to strictly increase, not to be gapless.
+   * Broadcast one simulation state snapshot to the peer. `state` must be
+   * JSON-serializable; this package does not look inside it. Never throws.
    */
-  async submit(event: GestureEvent): Promise<SubmitResult> {
+  broadcastState(state: unknown): SendResult {
+    return this.sendMessage({ type: 'state', seq: this.nextSeq(), state }, 'state');
+  }
+
+  private nextSeq(): number {
+    this.outSeq += 1;
+    return this.outSeq;
+  }
+
+  private sendMessage(msg: PeerMessage, kind: 'gesture' | 'state'): SendResult {
     try {
-      if (this._closed || !this.adapter || !this.transport) {
-        return this.drop({ kind: 'not_connected' }, event);
-      }
-      if (!this.isConnected) return this.drop({ kind: 'not_connected' }, event);
-
-      const wire = this.adapter.adapt(event);
-
-      // Client-side pre-flight. AN OPTIMISATION, NOT A SECURITY BOUNDARY: it
-      // runs in code the player controls and can be deleted by them. It exists
-      // so an obviously-bad event does not spend the player's server-side rate
-      // budget or a round trip. The server's PlausibilityGate re-checks all of
-      // it and is the only authority.
-      const verdict = this.gate.admit(wire, this.now());
-      if (!verdict.ok) {
-        return this.drop(
-          {
-            kind: 'preflight',
-            reason: verdict.reason!,
-            ...(verdict.detail !== undefined ? { detail: verdict.detail } : {}),
-          },
-          event,
-        );
-      }
-
-      let frame: AttestedFrame;
-      if (this.signer) {
-        const preimage = signedAttestedSigningBytes(wire, this.signer.publicKeyHex);
-        const sig = await this.signer.sign(preimage);
-        frame = {
-          type: ATTESTED_FRAME_TYPE,
-          signed: { event: wire, player_key: this.signer.publicKeyHex, sig: bytesToHex(sig) },
-        };
-      } else {
-        frame = { type: ATTESTED_FRAME_TYPE, event: wire };
-      }
-
-      // Re-check liveness: signing is async, so the socket may have dropped.
-      if (!this.transport.isConnected) return this.drop({ kind: 'not_connected' }, event);
-      if (!this.transport.send(JSON.stringify(frame))) {
-        return this.drop({ kind: 'send_failed' }, event);
-      }
-      this._sent += 1;
-      return { sent: true, seq: wire.seq };
+      if (this._closed || !this.isConnected) return { sent: false, kind: 'not_connected' };
+      const frame = JSON.stringify(msg);
+      if (!this.transport.send(frame)) return { sent: false, kind: 'send_failed' };
+      if (kind === 'gesture') this._sentGestures += 1;
+      else this._sentStates += 1;
+      return { sent: true, seq: msg.seq };
     } catch (error) {
       this.opts.onError?.(error);
-      return this.drop({ kind: 'error', error }, event);
+      return { sent: false, kind: 'error', error };
+    }
+  }
+
+  private handleMessage(raw: string): void {
+    try {
+      const verdict = this.gate.admit(raw, this.now());
+      if (!verdict.ok) {
+        this._dropped += 1;
+        this.opts.onDrop?.(
+          { kind: 'rejected', reason: verdict.reason!, ...(verdict.detail !== undefined ? { detail: verdict.detail } : {}) },
+          raw,
+        );
+        return;
+      }
+      this._received += 1;
+      const msg = verdict.message!;
+      if (msg.type === 'gesture') this.opts.onGestureEvent?.(wireToGesture(msg.event));
+      else this.opts.onState?.(msg.state);
+    } catch (error) {
+      this._dropped += 1;
+      this.opts.onError?.(error);
+      this.opts.onDrop?.({ kind: 'error', error }, raw);
     }
   }
 
   /**
-   * Convenience: stream every gesture from a wibbly input pipeline.
-   * Returns an unsubscribe function.
+   * Convenience: stream every locally captured gesture as it happens (guest
+   * side). Returns an unsubscribe function.
    */
   attach(input: { onGesture(cb: (ev: GestureEvent) => void): () => void }): () => void {
     return input.onGesture((ev) => {
-      void this.submit(ev);
+      this.sendGesture(ev);
     });
   }
 
-  /**
-   * Disconnect but keep the session reusable — `connect()` works again and the
-   * sequence counter deliberately keeps climbing, because the host's
-   * `PlausibilityGate` still holds this player's high-water mark unless it
-   * called `forget()`. Restarting the count would get every event refused as
-   * `SequenceReplayed`.
-   */
+  /** Disconnect but keep the session reusable — `connect()` works again with a fresh or reopened transport. */
   disconnect(): void {
-    this.transport?.disconnect();
+    this.transport.disconnect();
     this.setStatus('disconnected');
   }
 
-  /**
-   * Permanent teardown. Drops the transport, clears pre-flight state and makes
-   * the session unusable. Safe to call twice.
-   */
+  /** Permanent teardown. Drops the transport, clears gate state, makes the session unusable. Safe to call twice. */
   close(): void {
     if (this._closed) return;
     this._closed = true;
     try {
-      this.transport?.disconnect();
+      this.transport.disconnect();
     } catch (err) {
       this.opts.onError?.(err);
     }
-    this.transport = null;
-    this.adapter = null;
-    this.signer = null;
     this.gate.reset();
     this.setStatus('closed');
   }
 
-  private drop(failure: SubmitFailure, event: GestureEvent): SubmitResult {
-    this._dropped += 1;
-    this.opts.onDrop?.(failure, event);
-    return { sent: false, ...failure };
-  }
-
-  private setStatus(status: SessionStatus): void {
+  private setStatus(status: PeerSessionStatus): void {
     if (this._status === status) return;
     this._status = status;
     this.opts.onStatusChange?.(status);

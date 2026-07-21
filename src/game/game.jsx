@@ -8,9 +8,9 @@ import {
     WibblyInput,
     equalClaimZones,
 } from '@vulos/wibbly-input';
-import { MagnetiteSession } from '@vulos/wibbly-magnetite';
+import { PeerSession } from '@vulos/wibbly-magnetite';
 import CameraPreview from './camera-preview.jsx';
-import { assertNoMagnetite, currentMode, modelUrl, resolveMagnetiteConfig } from '../mode.js';
+import { assertNoPeerSession, currentMode, modelUrl, resolvePeerTransport } from '../mode.js';
 
 // Import game modules
 import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment, toggleHitBoxVisibility } from './player.js';
@@ -26,15 +26,41 @@ import {
 } from './game-logic.js';
 
 /**
- * Optional magnetite networking config. **OFF unless explicitly configured,
- * and null unconditionally in demo mode.** The resolution rules, and why demo
- * mode can never reach a node, live in ../mode.js.
+ * Optional peer transport for wibbly's peer-to-peer multiplayer. **OFF unless
+ * a host page hands one in, and null unconditionally in demo mode.** The
+ * resolution rules, and why there is no build-time config for this the way
+ * there is for mode/model, live in ../mode.js.
  */
-function magnetiteConfig() {
-    return resolveMagnetiteConfig(
+function peerTransport() {
+    return resolvePeerTransport(
         import.meta.env ?? {},
         typeof window !== 'undefined' ? window : null,
     );
+}
+
+/**
+ * Frees the GPU-side resources (vertex/index buffers, textures) held by
+ * every mesh under `root`. `WebGLRenderer.dispose()` only releases what the
+ * renderer itself owns — geometries, materials and their texture maps are
+ * the scene graph's own responsibility, and three.js never frees them on
+ * its own just because the JS objects became unreachable. Without this, a
+ * settings change or a restart (both remount TennisGame and build an
+ * entirely new scene) leaks the previous ball, both players and the court
+ * model's GPU memory for the rest of the tab's life.
+ */
+function disposeObject3D(root) {
+    if (!root) return;
+    root.traverse((obj) => {
+        obj.geometry?.dispose();
+        const materials = Array.isArray(obj.material) ? obj.material : obj.material ? [obj.material] : [];
+        for (const material of materials) {
+            for (const key of Object.keys(material)) {
+                const value = material[key];
+                if (value && typeof value === 'object' && value.isTexture) value.dispose();
+            }
+            material.dispose();
+        }
+    });
 }
 
 /**
@@ -68,9 +94,9 @@ function TennisGame({
     const playersRef = useRef([]);
     const ballRef = useRef(null);
     const inputRef = useRef(null);
-    // Optional magnetite session (§6 networked play). Null unless configured —
-    // see `magnetiteConfig()` below. Local play never touches this.
-    const magnetiteRef = useRef(null);
+    // Optional peer session (networked play). Null unless a transport was
+    // handed in — see `peerTransport()` above. Local play never touches this.
+    const peerRef = useRef(null);
     const gameStateRef = useRef(createGameState());
     const playerDataRef = useRef(createPlayerData());
 
@@ -96,6 +122,17 @@ function TennisGame({
     useEffect(() => {
         onBackendRef.current = onTrackerBackend;
     }, [onTrackerBackend]);
+
+    // Same reasoning as onSwingRef above. This one was previously read
+    // directly off the closed-over prop, which happened to be harmless only
+    // because Play.jsx's only caller passes a useState setter (a stable
+    // identity forever) — any caller passing a fresh function each render
+    // would have gotten 'starting…' stuck forever after the first camera
+    // resolution, since the setup effect that calls this never re-runs.
+    const onInputStateRef = useRef(onInputState);
+    useEffect(() => {
+        onInputStateRef.current = onInputState;
+    }, [onInputState]);
 
     // Exposed to the preview component so it can render video + skeletons.
     const [input, setInput] = useState(null);
@@ -216,8 +253,18 @@ function TennisGame({
         directionalLight.castShadow = true;
         scene.add(directionalLight);
 
-        // Load the court
-        loadCourt(scene);
+        // Load the court. Async and not awaited — the match starts on the
+        // fallback/empty ground and the real model slots in whenever it
+        // arrives.
+        loadCourt(scene).then((model) => {
+            if (cancelled) {
+                // Cleanup already ran and already disposed whatever was in
+                // the scene at that point; this model attached itself
+                // after that, so it has to free its own geometry/textures
+                // here or they leak for the rest of the tab's life.
+                disposeObject3D(model);
+            }
+        });
 
         // Create ball
         const ballGroup = createBall(scene);
@@ -309,13 +356,15 @@ function TennisGame({
             });
 
             wibbly.onGesture((event) => {
-                // Stream to magnetite BEFORE the tennis-specific filtering
-                // below: the session is the input layer for whatever game is
-                // hosted, not for tennis' idea of a relevant gesture. Absent
-                // unless configured, and fire-and-forget — `submit` never
-                // throws and never blocks, so a dead node cannot stall or break
-                // the local swing that follows.
-                magnetiteRef.current?.submit(event);
+                // Stream to the peer session BEFORE the tennis-specific
+                // filtering below: PeerSession is the input layer for
+                // whatever game is hosted, not for tennis' idea of a relevant
+                // gesture. Absent unless a transport was handed in, and
+                // fire-and-forget — `sendGesture` never throws and reports
+                // failure through its return value rather than an exception,
+                // so a disconnected peer cannot stall or break the local
+                // swing that follows.
+                peerRef.current?.sendGesture(event);
 
                 if (event.kind !== 'swing') return;
                 // Only player 1 controls the racket in tennis today.
@@ -327,7 +376,14 @@ function TennisGame({
                 // forehand behave like a right-handed player's forehand,
                 // instead of being mirrored into the wrong shot.
                 const swingDirection = event.detail?.stroke === 'backhand' ? 'left' : 'right';
-                handleSwing(swingDirection);
+                // event.confidence is 0..1 and never a certainty — an
+                // Attested gesture is not replay-verifiable and this game
+                // must not treat it as a clean signal (see GestureEvent's
+                // doc comment in wibbly-input). Threaded through to the hit
+                // physics rather than dropped on the floor, so a marginal
+                // detection produces a visibly softer shot instead of the
+                // same full-power swing as a confident one.
+                handleSwing(swingDirection, event.confidence);
             });
 
             wibbly.onPeople((people) => {
@@ -341,47 +397,60 @@ function TennisGame({
 
             try {
                 await wibbly.start();
+                if (cancelled) {
+                    // Unmounted (settings change, restart, navigation) while
+                    // the camera/model was still starting. Nothing is left
+                    // to consume this pipeline's output, so stop it here
+                    // rather than handing a live camera stream + tracker to
+                    // refs the cleanup below already nulled out — the same
+                    // leak setupPeerSession guards against for its transport.
+                    wibbly.stop();
+                    return;
+                }
                 inputRef.current = wibbly;
                 setInput(wibbly);
-                onInputState?.('live');
+                onInputStateRef.current?.('live');
                 console.log('Gesture input initialized');
             } catch (error) {
                 // Camera denied or unavailable — the game stays fully playable
                 // on the spacebar, which is the correct degradation.
                 console.error('Gesture input unavailable, falling back to keyboard:', error);
                 gameStateRef.current.usePoseDetection = false;
-                onInputState?.('keyboard');
+                if (!cancelled) onInputStateRef.current?.('keyboard');
                 wibbly.stop();
             }
         }
 
         /**
-         * Optional magnetite session. Every failure path here is a no-op that
-         * leaves local play exactly as it was — an unreachable node, a missing
-         * client module, or an engine with no Ed25519 must never cost the
-         * player their game. That is why it is `catch`-and-log rather than
-         * anything louder, and why it is never awaited by the setup path.
+         * Optional peer session. There is no signalling here — by the time a
+         * transport exists at all, some other surface (a lobby screen, a
+         * host page) has already run the offer/answer exchange in
+         * site/docs/MULTIPLAYER.md's design and handed the resulting
+         * `PeerTransport` in via `window.__WIBBLY_PEER_TRANSPORT__`. This
+         * function only wraps it in a `PeerSession` and wires it to the local
+         * gesture stream. Every failure path here is a no-op that leaves
+         * local play exactly as it was — a peer that never connects, or one
+         * that drops mid-match, must never cost the player their own game.
+         * That is why it is `catch`-and-log rather than anything louder, and
+         * why it is never awaited by the setup path.
          */
-        async function setupMagnetite() {
-            const cfg = magnetiteConfig();
-            if (!cfg) return; // default: pure local play, no server involved.
+        async function setupPeerSession() {
+            const transport = peerTransport();
+            if (!transport) return; // default: pure local play, no peer involved.
 
-            // Belt to the brace above. `magnetiteConfig()` already returns null
+            // Belt to the brace above. `peerTransport()` already returns null
             // in demo mode, so reaching here at all would mean that gate broke;
             // throwing makes that a loud bug rather than a silent outbound
-            // WebSocket from an embedded demo. Held by test/mode.test.js.
-            assertNoMagnetite(currentMode());
+            // peer connection from an embedded demo. Held by test/mode.test.js.
+            assertNoPeerSession(currentMode());
 
-            const session = new MagnetiteSession({
-                url: cfg.url,
-                token: cfg.token,
-                clientModule: cfg.clientModule,
-                playerKeyHex: cfg.playerKeyHex,
-                // Tennis only produces swings today; telling the host so lets it
-                // reject anything else outright.
+            const session = new PeerSession({
+                transport,
+                // Tennis only produces swings today; telling the session so
+                // lets it reject anything else outright.
                 limits: { acceptedKinds: ['swing'] },
-                onStatusChange: (status) => console.log('[magnetite] session', status),
-                onError: (err) => console.warn('[magnetite] transport error:', err),
+                onStatusChange: (status) => console.log('[peer] session', status),
+                onError: (err) => console.warn('[peer] transport error:', err),
             });
 
             try {
@@ -390,22 +459,25 @@ function TennisGame({
                     session.close();
                     return;
                 }
-                magnetiteRef.current = session;
-                console.log(
-                    `[magnetite] streaming gesture events to ${cfg.url}` +
-                        (session.signed
-                            ? ' (signed — authorship only, NOT verification)'
-                            : ' (UNSIGNED — no authorship binding at all)'),
-                );
+                peerRef.current = session;
+                // No signed/unsigned distinction to report here, deliberately:
+                // this design never signs events. A signature would only prove
+                // "this connection sent this", which the RTCDataChannel this
+                // transport wraps already gives for free — see inbound-gate.ts.
+                console.log('[peer] connected — streaming local gesture events to the peer');
             } catch (error) {
                 // Stay local. This is the designed degradation, not a failure.
-                console.warn('[magnetite] unavailable, continuing with local play:', error);
+                console.warn('[peer] unavailable, continuing with local play:', error);
                 session.close();
             }
         }
 
-        // Function to handle swings (from pose detection or spacebar)
-        function handleSwing(swingDirection = 'right') {
+        // Function to handle swings (from pose detection or spacebar).
+        // `confidence` defaults to 1 (full, deterministic power) which is
+        // exactly right for the keyboard fallback below — a keypress has no
+        // notion of "how sure" it is. Only the gesture path above ever
+        // passes something less than that.
+        function handleSwing(swingDirection = 'right', confidence = 1) {
             console.log("Handling swing!", swingDirection);
 
             // Reported for EVERY swing the player makes, before the animation
@@ -431,7 +503,7 @@ function TennisGame({
                 console.log("Player 1 swinging racket!");
 
                 // Try to hit the ball
-                handleBallHit(ballGroup, gameState, player1, 0, swingDirection);
+                handleBallHit(ballGroup, gameState, player1, 0, swingDirection, confidence);
             }
         }
         
@@ -458,8 +530,10 @@ function TennisGame({
         let lastFpsTime = performance.now();
         let currentFps = 60;
         
+        let animationFrameId = null;
+
         function animate() {
-            requestAnimationFrame(animate);
+            animationFrameId = requestAnimationFrame(animate);
 
             // Paused: keep presenting the frozen frame under the menu, advance
             // nothing. getDelta() is still drained so the first frame after a
@@ -532,12 +606,12 @@ function TennisGame({
             console.log("Starting gesture input setup...");
             setupGestureInput();
         } else {
-            onInputState?.('keyboard');
+            onInputStateRef.current?.('keyboard');
         }
 
         // Optional, and deliberately not awaited: the game starts immediately
-        // and the session joins it if and when it connects.
-        setupMagnetite();
+        // and the peer session joins it if and when it connects.
+        setupPeerSession();
 
         // Start game
         startGame();
@@ -561,12 +635,27 @@ function TennisGame({
         // Cleanup
         return () => {
             cancelled = true;
+
+            // Stop the render/simulation loop FIRST. Nothing below is safe
+            // to skip this: without it, the previous instance's `animate`
+            // keeps calling requestAnimationFrame on itself forever — every
+            // settings change and every restart (both remount this
+            // component via a fresh `key`) would leave one more zombie loop
+            // running full physics/AI and rendering into a renderer that
+            // `renderer.dispose()` below is about to tear down.
+            if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('resize', handleResize);
-            window.removeEventListener('click', startGame);
             renderer.domElement.removeEventListener('click', startGame);
             renderer.dispose();
-            
+
+            // renderer.dispose() only releases what the renderer itself
+            // owns. The scene's own geometries/materials/textures (ball,
+            // both players, the court) are freed here — see
+            // disposeObject3D's doc comment for why this is required.
+            disposeObject3D(scene);
+
             // Tear down gesture input: stops the camera tracks, disposes the
             // model and clears binder/recognizer state.
             if (inputRef.current) {
@@ -575,11 +664,11 @@ function TennisGame({
             }
             setInput(null);
 
-            // Close the socket and clear pre-flight state. No-op when magnetite
-            // was never configured, which is the default.
-            if (magnetiteRef.current) {
-                magnetiteRef.current.close();
-                magnetiteRef.current = null;
+            // Close the transport and clear gate state. No-op when no peer
+            // session was ever configured, which is the default.
+            if (peerRef.current) {
+                peerRef.current.close();
+                peerRef.current = null;
             }
 
             containerRef.current?.removeChild(renderer.domElement);

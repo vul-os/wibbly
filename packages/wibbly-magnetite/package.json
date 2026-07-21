@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Bridge from a Wibbly GestureEvent to a magnetite session: client-attested AttestedEvent adapter, client-side pre-flight, optional Ed25519 signing, session lifecycle.",
+  "description": "Wibbly's peer-to-peer multiplayer: WebRTC host-authority session, no backend — connection setup, DataChannel transport, inbound rate-limit/sanity gate, session lifecycle.",
   "license": "MIT",
   "main": "./src/index.ts",
   "module": "./src/index.ts",

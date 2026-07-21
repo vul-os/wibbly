@@ -5,9 +5,9 @@ import {
   MODE_DEMO,
   MODE_FULL,
   OWNED_STORAGE_KEYS,
-  assertNoMagnetite,
+  assertNoPeerSession,
   clearOwnedStorage,
-  resolveMagnetiteConfig,
+  resolvePeerTransport,
   resolveMode,
   resolveModelUrl,
 } from '../src/mode.js';
@@ -99,45 +99,56 @@ describe('resolveModelUrl', () => {
   });
 });
 
-describe('magnetite gating', () => {
-  const configured = { VITE_MAGNETITE_URL: 'ws://127.0.0.1:9000' };
+describe('peer transport gating', () => {
+  // A stand-in for a real PeerTransport — resolvePeerTransport only ever
+  // passes this through unexamined, so any object identity works for
+  // asserting it came back (or didn't).
+  const fakeTransport = { connect() {}, send: () => true };
 
   it('is off by default in the full app', () => {
-    expect(resolveMagnetiteConfig({}, null)).toBeNull();
+    expect(resolvePeerTransport({}, null)).toBeNull();
+    expect(resolvePeerTransport({}, {})).toBeNull();
   });
 
-  it('works in the full app when configured', () => {
-    expect(resolveMagnetiteConfig(configured, null)).toEqual({
-      url: 'ws://127.0.0.1:9000',
-      token: undefined,
-    });
+  it('hands back a runtime-provided transport in the full app', () => {
+    expect(resolvePeerTransport({}, { __WIBBLY_PEER_TRANSPORT__: fakeTransport })).toBe(
+      fakeTransport,
+    );
   });
 
   it('is HARD-DISABLED in demo mode, not merely off by default', () => {
-    // Build-time config: ignored.
-    expect(resolveMagnetiteConfig({ ...configured, VITE_WIBBLY_MODE: 'demo' }, null)).toBeNull();
-
-    // Runtime override from a host page: also ignored. This is the one that
-    // matters — the demo is embedded in a page we do not control the source of.
+    // Build-time mode flag: the runtime transport is ignored even though
+    // it's present, because demo mode is checked before the transport is
+    // ever read.
     expect(
-      resolveMagnetiteConfig(
+      resolvePeerTransport(
         { VITE_WIBBLY_MODE: 'demo' },
-        { __WIBBLY_MAGNETITE__: { url: 'wss://evil.example/steal' } },
+        { __WIBBLY_PEER_TRANSPORT__: fakeTransport },
+      ),
+    ).toBeNull();
+
+    // Runtime mode override from a host page: same result. This is the one
+    // that matters — the demo is embedded in a page we do not control the
+    // source of.
+    expect(
+      resolvePeerTransport(
+        {},
+        { __WIBBLY_MODE__: 'demo', __WIBBLY_PEER_TRANSPORT__: fakeTransport },
       ),
     ).toBeNull();
 
     // Both at once.
     expect(
-      resolveMagnetiteConfig(
-        { ...configured, VITE_WIBBLY_MODE: 'demo' },
-        { __WIBBLY_MAGNETITE__: { url: 'wss://evil.example/steal' } },
+      resolvePeerTransport(
+        { VITE_WIBBLY_MODE: 'demo' },
+        { __WIBBLY_MODE__: 'demo', __WIBBLY_PEER_TRANSPORT__: fakeTransport },
       ),
     ).toBeNull();
   });
 
-  it('assertNoMagnetite throws in demo mode and is a no-op otherwise', () => {
-    expect(() => assertNoMagnetite(MODE_DEMO)).toThrow(/never be constructed in demo mode/);
-    expect(() => assertNoMagnetite(MODE_FULL)).not.toThrow();
+  it('assertNoPeerSession throws in demo mode and is a no-op otherwise', () => {
+    expect(() => assertNoPeerSession(MODE_DEMO)).toThrow(/never be constructed in demo mode/);
+    expect(() => assertNoPeerSession(MODE_FULL)).not.toThrow();
   });
 });
 
