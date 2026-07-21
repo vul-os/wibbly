@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 /**
  * In-game menu — pause, settings, camera, help, quit.
@@ -149,6 +149,11 @@ const InGameMenu = ({
     calibration ? calibration.handednessFor(PLAYER_ID) : 'right',
   );
 
+  const menuRef = useRef(null);
+  const closeBtnRef = useRef(null);
+  const previousFocusRef = useRef(null);
+  const closeTimerRef = useRef(null);
+
   useEffect(() => {
     if (!isOpen && isClosing) setIsClosing(false);
   }, [isOpen, isClosing]);
@@ -158,6 +163,59 @@ const InGameMenu = ({
   useEffect(() => {
     if (isOpen && calibration) setHandedness(calibration.handednessFor(PLAYER_ID));
   }, [isOpen, calibration]);
+
+  // `role="dialog" aria-modal="true"` is a promise, not a decoration: while
+  // this is open, focus has to actually live inside it. Without this, Tab
+  // walks straight through the overlay into the paused game behind it, which
+  // is the one thing aria-modal exists to prevent. Whatever had focus before
+  // opening (the HUD's "Menu" button, typically) gets it back on the way out,
+  // so resuming does not strand keyboard focus on a control that just closed.
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    previousFocusRef.current = document.activeElement;
+    closeBtnRef.current?.focus();
+    return () => {
+      const el = previousFocusRef.current;
+      if (el && typeof el.focus === 'function' && document.contains(el)) el.focus();
+      previousFocusRef.current = null;
+    };
+  }, [isOpen]);
+
+  // Trap Tab/Shift+Tab within the dialog's own focusable elements. Computed
+  // fresh on every keypress rather than cached, because which controls are
+  // focusable changes with the active tab (a disabled row has none).
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key !== 'Tab' || !menuRef.current) return;
+      const focusables = menuRef.current.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), ' +
+          'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen]);
+
+  // handleClose's timer below outlives a single render; if the whole page
+  // unmounts mid-animation (e.g. "Quit to title" fired a navigation while the
+  // close transition was still running) nothing else would ever clear it.
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    },
+    [],
+  );
 
   // Motion-trail sparks — the one moving thing, in the accent that always means
   // movement in this product. Suppressed entirely under reduced motion.
@@ -176,7 +234,10 @@ const InGameMenu = ({
 
   const handleClose = () => {
     setIsClosing(true);
-    setTimeout(() => onClose?.(), 220);
+    closeTimerRef.current = setTimeout(() => {
+      closeTimerRef.current = null;
+      onClose?.();
+    }, 220);
   };
 
   const setHand = (hand) => {
@@ -496,7 +557,7 @@ const InGameMenu = ({
         ))}
       </div>
 
-      <div className="menu-container wb-bracket is-live">
+      <div className="menu-container wb-bracket is-live" ref={menuRef}>
         <header className="menu-header">
           <div className="menu-title">
             <span className="menu-eyebrow">
@@ -505,7 +566,7 @@ const InGameMenu = ({
             </span>
             <span className="title-text">Game menu</span>
           </div>
-          <button className="close-btn" onClick={handleClose} aria-label="Resume game">
+          <button className="close-btn" ref={closeBtnRef} onClick={handleClose} aria-label="Resume game">
             <svg viewBox="0 0 16 16" aria-hidden="true">
               <path d="M4 4 L12 12 M12 4 L4 12" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
             </svg>

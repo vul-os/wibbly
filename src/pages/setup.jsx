@@ -100,6 +100,17 @@ export default function Setup() {
       onError: (err) => console.error('[setup] pipeline error:', err),
     });
 
+    // Bind the instance BEFORE awaiting start(), not after. `wibbly.start()`
+    // requests the camera partway through its own await chain — by the time
+    // it resolves, the permission light may already be lit — and the unmount
+    // effect below can only stop whatever `inputRef.current` points to.
+    // Binding late left a real gap: a player who presses "Turn on my camera"
+    // and immediately backs out (or whose device is slow to load the model)
+    // unmounts this component while `wibbly.start()` is still in flight,
+    // `inputRef.current` was still null, and nothing was ever told to release
+    // the stream — the camera stayed on until the tab itself closed.
+    inputRef.current = wibbly;
+
     wibbly.onPeople((people) => {
       const person = people[0] ?? null;
       if (person) setSeenPerson(true);
@@ -127,7 +138,18 @@ export default function Setup() {
 
     try {
       await wibbly.start();
-      inputRef.current = wibbly;
+      // The unmount effect may have already stopped and cleared this exact
+      // instance while start() was in flight — WibblyInput.start() does not
+      // itself abort on a concurrent stop() the way the underlying frame
+      // source does (see packages/wibbly-input/src/pipeline.ts). If
+      // `inputRef.current` no longer points at `wibbly`, this component has
+      // moved on (unmounted, or a fresh attempt is under way), and finishing
+      // here would silently reopen a camera nobody is asking for. Shut it
+      // straight back down instead of touching state that nobody will read.
+      if (inputRef.current !== wibbly) {
+        wibbly.stop();
+        return;
+      }
       setCamera('live');
       setStep('handedness');
     } catch (err) {
@@ -149,6 +171,9 @@ export default function Setup() {
       } catch {
         /* already torn down */
       }
+      // Only clear the ref if it is still ours — an unmount in the meantime
+      // already did this and already stopped this same instance.
+      if (inputRef.current === wibbly) inputRef.current = null;
     }
   }, []);
 

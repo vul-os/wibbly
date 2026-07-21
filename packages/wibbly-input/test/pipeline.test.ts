@@ -249,4 +249,78 @@ describe('WibblyInput pipeline', () => {
     await sweep(h, 0.25, 'right', { x: 0.15, y: 0.5 }, { x: 0.32, y: 0.44 }, 1000);
     expect(h.gestures).toHaveLength(1);
   });
+
+  /**
+   * `start()` awaits tracker init AND camera acquisition before it does
+   * anything observable. `WebcamFrameSource.start()` already guards its own
+   * internal awaits with a generation counter for exactly this reason (see
+   * its doc comment: a cancelled start() must never let the camera light stay
+   * on with nothing holding a reference to turn it off). `WibblyInput.start()`
+   * needed the identical guard one layer up — these tests are the case that
+   * motivated it: navigate away (stop()) while the pose model is still
+   * loading, and the pipeline must not open the camera afterward regardless.
+   */
+  describe('start()/stop() race safety', () => {
+    it('never starts the camera if stop() lands while tracker.init() is still pending', async () => {
+      const h = harness();
+      let releaseInit: (() => void) | null = null;
+      h.tracker.init = () =>
+        new Promise<void>((resolve) => {
+          releaseInit = resolve;
+        });
+
+      const startPromise = h.input.start();
+      await new Promise((r) => setTimeout(r, 0)); // let start() reach and park on tracker.init()
+
+      h.input.stop(); // navigating away mid-load
+      releaseInit!(); // the model finishes loading AFTER stop() was requested
+      await startPromise;
+
+      expect(h.source.started).toBeNull(); // getUserMedia-equivalent was never called
+      expect(h.source.running).toBe(false);
+      expect(h.tracker.disposed).toBe(true);
+    });
+
+    it('releases the camera immediately if stop() lands while source.start() is still pending', async () => {
+      const h = harness();
+      let releaseSourceStart: (() => void) | null = null;
+      const realSourceStart = h.source.start.bind(h.source);
+      h.source.start = (opts: FrameSourceOptions) =>
+        new Promise<void>((resolve) => {
+          releaseSourceStart = () => {
+            void realSourceStart(opts).then(resolve);
+          };
+        });
+
+      const startPromise = h.input.start();
+      await new Promise((r) => setTimeout(r, 0)); // let start() get past tracker.init() and park on source.start()
+
+      h.input.stop(); // navigating away while the camera permission prompt/acquisition is outstanding
+      releaseSourceStart!(); // the camera is granted AFTER stop() was requested
+      await startPromise;
+
+      // The camera light must not stay on: acquired-then-abandoned is exactly
+      // the leak this guard exists to close.
+      expect(h.source.running).toBe(false);
+    });
+
+    it('supports start() → stop() → start() as a legitimate retry (the setup flow\'s "Try again")', async () => {
+      const h = harness();
+      await h.input.start();
+      expect(h.source.running).toBe(true);
+      expect(h.tracker.initCalls).toBe(1);
+
+      h.input.stop();
+      expect(h.source.running).toBe(false);
+
+      await h.input.start();
+      expect(h.source.running).toBe(true);
+      expect(h.tracker.initCalls).toBe(2);
+
+      // The retried session still produces gestures normally — stop()/start()
+      // did not leave anything half-cancelled behind.
+      await sweep(h, 0.25, 'right', { x: 0.15, y: 0.5 }, { x: 0.32, y: 0.44 }, 1000);
+      expect(h.gestures).toHaveLength(1);
+    });
+  });
 });

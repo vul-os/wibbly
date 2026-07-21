@@ -151,7 +151,13 @@ export default function Title() {
           aria-activedescendant={`game-${selected.id}`}
         >
           {GAMES.map((game, i) => {
-            const planned = game.status === 'planned';
+            // Binary by construction, not by faith in the catalogue: anything
+            // that is not exactly 'playable' is treated as planned, matching
+            // the guard inside start() below. That way a future third status
+            // value cannot slip through this map as an accidentally-clickable,
+            // accidentally-live card — it would just render as another
+            // blueprint one, which is the safe failure.
+            const planned = game.status !== 'playable';
             const active = i === index;
             return (
               <button

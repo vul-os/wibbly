@@ -55,6 +55,18 @@ export class WibblyInput {
   private unsubscribe: (() => void) | null = null;
   private busy = false;
   private started = false;
+  /**
+   * Bumped by every start() and every stop() — same pattern as, and for the
+   * same reason as, `WebcamFrameSource`'s own `generation` counter (see its
+   * doc comment). `start()` here awaits tracker init AND camera acquisition
+   * before it does anything observable; without this guard, a `stop()` that
+   * lands in either gap is silently overwritten the moment the awaited work
+   * resolves — the camera gets opened (or the tracker left initialized)
+   * *after* the consumer was told it was off, with nothing left holding a
+   * reference to turn it back off. Every await in start() is followed by a
+   * cancellation check.
+   */
+  private generation = 0;
   private processed = 0;
   private dropped = 0;
   private lastPeopleCount = 0;
@@ -111,8 +123,29 @@ export class WibblyInput {
 
   async start(): Promise<void> {
     if (this.started) return;
+    const gen = ++this.generation;
+    const cancelled = () => this.generation !== gen;
+
     await this.tracker.init();
+    if (cancelled()) {
+      // stop() ran while we were still initializing the tracker. Dispose
+      // defensively — stop() already called dispose() once, but init() may
+      // have raced past that and finished afterward, leaving a live tracker
+      // nothing else will ever clean up.
+      this.tracker.dispose();
+      return;
+    }
+
     await this.source.start({ width: 640, height: 480, fps: 30, ...this.frameOpts });
+    if (cancelled()) {
+      // The camera may have JUST been acquired by the await above. This is
+      // the exact leak this guard exists for: release it immediately rather
+      // than leaving the capture light on with nothing holding a reference.
+      this.source.stop();
+      this.tracker.dispose();
+      return;
+    }
+
     this.unsubscribe = this.source.onFrame((frame, tCapture) => {
       void this.handleFrame(frame, tCapture);
     });
@@ -175,14 +208,22 @@ export class WibblyInput {
   }
 
   stop(): void {
+    // Invalidate any start() still in flight FIRST, so its post-await checks
+    // see the change no matter which of its two awaits it is currently in.
+    this.generation += 1;
     this.unsubscribe?.();
     this.unsubscribe = null;
     this.source.stop();
     this.tracker.dispose();
     this.binder.reset();
     for (const r of this.recognizers) r.reset();
-    this.gestureHandlers.clear();
-    this.peopleHandlers.clear();
+    // Deliberately NOT clearing gestureHandlers/peopleHandlers: those are the
+    // caller's own subscriptions (including the constructor's `onGesture`/
+    // `onPeople`, which only ever run once), not session state. Wiping them
+    // here would silently unsubscribe a consumer on every stop() with no way
+    // to tell — and would break the ordinary start() → stop() → start()
+    // retry a "Try again" button depends on, since the SAME instance is
+    // reused and nothing re-registers the original callback.
     this.started = false;
   }
 }
