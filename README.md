@@ -8,8 +8,6 @@
 **A camera-gesture input layer for browser games — a gesture is an input event like any other.**<br>
 **Frames never leave the device. No install, no download, no depth sensor, no controller.**
 
-<sub><img src="site/product-logos/wibbly.svg" height="14" alt="VulOS"> Part of <strong><a href="https://vulos.org">VulOS</a></strong> — the open, self-hostable web OS &amp; app suite. Runs standalone, or as an app hosted by the Vulos OS.</sub>
-
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![Three.js](https://img.shields.io/badge/Three.js-r174-000000?logo=three.js&logoColor=white)](https://threejs.org)
 [![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-MoveNet-FF6F00?logo=tensorflow&logoColor=white)](https://github.com/tensorflow/tfjs-models)
@@ -451,3 +449,10 @@ MediaPipe under **Apache-2.0**. The MoveNet weights are **vendored into this rep
 `public/models/movenet-multipose-lightning/`, which carries its own `LICENSE` (Apache-2.0,
 Google LLC) and provenance — those files are **not** covered by this repo's licence. That was a selection criterion, not luck — see
 [Model selection](#model-selection) for the alternatives ruled out on licensing alone.
+
+---
+
+<p align="center">
+  <a href="https://vulos.org"><img src="docs/assets/vulos-logo.png" alt="vulos" height="20"></a><br>
+  <sub><a href="https://vulos.org"><b>vulos</b></a> — open by design</sub>
+</p>
