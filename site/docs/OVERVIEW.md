@@ -19,7 +19,7 @@ cheap to build — plus one reference game, tennis, that proves it.
 
 <figure class="wbf">
 <div class="sc">
-<img src="/products/wibbly/shots/title.png" alt="Tennis is playable today from the title screen; soccer and boxing are listed as planned reference games with no code behind them yet." loading="lazy" decoding="async" />
+<img src="/products/magnetite/wibbly/shots/title.png" alt="Tennis is playable today from the title screen; soccer and boxing are listed as planned reference games with no code behind them yet." loading="lazy" decoding="async" />
 </div>
 <figcaption>The title screen, as it looks today. <b>Tennis is real and playable</b>; soccer and boxing are named on the same screen but are backlog entries, not games — see the status table below for what that distinction means everywhere else in these docs.</figcaption>
 </figure>
@@ -120,7 +120,7 @@ Three claims, each with a mechanism rather than an adjective.
 **Zero install beats native reach.** A link, a wave, a game. No store, no download, no dongle. For
 seeding a game library from nothing, that distribution property beats anything a native binary
 provides — which is why v1 is browser-first and non-negotiable. See
-[Runtime targets](/products/wibbly/docs/runtime-targets).
+[Runtime targets](/products/magnetite/wibbly/docs/runtime-targets).
 
 **Camera frames never leave the device.** Inference runs in your tab because it has to; there is
 nowhere fast enough to send frames. The networked design preserves that property by transmitting
@@ -132,7 +132,7 @@ that used to contradict it has been removed, though hosting is still Firebase.
 consumes four seams, each of which ships a working default. This one is now demonstrable rather than
 aspirational — `src/game/game.jsx` imports `WibblyInput`, `SpatialBinder`, `SwingRecognizer` and
 `Calibration`, and mentions no model anywhere. See
-[Architecture](/products/wibbly/docs/architecture).
+[Architecture](/products/magnetite/wibbly/docs/architecture).
 
 ## What wibbly is not
 
@@ -140,16 +140,16 @@ aspirational — `src/game/game.jsx` imports `WibblyInput`, `SpatialBinder`, `Sw
   simulation with replay verification. Camera input is a noisy, nondeterministic, un-replayable
   sensor stream — the one input class that *cannot* be replay-verified. Merging them would blur the
   property magnetite sells. wibbly consumes magnetite through seams instead, and treats gesture
-  input as client-attested. See [Multiplayer & anti-cheat](/products/wibbly/docs/multiplayer).
+  input as client-attested. See [Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer).
 - **Not ad-supported.** Ad SDKs are central tracking brokers, web-game CPMs need scale wibbly does
   not have, and an interstitial aimed at somebody standing up waving their arms is hostile. See
-  [Developer incentives](/products/wibbly/docs/incentives).
+  [Developer incentives](/products/magnetite/wibbly/docs/incentives).
 - **Not a privacy product.** It is an agency product. Your camera stays yours because of where the
   computation happens, not because of a policy page.
 
 ## Where to go next
 
-- [Getting started](/products/wibbly/docs/getting-started) — clone, run, swing.
-- [Architecture](/products/wibbly/docs/architecture) — the four seams and the data flow.
-- [Model selection](/products/wibbly/docs/models) — the licence and benchmark reasoning.
-- [Roadmap](/products/wibbly/docs/roadmap) — three phases and the open questions.
+- [Getting started](/products/magnetite/wibbly/docs/getting-started) — clone, run, swing.
+- [Architecture](/products/magnetite/wibbly/docs/architecture) — the four seams and the data flow.
+- [Model selection](/products/magnetite/wibbly/docs/models) — the licence and benchmark reasoning.
+- [Roadmap](/products/magnetite/wibbly/docs/roadmap) — three phases and the open questions.

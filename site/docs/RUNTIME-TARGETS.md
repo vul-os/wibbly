@@ -142,7 +142,7 @@ Tauri is right for the *app* and wrong for the *webview ML*. When it arrives:
 - **Preview:** a native wgpu surface under a transparent webview, the `tauri-wgpu-cam` pattern.
 
 This phase also unlocks RTMO, which the browser cannot currently reach. See
-[Model selection](/products/wibbly/docs/models).
+[Model selection](/products/magnetite/wibbly/docs/models).
 
 ## Open question
 

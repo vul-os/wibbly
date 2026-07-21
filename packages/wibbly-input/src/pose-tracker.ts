@@ -34,7 +34,7 @@ export const MOVENET_MULTIPOSE_LIGHTNING_VENDORED_PATH =
 
 /**
  * Resolve the vendored model against the document base, so the same code works
- * at `/` and at `/products/wibbly/play/`. Falls back to the bare relative path
+ * at `/` and at `/products/magnetite/wibbly/play/`. Falls back to the bare relative path
  * outside a browser (tests), where nothing loads it anyway.
  */
 export function defaultModelUrl(): string {

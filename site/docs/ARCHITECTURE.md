@@ -118,7 +118,7 @@ Implementations own their own capture loop and push frames to the tracker.
 - **Default — `WebcamFrameSource`.** `getUserMedia` in a browser tab. It owns its capture loop and
   no longer appends anything to your `document.body`; the preview is a component you place.
 - **Phase 3 — `NativeFrameSource`.** Rust-side `nokhwa` capture under Tauri. Frames never cross IPC;
-  see [Runtime targets](/products/wibbly/docs/runtime-targets).
+  see [Runtime targets](/products/magnetite/wibbly/docs/runtime-targets).
 
 ## 2. `PoseTracker` — pixels to skeletons
 
@@ -136,7 +136,7 @@ the rest, which is what blocked every multi-player capability downstream.
 
 - **Default — `MoveNetMultiPoseTracker`.** Pins `modelType: 'MultiPose.Lightning'`, returns up to six
   people at flat inference cost, and normalises every landmark to `[0,1]` in image space with the
-  origin top-left. See [Model selection](/products/wibbly/docs/models).
+  origin top-left. See [Model selection](/products/magnetite/wibbly/docs/models).
 - **Optional — `HandLandmarkTracker`.** MediaPipe, composable alongside the body tracker.
 - **Future — `RtmoOnnxTracker`.** Same interface, ONNX Runtime Web, phase 3.
 
@@ -198,7 +198,7 @@ defined entry point.
 
 The boundary is anti-cheat. magnetite's replay verification assumes deterministic input; gesture
 input is not deterministic and cannot be replay-verified. Gesture games therefore run
-**client-attested** — spelled out in [Multiplayer & anti-cheat](/products/wibbly/docs/multiplayer).
+**client-attested** — spelled out in [Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer).
 
 A `packages/wibbly-magnetite` integration is being written now. It has **not** been proven against a
 live magnetite node, so nothing in wibbly's shipping path talks to magnetite today — treat the

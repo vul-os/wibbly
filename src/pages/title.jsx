@@ -64,6 +64,18 @@ const GameArt = ({ kind, planned }) => {
           <path d="M74 27 L92 24 M72 50 L90 53" stroke={stroke} strokeWidth="2" strokeDasharray="3 4" strokeLinecap="round" />
         </>
       )}
+      {kind === 'palmworks' && (
+        <>
+          {/* arm out to a pinching hand, then the piece it is placing */}
+          <path d="M42 34 L57 29" stroke={stroke} strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M58 24 Q64 27 62 30" fill="none" stroke={stroke} strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M58 34 Q64 33 62 30" fill="none" stroke={stroke} strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M68 29 Q79 24 88 33" fill="none" stroke={stroke} strokeWidth="2" strokeDasharray="3 4" strokeLinecap="round" />
+          <rect x="84" y="34" width="16" height="21" rx="3" fill="none" stroke={stroke} strokeWidth="2.5" />
+          <path d="M84 41 L100 41" stroke={stroke} strokeWidth="1.2" />
+          <path d="M92 55 L92 64 L106 64" fill="none" stroke={dim} strokeWidth="2" strokeLinecap="round" />
+        </>
+      )}
     </svg>
   );
 };

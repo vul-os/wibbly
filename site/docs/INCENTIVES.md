@@ -75,7 +75,7 @@ Ordered by fit with what magnetite already has, so the cheapest rungs come first
 3. **Tournaments with entry pools.** Camera games are inherently spectator-friendly and competitive —
    watching someone play is legible in a way watching someone hold a controller is not. The pool *is*
    the prize; no advertiser is required. Note the constraint from
-   [Multiplayer & anti-cheat](/products/wibbly/docs/multiplayer): gesture input is client-attested,
+   [Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer): gesture input is client-attested,
    so high-stakes formats need a referee or in-person play.
 4. **Bounty / patronage pool** for the first N games shipped against the SDK. The cheapest way to
    seed a library from zero, and the only rung that works before there is an audience.

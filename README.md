@@ -5,7 +5,7 @@
 # wibbly
 
 ***Your camera is the controller.***<br>
-**A camera-gesture input layer for browser games — a gesture is an input event like any other.**<br>
+**Camera-gesture games for [magnetite](https://github.com/vul-os/magnetite) — a gesture is an input event like any other.**<br>
 **Frames never leave the device. No install, no download, no depth sensor, no controller.**
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
@@ -22,13 +22,11 @@
 
 > ## Status: early. Most of this repo is a plan, not a product.
 >
-> wibbly is **not** a finished platform and this README will not pretend otherwise.
-> What runs today is **one game** — single-camera tennis — driven by **one gesture**
-> (swing) from **one player**. The input seams described below are implemented and
-> unit-tested as a library, but nothing except tennis consumes them, no second game
-> exists, and hand tracking is not built. The magnetite bridge now works end-to-end
-> against a live node — but nothing on the far side consumes the events it delivers, so
-> networked gesture play is a proven pipe with no game on the other end.
+> This README will not pretend otherwise. What **plays** today is one game —
+> single-camera tennis — driven by one gesture (swing) from one player. The input
+> library is real and unit-tested without a camera. Hand tracking is not built.
+> [Palmworks](games/palmworks) is folded in with its full history and builds, but
+> nothing drives it with gestures yet.
 >
 > Read [`WIBBLY.md`](WIBBLY.md) for the full spec and backlog. Read the
 > [status table](#status--what-is-actually-built) below for what is real.
@@ -37,15 +35,27 @@
 
 ## Overview
 
-wibbly is not a tennis game. wibbly is the **input layer and shell** that makes
-camera-controlled games cheap to build — plus one reference game that proves the seams
-are usable rather than theoretical.
+wibbly is **a game for [magnetite](https://github.com/vul-os/magnetite)** — the
+decentralized, self-hostable Rust games platform. Magnetite is the platform; wibbly is
+what it looks like to build on it when your controller is a webcam.
 
 The thesis is narrow and testable: a webcam is a controller, a `GestureEvent` is an
 input event like a keypress, and a game should never name a model, a runtime, or a
 vendor to receive one. Games run in a browser tab with zero install. Pose inference runs
-locally on the machine holding the camera, so in networked play the wire carries
-gesture events — not video.
+locally on the machine holding the camera, so the wire carries gesture events — not
+video.
+
+**What comes from magnetite:** the sandbox that lets a submitted game run without
+anyone trusting its author, content-addressed distribution, and the `InputProvider`
+seam — where camera gestures are typed `InputClass::Attested` and are, by
+construction, **never replay-verifiable**. That boundary is enforced by magnetite, in
+code, on purpose. Nothing here claims otherwise.
+
+**What stays here:** the camera. `packages/wibbly-input` is a standalone,
+vendor-neutral library with no magnetite dependency, so anything can consume it —
+magnetite ships the contract, not a pose pipeline.
+
+**The games** live in [`games/`](games/README.md) — see that README to submit one.
 
 [Spec](WIBBLY.md) · [Quick start](#quick-start) · [Demo mode](#demo-mode) · [Architecture](#architecture--the-seams) · [Model selection](#model-selection) · [Docs](site/docs/)
 
@@ -57,7 +67,7 @@ Audited against the tree, not against the pitch.
 
 | Capability | Status | Reality |
 |---|---|---|
-| `packages/wibbly-input` library | **Built** | TypeScript, zero DOM injection, 96 unit tests passing without a camera |
+| `packages/wibbly-input` library | **Built** | TypeScript, zero DOM injection, 150 unit tests passing without a camera |
 | `FrameSource` → `WebcamFrameSource` | **Built** | `getUserMedia`, owns its own capture loop |
 | `PoseTracker` → `MoveNetMultiPoseTracker` | **Built** | MoveNet **MultiPose** Lightning, returns `Person[]`, injectable detector for tests |
 | `GestureRecognizer` → `SwingRecognizer` | **Built** | Pure `detectSwing()` over wrist-velocity history; unit-testable without a camera |
@@ -77,7 +87,7 @@ Audited against the tree, not against the pitch.
 | **Tauri native shell** | *Planned (phase 2)* | Researched and specified; no Rust in this repo |
 | **RTMO / ONNX / WebGPU tracker** | *Planned (phase 3)* | No browser port exists to benchmark against |
 | **Vendored pose model** | **Built** | MoveNet MultiPose Lightning checked in at `public/models/` (~9.3 MiB) and served same-origin. Byte-verified against its own weight manifest by `npm run verify:model`. The TF Hub CDN is now an explicit opt-in, not the default. |
-| **Demo mode** (`VITE_WIBBLY_MODE=demo`) | **Built** | A separate single-surface build for embedding at `vulos.org/products/wibbly/play/`: instant start, no router, no persistent storage, magnetite hard-disabled, local model only. Verified end-to-end under the real production CSP by `npm run verify:demo` — **26/26 checks, zero external network requests**. |
+| **Demo mode** (`VITE_WIBBLY_MODE=demo`) | **Built** | A separate single-surface build for embedding at `vulos.org/products/magnetite/wibbly/play/`: instant start, no router, no persistent storage, magnetite hard-disabled, local model only. Verified end-to-end under the real production CSP by `npm run verify:demo` — **26/26 checks, zero external network requests**. |
 | Title screen, setup flow, in-game menu | **Built** | `src/pages/` is now four surfaces: title, first-run setup, play, 404. The marketing shell (`home`, `about`, `game-menu`, `game-container`) is deleted, along with the fabricated JSON-LD rating and play count that were still in `index.html`. Soccer and Boxing appear on the title screen as **Planned**, non-selectable, pointing at [`WIBBLY.md` §8](WIBBLY.md). The canonical public writing is `site/landing.html`. |
 
 ---
@@ -147,7 +157,7 @@ npm run screenshots    # requires: npm i -D playwright && npx playwright install
 ### The embeddable demo
 
 ```bash
-npm run build:demo     # → dist-demo/, based at /products/wibbly/play/
+npm run build:demo     # → dist-demo/, based at /products/magnetite/wibbly/play/
 npm run verify:demo    # builds it, serves it at that sub-path under the REAL
                        # production CSP, and drives it with Chromium
 npm run verify:model   # re-check the vendored weights against their manifest
@@ -186,7 +196,7 @@ constraints the normal app does not.
 
 ```bash
 npm run dev:demo       # http://localhost:5173
-npm run build:demo     # → dist-demo/, base /products/wibbly/play/
+npm run build:demo     # → dist-demo/, base /products/magnetite/wibbly/play/
 npm run verify:demo    # the proof, below
 ```
 
@@ -236,7 +246,7 @@ bring-any-box hosting. Not for wibbly matches, because those do not exist.
 
 ### What `npm run verify:demo` actually proves
 
-It builds the demo, serves `dist-demo/` **under `/products/wibbly/play/`** (not at the
+It builds the demo, serves `dist-demo/` **under `/products/magnetite/wibbly/play/`** (not at the
 root, and not through `vite preview`, which knows the base and would hide a base
 mistake), applies the **real production CSP** copied verbatim from
 `vulos-management/pkg/cproutes/spa.go`, and drives it with Chromium using a synthetic
@@ -245,15 +255,15 @@ camera. 26 checks, all passing:
 - **Zero external network requests.** Every request in the run, in full:
 
   ```
-  /products/wibbly/play/
-  /products/wibbly/play/assets/index-*.js
-  /products/wibbly/play/assets/index-*.css
-  /products/wibbly/play/assets/pose-detection.esm-*.js
-  /products/wibbly/play/assets/shared-*.js
-  /products/wibbly/play/models/court.glb
-  /products/wibbly/play/models/TennisCourt_BaseColor.png
-  /products/wibbly/play/models/movenet-multipose-lightning/model.json
-  /products/wibbly/play/models/movenet-multipose-lightning/group1-shard{1,2,3}of3.bin
+  /products/magnetite/wibbly/play/
+  /products/magnetite/wibbly/play/assets/index-*.js
+  /products/magnetite/wibbly/play/assets/index-*.css
+  /products/magnetite/wibbly/play/assets/pose-detection.esm-*.js
+  /products/magnetite/wibbly/play/assets/shared-*.js
+  /products/magnetite/wibbly/play/models/court.glb
+  /products/magnetite/wibbly/play/models/TennisCourt_BaseColor.png
+  /products/magnetite/wibbly/play/models/movenet-multipose-lightning/model.json
+  /products/magnetite/wibbly/play/models/movenet-multipose-lightning/group1-shard{1,2,3}of3.bin
   ```
 
 - the detector initialises **from the local model**, on the **WebGL** backend

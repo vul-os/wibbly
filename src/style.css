@@ -42,7 +42,7 @@
    `default-src 'self'` with `font-src 'self' data:`, so an external font URL
    would simply fail. These are imported from src/fonts/ so Vite emits them as
    hashed same-origin assets that resolve correctly under the demo's
-   /products/wibbly/play/ base. All three are SIL Open Font License 1.1:
+   /products/magnetite/wibbly/play/ base. All three are SIL Open Font License 1.1:
 
      Archivo          © The Archivo Project           OFL-1.1  https://openfontlicense.org
      Instrument Sans  © The Instrument Sans Project   OFL-1.1  https://openfontlicense.org

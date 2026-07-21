@@ -1,7 +1,7 @@
 # .github/workflows/release.yml — build and publish a GitHub Release
 #
 # wibbly is a static browser app (Vite + React) with no server binary — the
-# canonical deploy is vulos.org/products/wibbly, served from the vulos-cloud
+# canonical deploy is vulos.org/products/magnetite/wibbly, served from the vulos-cloud
 # repo. There is nothing to cross-compile, so a tagged release instead builds
 # both real bundles this repo produces (the standalone app and the
 # embeddable demo), proves them with the same verification scripts the repo

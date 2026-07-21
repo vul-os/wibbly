@@ -279,7 +279,7 @@ developer is forced to ship a tracking beacon.
 
 ## 9. Open questions
 
-- **Wibbly repo is private.** Publishing under `vulos.org/products/wibbly` makes it public-facing.
+- **Wibbly repo is private.** Publishing under `vulos.org/products/magnetite/wibbly` makes it public-facing.
   Founder call.
 - **`navigator.gpu` in WKWebView on macOS 26** — unresolved in research; test empirically.
 - **Other contributors** (`declan*`, `IMRAN`, `CAMERA` branches). The seam refactor touches

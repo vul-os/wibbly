@@ -44,6 +44,18 @@ export const GAMES = [
     gesture: 'punch ×2 — not built',
     art: 'boxing',
   },
+  {
+    id: 'palmworks',
+    name: 'Palmworks',
+    status: 'planned',
+    blurb: 'Planned. Build a factory with your hands.',
+    detail:
+      'Place pumps, boilers, tanks and heat exchangers on a grid and route the pipework between ' +
+      'them. The scene and 29 industrial objects are already in games/palmworks — what is missing ' +
+      'is the hands: pinch to place, point to select, pinch-drag to connect two ports.',
+    gesture: 'pinch + point — not built',
+    art: 'palmworks',
+  },
 ];
 
 export const PLAYABLE_GAMES = GAMES.filter((g) => g.status === 'playable');

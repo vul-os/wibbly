@@ -5,7 +5,7 @@ These are the app's own copies. src/style.css imports them by relative path so
 Vite emits them as hashed, same-origin assets — which is what makes them work
 under the demo build's `default-src 'self'` / `font-src 'self' data:` CSP, and
 what makes them resolve correctly when the demo is served from the sub-path
-/products/wibbly/play/ rather than the site root.
+/products/magnetite/wibbly/play/ rather than the site root.
 
 Nothing here is fetched from a CDN or any third-party host at runtime. That is
 verified, not assumed: scripts/verify-demo.mjs asserts that EVERY network

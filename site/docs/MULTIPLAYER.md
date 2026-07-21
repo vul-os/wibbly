@@ -26,7 +26,7 @@ The differentiated, fun case, and the one that ships first. The input layer for 
 It falls out of two things: `PoseTracker.maxPeople` returning up to six people, and `PlayerBinder`
 giving those skeletons durable identity. MoveNet MultiPose makes it cheap because its cost curve is
 flat — a fourth player in frame costs the same inference time as the first. See
-[Model selection](/products/wibbly/docs/models).
+[Model selection](/products/magnetite/wibbly/docs/models).
 
 What makes it hard is not the model, it is the binding. A frame gives you six anonymous skeletons; a
 game needs to know that the skeleton on the left is still player one after they ducked behind player

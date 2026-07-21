@@ -105,17 +105,17 @@ validation item at the top of phase 2.
 - [ ] `RtmoOnnxTracker` on ONNX Runtime Web with WebGPU, benchmarked against MoveNet on our own
       hardware.
 - [ ] Tauri shell with `nokhwa` capture and `ort` inference. See
-      [Runtime targets](/products/wibbly/docs/runtime-targets).
+      [Runtime targets](/products/magnetite/wibbly/docs/runtime-targets).
 - [ ] Networked play over magnetite.
 - [ ] Incentive rails — rungs 1 to 3 of the
-      [ladder](/products/wibbly/docs/incentives).
+      [ladder](/products/magnetite/wibbly/docs/incentives).
 
 ## Open questions
 
 Genuinely open. None of these has been decided.
 
 - ~~**The repo is private.**~~ **Resolved.** The repo is now public and MIT licensed (root `LICENSE`),
-  and `packages/wibbly-input` is MIT too. Publishing under `vulos.org/products/wibbly` is therefore
+  and `packages/wibbly-input` is MIT too. Publishing under `vulos.org/products/magnetite/wibbly` is therefore
   no longer gated on a founder call.
 - **`navigator.gpu` in WKWebView on macOS 26.** Unresolved in research; needs an empirical test, not
   another citation.

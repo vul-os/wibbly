@@ -34,7 +34,7 @@ These come from a DIFFERENT script — `npm run verify:demo`
 (`scripts/verify-demo.mjs`) — not from this one, so `npm run screenshots` neither
 produces nor refreshes them. They are captured at 1000×640, an iframe-shaped
 viewport rather than a desktop one, against `dist-demo/` served under the real
-`/products/wibbly/play/` sub-path with the production CSP applied, and with
+`/products/magnetite/wibbly/play/` sub-path with the production CSP applied, and with
 ANGLE/SwiftShader enabled so TFJS gets a real (software) WebGL backend.
 
 | File | Surface |

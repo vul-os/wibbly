@@ -58,16 +58,16 @@ describe('resolveModelUrl', () => {
     const url = resolveModelUrl(
       { VITE_WIBBLY_MODE: 'demo' },
       null,
-      '/products/wibbly/play/',
-      'https://vulos.org/products/wibbly/play/',
+      '/products/magnetite/wibbly/play/',
+      'https://vulos.org/products/magnetite/wibbly/play/',
     );
-    expect(url).toBe(`https://vulos.org/products/wibbly/play/${MODEL_VENDORED_PATH}`);
+    expect(url).toBe(`https://vulos.org/products/magnetite/wibbly/play/${MODEL_VENDORED_PATH}`);
     expect(url).not.toContain('tfhub.dev');
   });
 
   it('tolerates a base without a trailing slash', () => {
-    const url = resolveModelUrl({}, null, '/products/wibbly/play', 'https://vulos.org/');
-    expect(url).toBe(`https://vulos.org/products/wibbly/play/${MODEL_VENDORED_PATH}`);
+    const url = resolveModelUrl({}, null, '/products/magnetite/wibbly/play', 'https://vulos.org/');
+    expect(url).toBe(`https://vulos.org/products/magnetite/wibbly/play/${MODEL_VENDORED_PATH}`);
   });
 
   it('allows the CDN as an explicit opt-in for a lean full build', () => {

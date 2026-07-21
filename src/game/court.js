@@ -8,7 +8,7 @@ export function loadCourt(scene) {
         
         loader.load(
             // Resolved against the build base, NOT hardcoded to the site root:
-            // at /products/wibbly/play/ the old absolute path 404'd and the
+            // at /products/magnetite/wibbly/play/ the old absolute path 404'd and the
             // court silently degraded to placeholder geometry.
             assetUrl('models/court.glb'),
             (gltf) => {

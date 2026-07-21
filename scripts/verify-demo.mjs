@@ -2,7 +2,7 @@
 /**
  * wibbly — demo build verifier
  *
- * The demo is embedded at `vulos.org/products/wibbly/play/` inside a
+ * The demo is embedded at `vulos.org/products/magnetite/wibbly/play/` inside a
  * same-origin iframe on a page served under `default-src 'self'`. Two things
  * about that are easy to get wrong and impossible to notice by eye:
  *
@@ -13,7 +13,7 @@
  *      asset and renders a blank page.
  *
  * So this script does not test the dev server or the root path. It serves
- * `dist-demo/` UNDER `/products/wibbly/play/`, exactly as it will be deployed,
+ * `dist-demo/` UNDER `/products/magnetite/wibbly/play/`, exactly as it will be deployed,
  * drives it with Chromium, and asserts:
  *
  *   · every single network request is same-origin — the headline assertion
@@ -51,7 +51,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist-demo');
 const SHOTS = path.join(ROOT, 'docs', 'screenshots');
 
-const PREFIX = '/products/wibbly/play/';
+const PREFIX = '/products/magnetite/wibbly/play/';
 const PORT = 4187;
 const ORIGIN = `http://127.0.0.1:${PORT}`;
 const BASE = `${ORIGIN}${PREFIX}`;
