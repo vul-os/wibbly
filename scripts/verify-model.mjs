@@ -88,12 +88,41 @@ if (declared !== onDisk) {
   console.log('OK      shard bytes match the manifest exactly.');
 }
 
+// Pinned at vendoring time (provenance 2026-07-20) and recorded in
+// public/models/movenet-multipose-lightning/README.md. These are checked, not
+// merely printed: the manifest check above proves the shards are not TRUNCATED,
+// but a same-size substitution of the weights would sail straight through it.
+// Model weights decide what the camera thinks a body is doing, so a silent swap
+// is worth failing the build over. If a deliberate model update lands, change
+// these AND the README in the same commit — they are meant to disagree loudly.
+const PINNED_SHA256 = {
+  'model.json': '7d1875fc5508a0e094de7f4c6a9ab8037680fde8f1c8780da9b09d966983ae7a',
+  'group1-shard1of3.bin': '67b47c89fdec3307e0523e7e9854ea762e7e8f332c71e7a255d94eff96b37f7c',
+  'group1-shard2of3.bin': '44e8bcd60443be39f69c53242324bdf1ef7e19a934816097e00f05792c71baa5',
+  'group1-shard3of3.bin': 'bebbeadc125f787f07948865c88d1a998d9f3fc1f67e1ecaa7e76f8e5fdf8bf0',
+};
+
 console.log('\nsha256:');
 for (const f of ['model.json', ...shards]) {
   const p = path.join(DIR, f);
   if (!existsSync(p)) continue;
   const h = createHash('sha256').update(readFileSync(p)).digest('hex');
-  console.log(`  ${h}  ${f}`);
+  const pinned = PINNED_SHA256[f];
+  if (!pinned) {
+    console.log(`  ${h}  ${f}  (not pinned)`);
+  } else if (pinned === h) {
+    console.log(`  ${h}  ${f}  OK`);
+  } else {
+    console.log(`  ${h}  ${f}`);
+    console.log(`  ${pinned}  ${f}  EXPECTED`);
+    fail(`${f} does not match its pinned sha256 — the weights are not the ones that were vetted.`);
+  }
+}
+
+for (const f of Object.keys(PINNED_SHA256)) {
+  if (!existsSync(path.join(DIR, f))) {
+    fail(`${f} is pinned but missing from the vendored model directory.`);
+  }
 }
 
 const total = statSync(MODEL).size + onDisk;
