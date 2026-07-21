@@ -947,7 +947,7 @@
         <div>
           <div class="callout">
             <span class="tag">Before you click play</span>
-            <p>It will ask for your camera. Nothing is uploaded — there is no upload path in the code. One caveat we will not bury: TensorFlow.js fetches the MoveNet weights from a CDN on first load. That is a model <em>download</em>, once, and the browser caches it. It is still a network request, and we would rather name it than let you find it.</p>
+            <p>It will ask for your camera. Nothing is uploaded — there is no upload path in the code. The MoveNet weights (~9.3&nbsp;MiB) ship <em>with</em> the app and load same-origin from <code>models/</code> — no CDN, no third-party request; the demo build refuses the CDN outright under its <code>default-src&nbsp;'self'</code> CSP. Everything the tracker needs is served from the same place the page is.</p>
           </div>
           <div class="cta-row">
             <a class="btn btn-primary btn-lg" href="/products/magnetite/wibbly/play/" target="_top">▶ Launch the demo</a>
@@ -1316,7 +1316,7 @@
           <ul class="gapstack">
             <li><span class="sig sig-live">Today</span><div><b>Local inference</b><span>Every frame is captured by <code>getUserMedia</code>, run through MoveNet in the tab, and dropped. No frame is uploaded, stored or proxied. True of the code as it exists now, not of a future version.</span></div></li>
             <li><span class="sig sig-spec">Later</span><div><b>Events on the wire</b><span>Networked play is designed, not built. When it lands, it is peer-to-peer: one player's browser tab is authoritative, and each client tracks its own camera and transmits only gesture events over a WebRTC <code>DataChannel</code> — no backend wibbly runs. Magnetite's <code>InputProvider</code> seam is a separate, optional path for a hosted node, and the wire side of that has been proven against a live node already; nothing consumes it yet.</span></div></li>
-            <li><span class="sig sig-unval">Caveat</span><div><b>What we won't hide</b><span>The build used to initialise Firebase Analytics — central tracking, in a product whose thesis is the opposite. The SDK and its dependency are gone. Hosting is still Firebase, so the claim holds for your camera and your page views but not your DNS lookups. And TensorFlow.js fetches MoveNet weights from a CDN on first load: a download, once, not an upload.</span></div></li>
+            <li><span class="sig sig-unval">Caveat</span><div><b>What we won't hide</b><span>The build used to initialise Firebase Analytics — central tracking, in a product whose thesis is the opposite. The SDK and its dependency are gone. Hosting is still Firebase, so the claim holds for your camera and your page views but not your DNS lookups. The MoveNet weights ship with the app and load same-origin — no third-party CDN, and the demo build refuses one outright.</span></div></li>
           </ul>
         </div>
       </div>
@@ -1374,7 +1374,7 @@
 <span class="c"># camera preview — it applies on the next frame.</span></pre>
         </div>
         <ol class="steps">
-          <li><span class="n">01</span><div><b>Clone and install</b><span>Node 20+, React 19, Vite, Three.js. TensorFlow.js fetches the MoveNet weights on first load and the browser caches them after that.</span></div></li>
+          <li><span class="n">01</span><div><b>Clone and install</b><span>Node 20+, React 19, Vite, Three.js. The MoveNet weights are vendored under <code>public/models/</code> and served same-origin — no CDN to reach on first load.</span></div></li>
           <li><span class="n">02</span><div><b>Run the seam tests</b><span>The recognizers, binder, pacer and calibration are pure logic, so they verify in about two seconds with no camera and no GPU. That is the point of the refactor.</span></div></li>
           <li><span class="n">03</span><div><b>Stand back and swing</b><span>About two metres, upper body in frame, even lighting. Tennis drives one player today, either handedness. Details in the <a class="link" href="/products/magnetite/wibbly/docs/getting-started">docs</a>.</span></div></li>
         </ol>

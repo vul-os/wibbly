@@ -58,8 +58,9 @@ npm run dev
 ```
 
 Open the URL Vite prints — by default `http://localhost:5173`. Grant camera access when the browser
-asks. The first load fetches the MoveNet weights over the network; the browser caches them after
-that.
+asks. The MoveNet weights are vendored under `public/models/` and served same-origin (no CDN); the
+first load reads them from the dev server and the browser caches them after that. Set
+`VITE_WIBBLY_MODEL=cdn` only if you deliberately want the lean build that fetches them from TF Hub.
 
 ```bash
 npm run build     # production bundle into dist/
