@@ -16,7 +16,7 @@ client-side authority in the tab — the thing "wibbly is built on magnetite"
 actually refers to. This package is not part of that path.
 
 ```ts
-import { createHostOffer, createGuestAnswer, PeerSession } from '@vulos/wibbly-magnetite';
+import { createHostOffer, createGuestAnswer, PeerSession } from '@vulos/wibbly-p2p';
 
 // Host: create an offer, hand `offerCode` to the guest as a link or QR code.
 const host = await createHostOffer();
@@ -214,7 +214,7 @@ Not a dependency of this package today.
 
 ## Tests
 
-`npm test --workspace @vulos/wibbly-magnetite` — **70 tests**, vitest, node
+`npm test --workspace @vulos/wibbly-p2p` — **70 tests**, vitest, node
 environment, no camera, no DOM, no real WebRTC. Every WebRTC-shaped piece is
 exercised through an injected fake:
 

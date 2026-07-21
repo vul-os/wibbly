@@ -9,8 +9,35 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **`@vulos/wibbly-authority` — a real magnetite authority, running client-side.** Loads
+  magnetite's reference `AuthoritativeGame` (`game-templates/authoritative`), compiled to
+  `wasm32-unknown-unknown` (`public/magnetite/arena-authority.wasm`, ~247 KB), and drives it
+  through the `mag_*` sandbox ABI as a `Topology::SingleRoom` match — the bottom rung of
+  magnetite's own topology ladder, hosted by the browser tab with no server.
+  `src/game/magnetite-authority.js` steps it once per tennis frame, fed by the match's own
+  gesture events. This is what makes "wibbly is built on magnetite" literally true, replacing
+  the earlier signed-wire-to-a-live-node design (see Changed, below). It does not verify
+  gesture input or add anti-cheat — camera gestures stay `InputClass::Attested`, never
+  replay-verifiable, regardless of where the authority runs — and it is refused in demo mode,
+  since the demo's `default-src 'self'` CSP has no `wasm-unsafe-eval` and blocks wasm
+  compilation (`verify:demo` stays 26/26). 5 unit tests.
+
 ### Changed
 
+- **`packages/wibbly-magnetite` renamed to `@vulos/wibbly-p2p`.** The package is pure WebRTC
+  peer-to-peer with **no magnetite dependency** — it began life bridging `GestureEvent`s to a
+  live magnetite node (see Removed, below), but after that bridge was retired the package had
+  no magnetite code left in it, so the old name no longer described what was here. See
+  `packages/wibbly-p2p/README.md`'s "What this used to be" for the full account of what changed
+  and why.
+- **Docs corrected to match the mechanism above.** `README.md`, `WIBBLY.md`, `site/docs/ARCHITECTURE.md`,
+  `site/docs/MULTIPLAYER.md`, `site/docs/OVERVIEW.md`, `site/docs/ROADMAP.md`, and
+  `site/landing.html` no longer describe signed `AttestedEvent`s reaching a live `magnetite dev`
+  node and coming back `attested_ack` — that mechanism is gone (see Removed, below). They now
+  describe the wasm authority above, and state plainly that wibbly's own networked multiplayer
+  (`packages/wibbly-p2p`) is a separate, magnetite-free track.
 - **Documentation reframed: wibbly is a game, not a platform.** `WIBBLY.md`, `site/docs/`, and
   `site/landing.html` no longer describe wibbly as "the input layer and shell" for camera-controlled
   games in general — that framing made one game look like infrastructure it isn't. wibbly is now
@@ -46,6 +73,17 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed
 
+- **The signed-wire-to-a-live-node magnetite bridge.** `packages/wibbly-magnetite`'s
+  `AttestedEventAdapter` (mapped a `GestureEvent` onto magnetite's exact `AttestedEvent` Rust
+  wire shape, `f32` rounding included), `wire.ts` (the wire shape itself, `ATTESTED_FRAME_TYPE`,
+  the byte-for-byte signing preimage, pinned against magnetite's verifier by golden vectors),
+  and `identity.ts` (WebCrypto Ed25519 signing) are deleted outright, not replaced with a
+  different signing scheme. A signature over a `GestureEvent` only ever proved *authorship*,
+  never that a real arm moved in front of a real camera, so a rented server checking the same
+  event stream faced the same unverifiable input a host's own browser tab does — retired
+  because the premise didn't hold, not because it stopped working. See
+  `packages/wibbly-p2p/README.md`'s "What this used to be" for the full account, and Added,
+  above, for what wibbly's real magnetite link is now.
 - **`site/docs/INCENTIVES.md` deleted, and `WIBBLY.md` §7 rewritten to a removal note.** Wibbly is
   free. There is no payment path anywhere in this repo: no host-earns split, no non-custodial paid
   games, no tournament entry pools, no `AdProvider` seam. This is not a deprioritization — the

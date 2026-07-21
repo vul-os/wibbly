@@ -88,11 +88,16 @@ validation item at the top of phase 2.
 - [ ] Migrate hosting off Firebase; the deploy target and GitHub Actions workflow are still there.
 - [x] Static site in the Vulos house style; `src/pages/` has been shrunk to title, first-run setup,
       play and 404.
-- [x] magnetite `InputProvider` seam plus the client-attested anti-cheat path. A
-      `packages/wibbly-magnetite` integration exists and has been proven end-to-end against a live
-      `magnetite dev` node: a signed event returns `attested_ack`, a tampered one is rejected. Off
-      by default. *(This proves the pipe — nothing on either side drains the queue yet; no game
-      reads gesture input back out.)*
+- [x] A real magnetite link: `@vulos/wibbly-authority` compiles magnetite's reference
+      `AuthoritativeGame` to wasm and runs it client-side as a `Topology::SingleRoom` match, with
+      no server, stepped once per tennis frame by `src/game/magnetite-authority.js`. *(Does not
+      verify gesture input or add anti-cheat — camera gestures stay `InputClass::Attested`, never
+      replay-verifiable, regardless of where the authority runs. Refused in demo mode, since the
+      demo's CSP blocks wasm compilation.)* An earlier design — signing events to a persistent
+      `magnetite dev` node over WebSocket — was retired rather than extended; see
+      `packages/wibbly-p2p/README.md`'s "What this used to be." Networked multiplayer is a
+      separate, magnetite-free track: peer-to-peer WebRTC via `packages/wibbly-p2p` (renamed from
+      `packages/wibbly-magnetite`, which no longer has any magnetite code in it).
 - [ ] **Palmworks** — folded into [`games/palmworks`](https://github.com/vul-os/wibbly/tree/main/games/palmworks)
       with its full history and its own build: an industrial factory-building game. **Hands are not
       wired to it.** `HandLandmarkTracker` and the pinch/point recognizers now exist (Phase 1,
@@ -124,7 +129,7 @@ validation item at the top of phase 2.
       cannot connect — a stated limitation, not a gap to quietly patch later. See
       [Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer). The transport
       (`PeerSession`, offer/answer helpers, a link-sized codec) is built and unit-tested in
-      `packages/wibbly-magnetite`, and tennis wires an optional `PeerSession` in already — off
+      `packages/wibbly-p2p` (no magnetite dependency), and tennis wires an optional `PeerSession` in already — off
       unless a host page supplies a transport. **Not true yet:** there is no lobby screen
       anywhere in wibbly, so nothing turns this into a button a visitor can click.
 

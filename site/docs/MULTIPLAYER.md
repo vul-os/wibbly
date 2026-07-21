@@ -129,11 +129,15 @@ and a timestamp — tens of bytes at gesture rate, versus roughly 250 MB/s for r
 <figcaption><b>Host authority sits in a browser tab, not a server.</b> A guest's `GestureEvent`s cross a `DataChannel` opened by a one-time, zero-infrastructure signalling exchange. Free STUN resolves most NAT situations; there is no free TURN, so the one honest gap — symmetric NAT or CGNAT on either side — has no workaround today.</figcaption>
 </figure>
 
-**Why this doesn't need a server, or a magnetite node, to be "real" multiplayer.** Session hosting
-through [magnetite](https://github.com/vul-os/magnetite)'s `InputProvider` seam is still a valid
-path for someone who wants a persistent, always-on host — but it is not a requirement for wibbly's
-own multiplayer, because a rented server does not do anything for anti-cheat that a host's own
-browser tab doesn't. See the next section for why.
+**Why this doesn't need a server, or a magnetite node, to be "real" multiplayer.** A rented,
+always-on authoritative server was the earlier design here — signing `GestureEvent`s to a
+persistent `magnetite dev` node over a WebSocket — and it was retired rather than built out,
+because a rented server does not do anything for anti-cheat that a host's own browser tab doesn't:
+see the next section for why. This peer-to-peer design (`packages/wibbly-p2p`) has **no magnetite
+dependency at all** and needs none. It is a separate track from `@vulos/wibbly-authority` — the
+real magnetite link, which runs a compiled magnetite game module client-side for solo tennis (see
+[Architecture](/products/magnetite/wibbly/docs/architecture)) and has nothing to do with hosting a
+second player's connection.
 
 ## The anti-cheat boundary — be honest about this
 

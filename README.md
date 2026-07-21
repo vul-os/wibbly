@@ -46,11 +46,15 @@ vendor to receive one. Games run in a browser tab with zero install. Pose infere
 locally on the machine holding the camera, so the wire carries gesture events — not
 video.
 
-**What comes from magnetite:** the sandbox that lets a submitted game run without
-anyone trusting its author, content-addressed distribution, and the `InputProvider`
-seam — where camera gestures are typed `InputClass::Attested` and are, by
-construction, **never replay-verifiable**. That boundary is enforced by magnetite, in
-code, on purpose. Nothing here claims otherwise.
+**What comes from magnetite:** a real magnetite `AuthoritativeGame` — the reference
+arena-shooter, compiled to wasm — runs client-side in the browser tab via
+`@vulos/wibbly-authority`, stepped from the tennis render loop as a `Topology::SingleRoom`
+match: the bottom rung of magnetite's own topology ladder, hosted by the tab with no
+server. That is the concrete, current sense in which wibbly is built on magnetite. It
+changes nothing about camera gestures, which magnetite types `InputClass::Attested` and
+are, by construction, **never replay-verifiable** — determinism is a property of the
+simulation given its inputs, not of the inputs themselves. That boundary is enforced by
+magnetite, in code, on purpose. Nothing here claims otherwise.
 
 **What stays here:** the camera. `packages/wibbly-input` is a standalone,
 vendor-neutral library with no magnetite dependency, so anything can consume it —
@@ -82,9 +86,8 @@ Audited against the tree, not against the pitch.
 | **Gesture vocabulary beyond swing** | **Partial** | `pinch` and `point` are built and unit-tested (`packages/wibbly-input/src/recognizers/`) — but not composed into `WibblyInput`'s pipeline and not driving any game yet. `punch` and `kick` remain unbuilt. |
 | **Hand tracking** (MediaPipe HandLandmarker) | **Built, not wired** | `HandLandmarkTracker` exists and is unit-tested, including distance-from-camera and rotation invariance — but thresholds are derived from geometry, not a real hand, since no hand-tracking session has run against a live camera yet, and the pipeline doesn't compose it in. |
 | **A second game** | *Planned* | Tennis is the only consumer of the SDK, so "generalises beyond tennis" is unproven |
-| **Networked play** (peer-to-peer) | **Transport built, no lobby** | `packages/wibbly-magnetite`'s `PeerSession` + WebRTC offer/answer helpers are built and unit-tested, and tennis wires an optional `PeerSession` in (off unless a host page hands in a transport) — but there is no lobby screen anywhere in wibbly, so nothing turns it into a button a visitor can click. |
-| **magnetite integration** | **Built, ingested end-to-end** | `packages/wibbly-magnetite` maps a `GestureEvent` onto magnetite's §3.7 `InputProvider` seam. Proven against a live `magnetite dev` node running a real wasm game, driven by this repo's own `wire.ts` + WebCrypto Ed25519: a fresh signed event returns `attested_ack`, a tampered one `signature does not verify`, an unsigned one `missing field 'signed'`. The wire format is pinned to magnetite's Rust verifier by golden vectors, so the two sides cannot drift silently. **Off by default** — local play needs no server. |
-| **A game that consumes gesture input over the wire** | *Planned* | Accepted events land in magnetite's per-connection queue and **nothing drains them** — no game in either repo reads gesture input yet. The pipe is proven; nothing is on the other end. |
+| **Networked play** (peer-to-peer) | **Transport built, no lobby** | `packages/wibbly-p2p`'s `PeerSession` + WebRTC offer/answer helpers are built and unit-tested, and tennis wires an optional `PeerSession` in (off unless a host page hands in a transport) — but there is no lobby screen anywhere in wibbly, so nothing turns it into a button a visitor can click. This package has **no magnetite dependency**; it is pure WebRTC. |
+| **magnetite integration** | **Built, running client-side** | `@vulos/wibbly-authority` loads a real magnetite `AuthoritativeGame` — the reference arena-shooter, compiled to `wasm32-unknown-unknown` (`public/magnetite/arena-authority.wasm`, ~247 KB) — and runs it as a `Topology::SingleRoom` match: the bottom rung of magnetite's topology ladder, hosted by the tab with no server. `src/game/magnetite-authority.js` steps it once per tennis frame, fed by the match's own gesture events. This does **not** verify gesture input or add anti-cheat — magnetite classes camera gestures `InputClass::Attested` (never replay-verifiable); determinism here is a property of the simulation given its inputs, not of the inputs. **Refused in demo mode** — the demo's `default-src 'self'` CSP has no `wasm-unsafe-eval`, so wasm compilation is blocked there and `verify:demo` stays 26/26. |
 | **Tauri native shell** | *Planned (phase 2)* | Researched and specified; no Rust in this repo |
 | **RTMO / ONNX / WebGPU tracker** | *Planned (phase 3)* | No browser port exists to benchmark against |
 | **Vendored pose model** | **Built** | MoveNet MultiPose Lightning checked in at `public/models/` (~9.3 MiB) and served same-origin. Byte-verified against its own weight manifest by `npm run verify:model`. The TF Hub CDN is now an explicit opt-in, not the default. |
@@ -152,7 +155,7 @@ model fails to load, which is the correct degradation.
 ```bash
 npm run build          # production bundle → dist/
 npm run preview        # serve dist/
-npm test               # 333 unit tests (input seams + wibbly-magnetite + app), no camera required
+npm test               # 338 unit tests (input seams + wibbly-p2p + wibbly-authority + app), no camera required
 npm run typecheck
 npm run screenshots    # requires: npm i -D playwright && npx playwright install chromium
 ```
@@ -218,7 +221,7 @@ rather than trusted.
 | Settings | persisted to `localStorage` | React state only |
 | Pose model | vendored, same-origin | vendored, same-origin; **CDN opt-in refused** |
 | TFJS backend | WebGL preferred | WebGL preferred, and a hostile fallback is **said out loud** |
-| magnetite | off unless configured | **hard-disabled** — `resolveMagnetiteConfig` returns null before reading any config, and `assertNoMagnetite()` throws on the construction path |
+| magnetite authority (`@vulos/wibbly-authority`, wasm) | on — best-effort, non-blocking | **refused** — `startMagnetiteAuthority()` throws before fetching the wasm; the demo's CSP has no `wasm-unsafe-eval` so compilation would fail anyway |
 | Outbound links | in-app navigation | `target="_blank" rel="noopener"` only — never navigates the frame |
 
 **What demo mode does not do.** It does not skip the camera explanation. A cold
@@ -231,21 +234,26 @@ It also does not hide what this is. There is a permanent "Demo" marker, a link t
 repo, and a line stating that this is one game driven by one gesture from one player
 against a local AI.
 
-### The magnetite step
+### The multiplayer step
 
-After a few swings — or 90 seconds, whichever comes first — a dismissible panel appears
-in the corner. It never blocks play, and it says this:
+After a few swings, a dismissible panel appears in the corner. It never blocks play,
+and it says this:
 
-> **In progress, plainly: wibbly multiplayer does not work yet.** The input path is
-> proven — wibbly signs gesture events and a live magnetite node returns
-> `attested_ack`. The game side is not built: nothing in either repo reads those events
-> back out. Run magnetite for what it already does, not for wibbly matches.
+> **In progress, plainly: wibbly multiplayer does not work yet.** The transport side
+> is built and tested on its own — the peer session, the WebRTC offer/answer
+> handshake, a compact code for putting a connection in a link — with no code path
+> that touches a server anywhere in it. What is missing is a lobby: nothing in wibbly
+> turns that into a screen you can actually use, so there is no invite link and
+> nothing to click yet.
 
 That warning is the point of the panel, not a disclaimer bolted to it. The pitch above
-it is only that solo tennis needed no server, that two people would need one, and that
-[magnetite](https://github.com/vul-os/magnetite) is a game server you run yourself —
-useful today for its authoritative runtime, WASM sandbox, replay verification and
-bring-any-box hosting. Not for wibbly matches, because those do not exist.
+it is only that solo tennis needed no server, and that a second player is designed as
+peer-to-peer — one browser tab holds authority, a WebRTC `DataChannel` carries the
+other player's gesture events, opened by a one-time link or QR code exchange, no
+server for anyone to run or rent. `packages/wibbly-p2p` has **no magnetite
+dependency**; this panel has nothing to do with the magnetite wasm authority described
+above — that link runs entirely in the full app (never in this demo embed, since its
+CSP blocks wasm) and has no bearing on whether a second player can join.
 
 ### What `npm run verify:demo` actually proves
 
@@ -400,10 +408,10 @@ MoveNet's flat cost curve makes it cheap, and it is the differentiated case. The
 plumbing is in place; two humans have not tested it.
 
 **Networked (different cameras)** has each client run its own tracker and transmit
-**GestureEvents, not video** — camera frames never leave the device. Sessions,
-discovery, and lobbies are planned to come from
-[magnetite](https://github.com/vul-os/magnetite) through an `InputProvider` seam. That
-seam does not exist yet in either repo.
+**GestureEvents, not video** — camera frames never leave the device. Sessions and
+discovery are peer-to-peer (`packages/wibbly-p2p`, WebRTC, no magnetite dependency and
+no server anywhere) — see [Relationship to magnetite](#relationship-to-magnetite)
+below for the separate, real magnetite link, which is unrelated to this transport.
 
 **Be clear about what anti-cheat can and cannot promise here.** Magnetite's replay
 verification assumes deterministic input. Camera gesture input is a noisy,
@@ -419,22 +427,36 @@ into magnetite and blurring the property magnetite sells.
 
 ## Relationship to magnetite
 
-wibbly is a **client** of [magnetite](https://github.com/vul-os/magnetite)'s seams, not
-a fork of them. magnetite is Rust and sells deterministic authoritative simulation with
-replay verification; wibbly is a JavaScript input layer for a sensor stream that cannot
-be replay-verified. Identity, payments, discovery, lobbies, and hosting are solved in
-`magnetite-seams` and rebuilding them in JS would be waste — so the plan is to consume
-them, with magnetite gaining an `InputProvider` seam and a client-attested path.
+wibbly is a **client** of [magnetite](https://github.com/vul-os/magnetite), not a fork
+of it — and, as of `@vulos/wibbly-authority`, a real one: `public/magnetite/arena-authority.wasm`
+is magnetite's own reference `AuthoritativeGame`, compiled to `wasm32-unknown-unknown`,
+running in the browser tab as a `Topology::SingleRoom` match (the bottom rung of
+magnetite's topology ladder, hosted client-side with no server), stepped once per
+tennis frame by `src/game/magnetite-authority.js`. That module is what makes "wibbly is
+built on magnetite" literally true, not just a stated intention.
 
-Today the two repos do not talk to each other at all.
+This does not change anything about the anti-cheat boundary. magnetite is Rust and
+sells deterministic authoritative simulation with replay verification for
+`InputClass::Deterministic` input; camera gestures are typed `InputClass::Attested` and
+are, by construction, **never replay-verifiable** — a property of the input, not of
+where the authority runs. Running a real magnetite simulation in the tab does not
+verify a swing was real; it means the same game module a dedicated or sharded
+magnetite host would run, runs here instead. See
+[Multiplayer & anti-cheat](site/docs/MULTIPLAYER.md) for the full argument.
+
+This is unrelated to wibbly's own networked multiplayer: `packages/wibbly-p2p` is pure
+WebRTC peer-to-peer with **no magnetite dependency at all** — see its
+[README](packages/wibbly-p2p/README.md) for why the earlier magnetite-node design was
+retired in favor of it.
 
 ---
 
 ## Repository layout
 
 ```
-packages/wibbly-input/   the seams — TypeScript library, no DOM injection, 221 tests
-packages/wibbly-magnetite/ peer-to-peer multiplayer transport (WebRTC, no backend), 70 tests
+packages/wibbly-input/     the seams — TypeScript library, no DOM injection, 221 tests
+packages/wibbly-p2p/       peer-to-peer multiplayer transport (WebRTC, no magnetite dependency), 70 tests
+packages/wibbly-authority/ the real magnetite link — AuthoritativeGame compiled to wasm, run client-side
 src/game/                tennis: court, ball physics, player rig, AI opponent, camera rig
 src/pages/               title, setup, play, 404 — the whole app shell
 site/                    house-style static mini-site + docs (the honest surface)

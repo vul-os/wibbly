@@ -14,8 +14,8 @@ a security bug, full stop.
 - Alternatively, email **vulosorg@gmail.com** with `[wibbly security]` in the subject.
 
 Include what you can: affected surface (camera pipeline, demo embed, the
-magnetite bridge, the pose model), reproduction steps, and impact as you
-understand it. You'll get an acknowledgement within **72 hours** and a status
+magnetite wasm authority, peer-to-peer transport, the pose model), reproduction
+steps, and impact as you understand it. You'll get an acknowledgement within **72 hours** and a status
 update at least every **14 days** until resolution. Please give a reasonable
 window to ship a fix before public disclosure — we'll credit you in the
 release notes unless you'd rather stay anonymous.
@@ -41,18 +41,29 @@ Especially interested in:
   manifest exists and that on-disk size matches what the manifest's tensor
   shapes imply. A bypass of that check, or a supply-chain path that could
   swap the vendored weights for something else, is in scope.
-- **The magnetite bridge** (`@vulos/wibbly-magnetite`, off by default). It
-  signs `GestureEvent`s with a WebCrypto Ed25519 key and submits them to a
-  magnetite node as `InputClass::Attested` events. Report anything where the
-  bridge's own claims are violated: a tampered event that is *not* rejected,
-  a signature check that can be bypassed, or key material that leaks off the
-  device. **Out of scope for this bridge:** a client signing fabricated but
-  plausible gesture data with its own genuine key. That is documented,
-  by design, and pinned in magnetite's own test suite — client attestation
-  proves authorship ("this key sent this"), never truth ("a human body
-  moved"). This package is explicitly not anti-cheat and reports along the
-  lines of "I can fake a swing" are a restatement of the disclosed model, not
-  a new finding.
+- **The magnetite wasm authority** (`@vulos/wibbly-authority`). Loads a real
+  magnetite `AuthoritativeGame`, compiled to `wasm32-unknown-unknown`, and
+  instantiates it with an empty import object — the module is expected to
+  need no host functions, and instantiation throws loudly if it ever declares
+  any. Report anything where that check can be bypassed, where a malformed or
+  malicious wasm module could execute beyond the documented `mag_*` exports,
+  or where the authority runs in demo mode (it must refuse there — the demo's
+  CSP has no `wasm-unsafe-eval`, so this should fail closed, not silently
+  degrade). **Out of scope:** the authority not verifying that a gesture
+  event came from a real camera. It doesn't, by design — magnetite classes
+  camera gestures `InputClass::Attested`, never replay-verifiable, and
+  running the simulation client-side changes nothing about that. Reports
+  along the lines of "I can fake a swing" are a restatement of the disclosed
+  model, not a new finding.
+- **The peer-to-peer transport** (`packages/wibbly-p2p`, WebRTC, no magnetite
+  dependency, off unless a host page supplies a transport). `InboundGate` is
+  the real defense boundary: rate limiting, sequence dedup/reorder rejection,
+  gesture field sanity, and `playerId` authorization. Report anything where
+  that gate can be bypassed, flooded past its configured limits without
+  effect, or where a guest can act as a `playerId` it wasn't assigned.
+  **Out of scope:** a guest fabricating plausible gesture data through its
+  own authenticated `DataChannel` — the gate authorizes *who* may speak for a
+  `playerId`, it does not and cannot verify that a swing was real.
 - **Local storage.** Calibration data (handedness, reach envelope, framing)
   is written to `localStorage` and never transmitted. Any path that sends it
   elsewhere is a bug.

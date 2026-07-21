@@ -70,7 +70,7 @@ way — using the three states below.
 | 2-player tennis | **Next** — the binder is multi-player, the game is not |
 | Soccer, Boxing reference games | **Planned** — tracked backlog, no code |
 | Hand landmarks, pinch, point | **Implemented**, unit-tested — not wired into the pipeline or any game, thresholds unvalidated against a real camera |
-| magnetite integration (`packages/wibbly-magnetite`) | **In progress** — unproven against a live node |
+| magnetite integration (`@vulos/wibbly-authority`) | **Built, running** — a real magnetite `AuthoritativeGame` compiled to wasm, run client-side; refused in demo mode |
 | Networked play (peer-to-peer, browser-hosted) | **Transport implemented**, unit-tested, wired into tennis (off by default) — no lobby UI, so nothing turns it into a click-to-play flow |
 | Tauri desktop shell | **Phase 3** |
 | Release build | **Source only** |

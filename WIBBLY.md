@@ -58,32 +58,55 @@ The reasoning here has changed since the previous pass, so it is rewritten rathe
 "blur the property magnetite sells," because camera input is a noisy, nondeterministic,
 un-replayable sensor stream — the one input class that cannot be replay-verified. That is still
 true as a fact about cameras, but it is no longer the reason to keep two repos: magnetite now
-defines `InputClass::{Deterministic, Attested}`, a `PlausibilityGate`, and a signed wire ingress
-(`ClientNet::AttestedEvent` → `magnetite_runtime::attested::AttestedIngress` →
-`ServerNet::AttestedAck`/`AttestedReject`) in its own code — see `DECENTRALIZATION.md` §3.7 / IN1,
-marked **Done**. The boundary between verifiable and attested input is now enforced by a type that
-fails closed, not by which repository a file happens to live in. Putting wibbly's TypeScript
-inside the magnetite tree would not weaken that boundary; the type does the work regardless of
-directory layout.
+defines `InputClass::{Deterministic, Attested}` and a `PlausibilityGate` in its own code — see
+`DECENTRALIZATION.md` §3.7. The boundary between verifiable and attested input is now enforced by
+a type that fails closed, not by which repository a file happens to live in. Putting wibbly's
+TypeScript inside the magnetite tree would not weaken that boundary; the type does the work
+regardless of directory layout.
+
+**Concretely, wibbly now runs a real magnetite simulation, not just a design pointed at one.**
+`@vulos/wibbly-authority` loads magnetite's reference `AuthoritativeGame` — the arena-shooter game
+template, compiled to `wasm32-unknown-unknown` (`public/magnetite/arena-authority.wasm`, ~247 KB)
+— and runs it client-side as a `Topology::SingleRoom` match: the bottom rung of magnetite's own
+topology ladder, hosted by the browser tab with no server. `src/game/magnetite-authority.js` steps
+it once per tennis frame, fed by that match's own gesture events. This is what makes "wibbly is
+built on magnetite" literally true. It changes nothing about camera gestures, which stay
+`InputClass::Attested` — nondeterministic and never replay-verifiable — regardless of whether the
+authority stepping them sits in a tab or on a rented box; see §6.
+
+An earlier design bridged wibbly's `GestureEvent`s to a persistent magnetite node over a signed
+WebSocket wire format (`AttestedEvent`, WebCrypto Ed25519 signing, golden-vector-pinned against the
+Rust verifier). That design was retired, not extended: a signature only ever proves *authorship*,
+never that a real arm moved in front of a real camera, so a rented server checking the exact same
+event stream faces the exact same unverifiable input a host's own tab does. That code (`wire.ts`,
+`identity.ts`, the `AttestedEventAdapter`) is deleted — see
+`packages/wibbly-p2p/README.md`'s "What this used to be" for the full account. What replaced it
+for networked play is peer-to-peer WebRTC with no magnetite node at all (`packages/wibbly-p2p`,
+renamed from `packages/wibbly-magnetite` because it no longer has any magnetite code in it) — a
+separate track from the wasm authority described above.
 
 **The reason that still holds: staying a separate repo is a conformance test, not a fence.**
 Wibbly can only reach magnetite through whatever magnetite decided to publish — its crates, its
-wire format, its `InputProvider` seam — because a repo boundary is the one thing that makes
+`mag_*` sandbox ABI, its game templates — because a repo boundary is the one thing that makes
 reaching past that impossible by accident. A game living inside magnetite's own tree could import
 an internal type or an unexported helper and nobody would notice until the next refactor broke it.
-Wibbly cannot do that by construction. Every place wibbly talks to magnetite is therefore evidence
-that magnetite's *published* surface is sufficient for a real consumer — not merely an assertion
-that it should be.
+Wibbly cannot do that by construction. `@vulos/wibbly-authority` is exactly this in practice: it
+compiles magnetite's own `game-templates/authoritative` to `wasm32-unknown-unknown` and drives it
+through nothing but the `mag_*` exports magnetite chose to expose — no internal type, no
+unexported helper. Every place wibbly talks to magnetite is therefore evidence that magnetite's
+*published* surface is sufficient for a real consumer — not merely an assertion that it should be.
 
 Against pure standalone: identity, discovery, lobbies, and hosting are already solved in
 `magnetite-seams`. Rebuilding them in JavaScript would be a straight waste — and wibbly does not;
 see §6 for where wibbly's own multiplayer draws that line even when it isn't leaning on magnetite
 at all.
 
-**Therefore:** wibbly consumes magnetite as an optional platform through the `InputProvider` seam
-magnetite already ships. Gesture input is, and stays, **client-attested** — never
-replay-verified — regardless of who is authoritative for a given match. See §6 for why that is
-true even in wibbly's own peer-to-peer multiplayer, with no magnetite node involved at all.
+**Therefore:** wibbly consumes magnetite concretely, today, as a client-side authority —
+`@vulos/wibbly-authority` runs magnetite's compiled game module in the browser tab with no server,
+per §0/§1. Gesture input is, and stays, **client-attested** — never replay-verified — regardless
+of who or what is authoritative for a given match, tab or rented box alike. See §6 for why that is
+true even in wibbly's own peer-to-peer multiplayer, which involves no magnetite node or code at
+all.
 
 ## 3. THE SEAMS
 
@@ -340,11 +363,16 @@ ads. Nothing in §0 or §2 depends on any of it existing.
 - [x] Static site in the house style.
 - [x] Shrink `src/pages/` — the marketing shell is deleted; the app is now a title
       screen, a first-run camera setup flow, the play surface and a 404.
-- [x] Magnetite `InputProvider` seam + client-attested anti-cheat path, via
-      `packages/wibbly-magnetite`. *(Proven end-to-end against a live `magnetite dev` node: a
-      signed event returns `attested_ack`, a tampered one is rejected. Off by default. This
-      proves the pipe — nothing on either side drains the queue yet; no game reads gesture
-      input back out of it.)*
+- [x] A real magnetite link, via `@vulos/wibbly-authority`: magnetite's reference
+      `AuthoritativeGame` compiled to wasm, run client-side as a `Topology::SingleRoom` match
+      with no server, stepped from the tennis render loop by
+      `src/game/magnetite-authority.js`. *(Does not verify gesture input or add anti-cheat —
+      that boundary is unchanged, see §6. Refused in demo mode, since the demo's CSP blocks
+      wasm compilation.)* The earlier design — a signed wire ingress to a persistent
+      `magnetite dev` node (`AttestedEvent`, WebCrypto Ed25519, golden-vector-pinned) — was
+      retired; see `packages/wibbly-p2p/README.md`'s "What this used to be." Networked
+      multiplayer is a separate, magnetite-free track: peer-to-peer WebRTC via
+      `packages/wibbly-p2p` (renamed from `packages/wibbly-magnetite`).
 - [ ] **Palmworks** — folded into [`games/palmworks`](games/palmworks) with its full history and
       its own build: an industrial factory-building game. **Hands are not wired to it yet.**
       `HandLandmarkTracker` + `PinchRecognizer`/`PointRecognizer` now exist (Phase 1, above), but
@@ -372,7 +400,7 @@ ads. Nothing in §0 or §2 depends on any of it existing.
       over a `RTCDataChannel`, copy-paste/QR signalling by default with Trystero as an optional
       zero-server alternative, free public STUN. The transport (`PeerSession`, WebRTC offer/answer
       helpers, a codec that fits a connection description in a link) is built and unit-tested in
-      `packages/wibbly-magnetite`, and tennis (`src/game/game.jsx`) already wires an optional
+      `packages/wibbly-p2p` (no magnetite dependency), and tennis (`src/game/game.jsx`) already wires an optional
       `PeerSession` in — off unless a host page hands in a transport. **What is not true yet, said
       as plainly as the rest:** there is no lobby screen anywhere in wibbly. Nothing turns that
       transport into a button a visitor can click, so this is not "open a link and play with a
