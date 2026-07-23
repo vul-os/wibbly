@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { debugLog } from './debug.js';
 import { handleBallHit } from './ball.js';
 import { calculateOptimalPosition } from './player.js';
 
@@ -65,7 +66,7 @@ export function updatePlayerPositions(gameState, playerData, clock) {
         player2Data.targetX = 6 + Math.random() * 2; // Smaller range: 6 to 8
         player2Data.targetZ = -2 + Math.random() * 4; // Smaller range: -2 to 2
         
-        console.log(`Players moving to new idle positions: P1(${player1Data.targetX.toFixed(1)}, ${player1Data.targetZ.toFixed(1)}), P2(${player2Data.targetX.toFixed(1)}, ${player2Data.targetZ.toFixed(1)})`);
+        debugLog(`Players moving to new idle positions: P1(${player1Data.targetX.toFixed(1)}, ${player1Data.targetZ.toFixed(1)}), P2(${player2Data.targetX.toFixed(1)}, ${player2Data.targetZ.toFixed(1)})`);
     }
 }
 
@@ -125,7 +126,7 @@ export function updatePlayer1AI(players, gameState, playerData, ballGroup) {
             
             // Debug logging for Player 1
             if (gameState.debug && Math.floor(Date.now() / 1000) % 4 === 0) {
-                console.log(`Player 1 AI: Ball at (${ballPos.x.toFixed(1)}, ${ballPos.z.toFixed(1)}), Distance: ${distanceToBall.toFixed(1)}, Moving to: (${optimalPos.x.toFixed(1)}, ${optimalPos.z.toFixed(1)})`);
+                debugLog(`Player 1 AI: Ball at (${ballPos.x.toFixed(1)}, ${ballPos.z.toFixed(1)}), Distance: ${distanceToBall.toFixed(1)}, Moving to: (${optimalPos.x.toFixed(1)}, ${optimalPos.z.toFixed(1)})`);
             }
             
             if (distanceToBall < 6) { // Increased from 4 to 6 for better ball tracking
@@ -221,7 +222,7 @@ function checkPlayer1Swing(player1, playerData1, ballGroup, gameState) {
             playerData1.swinging = true;
             playerData1.swingTime = 0;
             handleBallHit(ballGroup, gameState, player1, 0);
-            console.log(`Player 1 single swing! Distance: ${distanceToBall.toFixed(2)}, Approach ID: ${gameState.ballApproachId}`);
+            debugLog(`Player 1 single swing! Distance: ${distanceToBall.toFixed(2)}, Approach ID: ${gameState.ballApproachId}`);
         }
     }
 }
@@ -281,7 +282,7 @@ export function updatePlayer2AI(players, gameState, playerData, ballGroup) {
             
             // Debug logging for Player 2
             if (gameState.debug && Math.floor(Date.now() / 1000) % 3 === 0) {
-                console.log(`Player 2 AI: Ball at (${ballPos.x.toFixed(1)}, ${ballPos.z.toFixed(1)}), Distance: ${distanceToBall.toFixed(1)}, Moving to: (${optimalPos.x.toFixed(1)}, ${optimalPos.z.toFixed(1)})`);
+                debugLog(`Player 2 AI: Ball at (${ballPos.x.toFixed(1)}, ${ballPos.z.toFixed(1)}), Distance: ${distanceToBall.toFixed(1)}, Moving to: (${optimalPos.x.toFixed(1)}, ${optimalPos.z.toFixed(1)})`);
             }
             
             if (distanceToBall < 8) { // Increased from 6 to 8 for even more aggressive movement
@@ -362,19 +363,19 @@ function checkPlayer2Swing(player2, playerData2, ballGroup, gameState) {
             gameState.player2SwingCooldown = currentTime + gameState.swingCooldownDuration;
             
             // Debug info for swing timing
-            console.log(`🎾 SWING DEBUG - Player 2 at (${player2.position.x.toFixed(1)}, ${player2.position.z.toFixed(1)}), Ball at (${ballPos.x.toFixed(1)}, ${ballPos.z.toFixed(1)}), Distance: ${distanceToBall.toFixed(2)}, Ball velocity: (${gameState.ballVelocity.x.toFixed(1)}, ${gameState.ballVelocity.z.toFixed(1)})`);
+            debugLog(`🎾 SWING DEBUG - Player 2 at (${player2.position.x.toFixed(1)}, ${player2.position.z.toFixed(1)}), Ball at (${ballPos.x.toFixed(1)}, ${ballPos.z.toFixed(1)}), Distance: ${distanceToBall.toFixed(2)}, Ball velocity: (${gameState.ballVelocity.x.toFixed(1)}, ${gameState.ballVelocity.z.toFixed(1)})`);
             
             // Execute swing
             playerData2.swinging = true;
             playerData2.swingTime = 0;
             handleBallHit(ballGroup, gameState, player2, 1);
-            console.log(`Player 2 single swing! Distance: ${distanceToBall.toFixed(2)}, Approach ID: ${gameState.ballApproachId}`);
+            debugLog(`Player 2 single swing! Distance: ${distanceToBall.toFixed(2)}, Approach ID: ${gameState.ballApproachId}`);
         }
     }
 }
 
 export function initializeGame(players, ballGroup, gameState, playerData) {
-    console.log("Starting game!");
+    debugLog("Starting game!");
     
     // Reset player positions to realistic tennis ready positions (opposite sides)
     players[0].position.set(-6.0, 0, -1.5); // Player 1 on left side (moved forward)
@@ -414,5 +415,5 @@ export function initializeGame(players, ballGroup, gameState, playerData) {
     playerData[1].targetX = 6.5;
     playerData[1].targetZ = 1.7;  // Player 2 on right side
     
-    console.log("Game started. Press SPACEBAR to serve the ball.");
+    debugLog("Game started. Press SPACEBAR to serve the ball.");
 } 

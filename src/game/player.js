@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { debugLog } from './debug.js';
 
 export function createPlayer(x, z, rotation, scale = 1) {
     const group = new THREE.Group();
@@ -562,6 +563,6 @@ export function toggleHitBoxVisibility(players, ballGroup, visible = null) {
         ballGroup.userData.collisionSphere.visible = visible;
     }
     
-    console.log(`Hit boxes ${visible ? 'shown' : 'hidden'}`);
+    debugLog(`Hit boxes ${visible ? 'shown' : 'hidden'}`);
     return visible;
 } 

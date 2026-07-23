@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { debugLog } from './debug.js';
 // Remove OrbitControls import since we're implementing Wii Sports style camera
 import {
     Calibration,
@@ -154,7 +155,7 @@ function TennisGame({
 
     useEffect(() => {
         if (!containerRef.current) return;
-        console.log("Game initializing...");
+        debugLog("Game initializing...");
 
         // Set by cleanup so async setup that resolves after unmount tears its
         // own resources down instead of leaking a live socket.
@@ -424,7 +425,7 @@ function TennisGame({
                 inputRef.current = wibbly;
                 setInput(wibbly);
                 onInputStateRef.current?.('live');
-                console.log('Gesture input initialized');
+                debugLog('Gesture input initialized');
             } catch (error) {
                 // Camera denied or unavailable — the game stays fully playable
                 // on the spacebar, which is the correct degradation.
@@ -463,7 +464,7 @@ function TennisGame({
                 // Tennis only produces swings today; telling the session so
                 // lets it reject anything else outright.
                 limits: { acceptedKinds: ['swing'] },
-                onStatusChange: (status) => console.log('[peer] session', status),
+                onStatusChange: (status) => debugLog('[peer] session', status),
                 onError: (err) => console.warn('[peer] transport error:', err),
             });
 
@@ -478,7 +479,7 @@ function TennisGame({
                 // this design never signs events. A signature would only prove
                 // "this connection sent this", which the RTCDataChannel this
                 // transport wraps already gives for free — see inbound-gate.ts.
-                console.log('[peer] connected — streaming local gesture events to the peer');
+                debugLog('[peer] connected — streaming local gesture events to the peer');
             } catch (error) {
                 // Stay local. This is the designed degradation, not a failure.
                 console.warn('[peer] unavailable, continuing with local play:', error);
@@ -492,7 +493,7 @@ function TennisGame({
         // notion of "how sure" it is. Only the gesture path above ever
         // passes something less than that.
         function handleSwing(swingDirection = 'right', confidence = 1) {
-            console.log("Handling swing!", swingDirection);
+            debugLog("Handling swing!", swingDirection);
 
             // Reported for EVERY swing the player makes, before the animation
             // gate below. The gate is about whether the racket is mid-swing,
@@ -518,7 +519,7 @@ function TennisGame({
                 playerData1.swinging = true;
                 playerData1.swingTime = 0;
                 
-                console.log("Player 1 swinging racket!");
+                debugLog("Player 1 swinging racket!");
 
                 // Try to hit the ball
                 handleBallHit(ballGroup, gameState, player1, 0, swingDirection, confidence);
@@ -529,7 +530,7 @@ function TennisGame({
         function handleKeyDown(event) {
             // While the menu is open the game takes no input at all.
             if (pausedRef.current) return;
-            console.log(`Key pressed: ${event.code}`);
+            debugLog(`Key pressed: ${event.code}`);
 
             if (event.code === 'Space') {
                 handleSwing();
@@ -589,7 +590,7 @@ function TennisGame({
             
             // Debug logging every 5 seconds with performance info
             if (gameStateRef.current.debug && logTimer > 5) {
-                console.log(`Animation loop running... FPS: ${currentFps}, Delta: ${delta.toFixed(3)}s`);
+                debugLog(`Animation loop running... FPS: ${currentFps}, Delta: ${delta.toFixed(3)}s`);
                 logTimer = 0;
             }
             
@@ -656,7 +657,7 @@ function TennisGame({
         
         // Setup gesture input early
         if (gameStateRef.current.usePoseDetection) {
-            console.log("Starting gesture input setup...");
+            debugLog("Starting gesture input setup...");
             setupGestureInput();
         } else {
             onInputStateRef.current?.('keyboard');

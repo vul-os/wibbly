@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { debugLog } from './debug.js';
 
 export function createBall(scene) {
     // Create a group to hold both the ball and its collision sphere
@@ -89,21 +90,21 @@ export function updateBallPhysics(ballGroup, gameState, delta, clock, players) {
         
         // If ball hits ground, check for scoring
         if (Math.abs(ballGroup.position.x) > 10) {
-            console.log("Ball out of bounds!");
+            debugLog("Ball out of bounds!");
             resetBall(ballGroup, gameState, players);
         }
     }
     
     // Ball out of bounds check
     if (Math.abs(ballGroup.position.x) > 12 || Math.abs(ballGroup.position.z) > 7 || ballGroup.position.y > 15) {
-        console.log("Ball out of bounds!");
+        debugLog("Ball out of bounds!");
         resetBall(ballGroup, gameState, players);
     }
     
     // Log ball state every few seconds for debugging
     if (gameState.debug && Math.floor(clock.elapsedTime * 10) % 30 === 0) {
-        console.log(`Ball pos: (${ballGroup.position.x.toFixed(2)}, ${ballGroup.position.y.toFixed(2)}, ${ballGroup.position.z.toFixed(2)})`);
-        console.log(`Ball velocity: (${gameState.ballVelocity.x.toFixed(2)}, ${gameState.ballVelocity.y.toFixed(2)}, ${gameState.ballVelocity.z.toFixed(2)})`);
+        debugLog(`Ball pos: (${ballGroup.position.x.toFixed(2)}, ${ballGroup.position.y.toFixed(2)}, ${ballGroup.position.z.toFixed(2)})`);
+        debugLog(`Ball velocity: (${gameState.ballVelocity.x.toFixed(2)}, ${gameState.ballVelocity.y.toFixed(2)}, ${gameState.ballVelocity.z.toFixed(2)})`);
     }
 }
 
@@ -125,7 +126,7 @@ export function resetBall(ballGroup, gameState, players) {
     positionBallForServing(ballGroup, player1);
     gameState.ballVelocity.set(0, 0, 0);
     
-    console.log("Ball reset. Press SPACEBAR to serve again.");
+    debugLog("Ball reset. Press SPACEBAR to serve again.");
 }
 
 // Helper function to check if a sphere intersects with an oriented bounding box
@@ -208,7 +209,7 @@ export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDi
     // Enhanced collision detection with timing window
     const isSwinging = (player.userData.rightArm.rotation.x !== 0 || player.userData.rightArm.rotation.y !== 0 || player.userData.rightArm.rotation.z !== 0);
     
-    console.log(`Player ${playerIndex + 1} - Distance: ${racketToBallDistance.toFixed(2)}, Colliding: ${isColliding}, Swinging: ${isSwinging}`);
+    debugLog(`Player ${playerIndex + 1} - Distance: ${racketToBallDistance.toFixed(2)}, Colliding: ${isColliding}, Swinging: ${isSwinging}`);
     
     // Debug info available if needed, but removed for cleaner output
     
@@ -243,7 +244,7 @@ export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDi
         // Increment ball approach ID for new ball trajectory - resets swing attempts
         gameState.ballApproachId = (gameState.ballApproachId || 0) + 1;
         
-        console.log("Ball served toward player 2's actual position with diagonal trajectory!");
+        debugLog("Ball served toward player 2's actual position with diagonal trajectory!");
         return true;
     }
     // If ball is close to racket during play, hit it (adjusted for smaller players)
@@ -313,11 +314,11 @@ export function handleBallHit(ballGroup, gameState, player, playerIndex, swingDi
             gameState.returnToCenter.player2 = true;
         }
         
-        console.log(`Ball hit by player ${playerIndex + 1} with accurate racket collision! Direction: ${swingDirection}`);
+        debugLog(`Ball hit by player ${playerIndex + 1} with accurate racket collision! Direction: ${swingDirection}`);
         return true;
     } else if (racketToBallDistance < 0.45) {
         // Close miss - provide feedback
-        console.log(`Player ${playerIndex + 1} close miss - Distance: ${racketToBallDistance.toFixed(2)}, Colliding: ${isColliding}, Swinging: ${isSwinging}`);
+        debugLog(`Player ${playerIndex + 1} close miss - Distance: ${racketToBallDistance.toFixed(2)}, Colliding: ${isColliding}, Swinging: ${isSwinging}`);
         return false;
     } else {
         // Far miss

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { debugLog } from './debug.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { assetUrl } from '../mode.js';
 
@@ -12,7 +13,7 @@ export function loadCourt(scene) {
             // court silently degraded to placeholder geometry.
             assetUrl('models/court.glb'),
             (gltf) => {
-                console.log('Court loaded successfully');
+                debugLog('Court loaded successfully');
                 const model = gltf.scene;
                 model.traverse((child) => {
                     if (child.isMesh) {
@@ -46,6 +47,6 @@ export function createSimpleCourt(scene) {
     court.position.y = -0.01; // Slightly below players
     court.receiveShadow = true;
     scene.add(court);
-    console.log('Using fallback simple court');
+    debugLog('Using fallback simple court');
     return court;
 } 
