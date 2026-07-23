@@ -12,7 +12,10 @@ import { MagnetiteAuthority, makeInput, singleRoomConfig, type Input } from '../
  */
 
 const WASM_PATH = fileURLToPath(new URL('../../../public/magnetite/arena-authority.wasm', import.meta.url));
-const WASM = readFileSync(WASM_PATH);
+// Wrap in a Uint8Array so the bytes are a plain ArrayBuffer-backed BufferSource:
+// readFileSync returns a Node Buffer (typed Buffer<ArrayBufferLike>), which recent
+// @types/node will not accept where WebAssembly.compile/instantiate want a BufferSource.
+const WASM = new Uint8Array(readFileSync(WASM_PATH));
 
 // A player holding "move right" (arena maps keys.right → +x at MAX_SPEED=4/tick).
 function moveRight(seq: number): Input {

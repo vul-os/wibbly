@@ -1,0 +1,78 @@
+# .github/workflows/ci.yml — run wibbly's verification on every push and PR.
+#
+# release.yml runs these same checks, but only when a v* tag is pushed, so
+# day-to-day commits were never gated (a broken typecheck reached main this
+# way). This workflow runs the repo's canonical verification — unit tests,
+# typechecks, model-integrity check, and the same-origin/zero-external-request
+# CSP check on the built demo bundle — on ordinary pushes and pull requests,
+# without the release-only tag-version check or asset publishing.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Typecheck, unit tests, and both bundle builds (no browser) ──────────────
+  test:
+    name: Typecheck, tests & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build standalone app (dist/)
+        run: npm run build
+
+      - name: Verify vendored pose model
+        run: npm run verify:model
+
+      - name: Build embeddable demo (dist-demo/)
+        run: npm run build:demo
+
+  # ── The privacy guarantee: real Chromium, production CSP, zero external reqs ─
+  verify-demo:
+    name: Demo bundle (CSP + zero external requests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build embeddable demo (dist-demo/)
+        run: npm run build:demo
+
+      # playwright is intentionally not a declared dependency (it never ships in
+      # a bundle); install it just for this verification step, matching release.yml.
+      - name: Install Playwright (chromium)
+        run: |
+          npm i -D playwright
+          npx playwright install --with-deps chromium
+
+      - name: Verify demo bundle (CSP + zero external requests)
+        run: npm run verify:demo
