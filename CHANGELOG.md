@@ -143,10 +143,11 @@ unit-tested input library.
   checks, zero external network requests.
   `build:demo` outputs to `dist-demo/`, based at `/products/wibbly/play/`,
   independent from the standalone `build` (`dist/`, based at `/`).
-  wibbly's canonical home is `vulos.org/products/wibbly`, served from the
-  `vulos-cloud` repo; the `wibbly-io` Firebase project is a legacy host kept
-  as a manual-only (`workflow_dispatch`) deploy so it can no longer silently
-  diverge from the canonical copy by auto-deploying on every push.
+  wibbly's canonical home is `vulos.org/products/wibbly`, collected verbatim
+  from this repo's `site/` into the public marketing site; the `wibbly-io`
+  Firebase project is a legacy host kept as a manual-only
+  (`workflow_dispatch`) deploy so it can no longer silently diverge from the
+  canonical copy by auto-deploying on every push.
 - **Browser end-to-end test suite** — Playwright (chromium) drives the
   production build (`vite preview`) with the backend mocked in-browser: a
   boot guard across all gated top-level surfaces (ThemePicker, Login, IDE
