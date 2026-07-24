@@ -284,9 +284,30 @@ function teardown() {
 
 // ── Capture ───────────────────────────────────────────────────────────────────
 
-async function capture(page, base, route, theme) {
+// Console errors that are EXPECTED under headless SwiftShader and are not app
+// faults: TFJS cannot bring up an accelerated backend (see the header note), so
+// it logs WebGPU/WebGL init failures and the app's own pose runtime
+// (`[wibbly-input]`) logs its explicit, deliberate fallback to the CPU backend.
+// The JS-health guard below filters these out so it only reports genuinely
+// unexpected errors — otherwise it would cry wolf on every single run.
+const BENIGN_CONSOLE = /Initialization of backend (webgpu|webgl) failed|WebGL is not supported|Automatic fallback to software WebGL|Failed to create WebGL|GroupMarkerNotSet|falling back to CPU|Pose tracking could not start the preferred backend/i
+
+function recordIssues(page, pageIssues) {
+  page.on('pageerror', (e) => {
+    pageIssues.push({ type: 'pageerror', text: String(e?.message ?? e) })
+    console.warn(`     [pageerror] ${e?.message ?? e}`)
+  })
+  page.on('console', (msg) => {
+    if (msg.type() === 'error' && !BENIGN_CONSOLE.test(msg.text())) {
+      pageIssues.push({ type: 'console.error', text: msg.text() })
+    }
+  })
+}
+
+async function capture(page, base, route, theme, pageIssues = []) {
   const label = theme ? `${route.name}-${theme}` : route.name
   console.log(`  → ${label}: ${route.description}`)
+  const issuesBefore = pageIssues.length
   try {
     await page.goto(`${base}${route.path}`, { waitUntil: 'domcontentloaded', timeout: 30_000 })
 
@@ -307,10 +328,10 @@ async function capture(page, base, route, theme) {
     // can starve the compositor enough to miss the 30s default.
     await page.screenshot({ path: outPath, fullPage: false, timeout: 90_000 })
     console.log(`     saved docs/screenshots/${label}.png`)
-    return { label, description: route.description, status: 'ok' }
+    return { label, description: route.description, status: 'ok', issues: pageIssues.slice(issuesBefore) }
   } catch (err) {
     console.warn(`     FAILED: ${err.message}`)
-    return { label, description: route.description, status: 'failed', error: err.message }
+    return { label, description: route.description, status: 'failed', error: err.message, issues: pageIssues.slice(issuesBefore) }
   }
 }
 
@@ -380,8 +401,9 @@ async function main() {
   for (const route of APP_ROUTES) {
     const ctx = await newContext(browser, null, route.storage)
     const page = await ctx.newPage()
-    page.on('pageerror', e => console.warn(`     [pageerror] ${e.message}`))
-    results.push(await capture(page, APP_BASE, route))
+    const pageIssues = []
+    recordIssues(page, pageIssues)
+    results.push(await capture(page, APP_BASE, route, undefined, pageIssues))
     await ctx.close()
   }
 
@@ -390,7 +412,9 @@ async function main() {
     for (const theme of route.themes ?? [null]) {
       const ctx = await newContext(browser, theme)
       const page = await ctx.newPage()
-      results.push(await capture(page, SITE_BASE, route, theme))
+      const pageIssues = []
+      recordIssues(page, pageIssues)
+      results.push(await capture(page, SITE_BASE, route, theme, pageIssues))
       await ctx.close()
     }
   }
@@ -403,6 +427,26 @@ async function main() {
 
   console.log(`\nDone — ${ok.length} captured, ${failed.length} failed`)
   for (const r of failed) console.log(`  FAILED ${r.label}: ${r.error}`)
+
+  // JS-health guard (parity with the cackle/magnetite screenshotters). A saved
+  // screenshot proves a surface painted, not that it ran cleanly — collect
+  // console errors + uncaught exceptions per surface (minus the known-benign
+  // headless-GPU noise, see BENIGN_CONSOLE) and surface them so a page that is
+  // actually throwing is never silently shipped as "captured". Non-fatal.
+  const withIssues = results.filter((r) => r.issues && r.issues.length)
+  if (withIssues.length) {
+    const total = withIssues.reduce((n, r) => n + r.issues.length, 0)
+    console.warn(`\n  WARNING: ${total} console error(s)/uncaught exception(s) across ${withIssues.length} capture(s):`)
+    for (const r of withIssues) {
+      console.warn(`    ${r.label} — ${r.issues.length}:`)
+      for (const it of r.issues.slice(0, 3)) {
+        console.warn(`        ${it.type}: ${it.text.replace(/\s+/g, ' ').slice(0, 160)}`)
+      }
+    }
+    console.warn('  A clean-looking screenshot of a page that threw is a false positive.')
+  } else if (ok.length) {
+    console.log('  no unexpected console errors or uncaught exceptions during capture')
+  }
 
   writeFileSync(path.join(OUT, 'README.md'), [
     '# docs/screenshots',
