@@ -1,0 +1,1500 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-theme-pref="system">
+<head>
+<meta charset="utf-8" />
+<title>wibbly — your camera is the controller</title>
+<meta name="description" content="wibbly is a camera-gesture game built on magnetite, the decentralized self-hostable games platform: a gesture is an input event like any other, and frames never leave the device. Free, MIT OR Apache-2.0, no payments anywhere. Early — today it is a single-player, one-gesture tennis demo you can play in a tab; multi-person tracking and peer-to-peer networked play are specified, not built." />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="/product-logos/wibbly.svg" />
+
+<!-- Resolve theme before paint to avoid a flash. Preference (light|dark|system)
+     lives in localStorage 'vulos-theme'; <html data-theme> holds the RESOLVED
+     light|dark value so CSS and theme-aware imagery switch together. -->
+<script>
+  (function () {
+    try {
+      var pref = localStorage.getItem('vulos-theme') || 'system';
+      var sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      var resolved = pref === 'system' ? sys : pref;
+      document.documentElement.setAttribute('data-theme', resolved);
+      document.documentElement.setAttribute('data-theme-pref', pref);
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>
+
+<style>
+  /* ═══════════════════════════════════════════════════════════════════════════
+     wibbly mini-site — self-contained brand styles.
+
+     IDENTITY: "BROADCAST / NIGHT COURT".
+     The page is not a brochure about a sports hall; it is the telemetry feed
+     from one. Structure comes from court geometry — baselines, service lines,
+     a net — and from broadcast furniture: wide stadium capitals for headings,
+     a monospace instrument voice for every number, and a strict signal
+     vocabulary that makes honesty a designed element rather than a footnote.
+
+       · display  Archivo Variable, run WIDE (wdth 108–125) in caps — scoreboard
+       · body     Instrument Sans Variable
+       · data     JetBrains Mono Variable — every measurement, label and status
+       · accent   #FF4D9D dark / #C4006B light — the motion trail. It marks
+                  movement or a tracked landmark. It is never decoration.
+       · signals  LIVE (green) · UNVALIDATED (amber) · SPEC (grey)
+
+     Every font is vendored under /products/wibbly/fonts. The page issues no
+     network request of any kind at runtime — it is served under a
+     `default-src 'self'` CSP and holds to it with room to spare.
+     ═══════════════════════════════════════════════════════════════════════════ */
+
+  /* ── Vendored variable fonts (SIL Open Font License 1.1, all three) ─────── */
+  @font-face {
+    font-family: 'Archivo Variable';
+    src: url('/products/wibbly/fonts/archivo.woff2') format('woff2-variations');
+    font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+                   U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+                   U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Archivo Variable';
+    src: url('/products/wibbly/fonts/archivo-ext.woff2') format('woff2-variations');
+    font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                   U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+                   U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Instrument Sans Variable';
+    src: url('/products/wibbly/fonts/instrument-sans.woff2') format('woff2-variations');
+    font-weight: 400 700; font-stretch: 75% 100%; font-style: normal; font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+                   U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+                   U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Instrument Sans Variable';
+    src: url('/products/wibbly/fonts/instrument-sans-ext.woff2') format('woff2-variations');
+    font-weight: 400 700; font-stretch: 75% 100%; font-style: normal; font-display: swap;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                   U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+                   U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono Variable';
+    src: url('/products/wibbly/fonts/jetbrains-mono.woff2') format('woff2-variations');
+    font-weight: 100 800; font-style: normal; font-display: swap;
+  }
+
+  :root {
+    --display: 'Archivo Variable', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --sans: 'Instrument Sans Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+    --maxw: 1160px;
+    --r-sm: 4px; --r-md: 6px; --r-lg: 10px; --r-xl: 14px;
+    --ease: cubic-bezier(.2,.7,.3,1);
+  }
+
+  /* ── Night court (dark) — wibbly's home canvas ─────────────────────────── */
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    --court:      #09070E;
+    --surface:    #110D19;
+    --surface-2:  #171122;
+    --surface-3:  #1E1730;
+    --line:       #241B33;
+    --line-2:     #3A2C52;
+    --ink:        #F5F1FA;
+    --ink-2:      #ADA2BE;
+    --ink-3:      #6F6483;
+
+    --accent:      #FF4D9D;
+    --accent-hi:   #FF85BC;
+    --accent-ink:  #14000A;
+    --accent-dim:  rgba(255,77,157,.12);
+    --accent-line: rgba(255,77,157,.34);
+    --accent-glow: rgba(255,77,157,.30);
+
+    --live:       #3FE08A;
+    --live-dim:   rgba(63,224,138,.11);
+    --live-line:  rgba(63,224,138,.32);
+    --unval:      #FFB020;
+    --unval-dim:  rgba(255,176,32,.11);
+    --unval-line: rgba(255,176,32,.32);
+    --spec:       #857A99;
+    --spec-dim:   rgba(133,122,153,.10);
+    --spec-line:  rgba(133,122,153,.28);
+
+    --chalk:      rgba(245,241,250,.10);
+    --chalk-hi:   rgba(245,241,250,.18);
+    --sh-1: 0 1px 2px rgba(0,0,0,.5), 0 4px 14px rgba(0,0,0,.4);
+    --sh-2: 0 24px 70px -28px rgba(0,0,0,.9), 0 6px 24px rgba(0,0,0,.5);
+    --plate-tint: linear-gradient(178deg, #1A1329 0%, #0D0A16 100%);
+  }
+
+  /* ── Day court (light) — same hall, floodlights off, skylights open ────── */
+  :root[data-theme='light'] {
+    color-scheme: light;
+    --court:      #EDE9F2;
+    --surface:    #FFFFFF;
+    --surface-2:  #F8F5FB;
+    --surface-3:  #F1ECF6;
+    --line:       #DFD8E8;
+    --line-2:     #BEB2CD;
+    --ink:        #140F1B;
+    --ink-2:      #544A61;
+    --ink-3:      #837791;
+
+    --accent:      #C4006B;
+    --accent-hi:   #9E0056;
+    --accent-ink:  #FFFFFF;
+    --accent-dim:  rgba(196,0,107,.07);
+    --accent-line: rgba(196,0,107,.30);
+    --accent-glow: rgba(196,0,107,.14);
+
+    --live:       #0F7A3D;
+    --live-dim:   rgba(15,122,61,.08);
+    --live-line:  rgba(15,122,61,.28);
+    --unval:      #8A4B00;
+    --unval-dim:  rgba(138,75,0,.08);
+    --unval-line: rgba(138,75,0,.28);
+    --spec:       #6E6480;
+    --spec-dim:   rgba(110,100,128,.07);
+    --spec-line:  rgba(110,100,128,.26);
+
+    --chalk:      rgba(20,15,27,.07);
+    --chalk-hi:   rgba(20,15,27,.13);
+    --sh-1: 0 1px 2px rgba(40,25,60,.05), 0 5px 16px rgba(40,25,60,.07);
+    --sh-2: 0 28px 70px -32px rgba(45,25,70,.32), 0 8px 26px rgba(45,25,70,.10);
+    --plate-tint: linear-gradient(178deg, #FFFFFF 0%, #F2EDF7 100%);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 16px;
+    background: var(--court);
+    color: var(--ink);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  img, svg { max-width: 100%; display: block; }
+  ::selection { background: var(--accent-glow); color: var(--ink); }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 22px; }
+
+  /* ── The stadium voice ─────────────────────────────────────────────────── */
+  h1, h2, h3, h4 { margin: 0; font-family: var(--display); }
+  h1, h2 {
+    font-weight: 800; font-stretch: 118%;
+    text-transform: uppercase; letter-spacing: -.005em; line-height: .94;
+  }
+  h3, h4 { font-weight: 700; font-stretch: 104%; letter-spacing: -.012em; line-height: 1.18; }
+
+  /* The instrument voice — every label, status and measurement */
+  .mono, code, pre { font-family: var(--mono); }
+  .tag {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .link { color: var(--accent); font-weight: 600; box-shadow: inset 0 -1px 0 var(--accent-line); }
+  .link:hover { box-shadow: inset 0 -2px 0 var(--accent); }
+
+  p { margin: 0 0 1em; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Signal vocabulary — the honesty system, as a designed component ───── */
+  .sig {
+    display: inline-flex; align-items: center; gap: 6px; flex: none;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+    padding: 3px 8px 3px 6px; border-radius: var(--r-sm);
+    border: 1px solid; vertical-align: 1px;
+  }
+  .sig::before {
+    content: ''; width: 7px; height: 7px; border-radius: 50%; flex: none;
+    background: currentColor;
+  }
+  .sig-live { color: var(--live); background: var(--live-dim); border-color: var(--live-line); }
+  .sig-unval { color: var(--unval); background: var(--unval-dim); border-color: var(--unval-line); }
+  .sig-unval::before { background: linear-gradient(90deg, currentColor 50%, transparent 50%); box-shadow: inset 0 0 0 1px currentColor; }
+  .sig-spec { color: var(--spec); background: var(--spec-dim); border-color: var(--spec-line); }
+  .sig-spec::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+
+  /* ── Top bar ───────────────────────────────────────────────────────────── */
+  .topbar {
+    position: sticky; top: 0; z-index: 80;
+    backdrop-filter: blur(16px) saturate(1.4);
+    background: color-mix(in srgb, var(--court) 84%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-in {
+    max-width: var(--maxw); margin: 0 auto; padding: 0 22px;
+    height: 62px; display: flex; align-items: center; gap: 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; }
+  .brand .plaque {
+    width: 30px; height: 30px; flex: none; border-radius: var(--r-sm);
+    background: var(--surface-2); border: 1px solid var(--line);
+    display: grid; place-items: center; padding: 4px; color: var(--ink-3);
+  }
+  .brand-word {
+    font-family: var(--display); font-weight: 800; font-stretch: 118%;
+    font-size: 18px; letter-spacing: -.02em; text-transform: lowercase;
+  }
+  .grow { flex: 1; }
+
+  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-links a {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+    padding: 5px 8px; border-radius: var(--r-sm); transition: color .15s, background .15s;
+  }
+  .nav-links a:hover { color: var(--ink); background: var(--surface-2); }
+  @media (max-width: 1080px) { .nav-links { display: none; } }
+
+  .seg {
+    display: inline-flex; align-items: center; padding: 2px; flex: none;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md);
+  }
+  .seg button {
+    display: grid; place-items: center; width: 28px; height: 24px;
+    border: 0; background: transparent; color: var(--ink-3); cursor: pointer;
+    border-radius: var(--r-sm); transition: color .15s, background .15s;
+  }
+  .seg button:hover { color: var(--ink-2); }
+  .seg button svg { width: 15px; height: 15px; }
+  .seg button[aria-pressed='true'] { background: var(--surface-3); color: var(--accent); }
+
+  .vulos-btn {
+    display: inline-flex; align-items: center; gap: 7px; flex: none;
+    padding: 5px 11px 5px 6px; border-radius: var(--r-md);
+    border: 1px solid var(--line); background: var(--surface-2);
+    color: var(--ink-2); font-family: var(--mono); font-size: 11px; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+    transition: border-color .18s, color .18s;
+  }
+  .vulos-btn:hover { border-color: var(--accent-line); color: var(--ink); }
+  .vulos-btn img { width: 18px; height: 18px; border-radius: var(--r-sm); }
+  @media (max-width: 700px) { .vulos-btn .lead { display: none; } }
+
+  /* ── Buttons ───────────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 12px 20px; border-radius: var(--r-md);
+    font-family: var(--mono); font-weight: 700; font-size: 12.5px;
+    letter-spacing: .1em; text-transform: uppercase;
+    border: 1px solid transparent; cursor: pointer;
+    transition: transform .18s var(--ease), background .18s, border-color .18s, color .18s, box-shadow .18s;
+  }
+  .btn-primary {
+    background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  .btn-primary:hover { background: var(--accent-hi); border-color: var(--accent-hi); transform: translateY(-2px); box-shadow: 0 10px 30px -10px var(--accent-glow); }
+  .btn-ghost { background: transparent; border-color: var(--line-2); color: var(--ink-2); }
+  .btn-ghost:hover { border-color: var(--ink-3); color: var(--ink); transform: translateY(-2px); }
+  .btn-lg { padding: 15px 26px; font-size: 13px; }
+
+  /* ═════ HERO ═════════════════════════════════════════════════════════════ */
+  .hero { position: relative; padding: 60px 0 30px; overflow: hidden; }
+  /* Court markings: the hall floor, receding. Chalk on a dark surface. */
+  .hero::before {
+    content: ''; position: absolute; inset: -10% -20% auto -20%; height: 130%;
+    z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(58% 40% at 74% 4%, var(--accent-glow), transparent 72%),
+      repeating-linear-gradient(90deg, transparent 0 118px, var(--chalk) 118px 119px),
+      repeating-linear-gradient(0deg, transparent 0 118px, var(--chalk) 118px 119px);
+    mask-image: radial-gradient(120% 78% at 50% 0%, #000 10%, transparent 78%);
+  }
+  .hero .wrap { position: relative; z-index: 1; }
+
+  .hero-grid {
+    display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr);
+    gap: 44px; align-items: center;
+  }
+  @media (max-width: 1000px) { .hero-grid { grid-template-columns: 1fr; gap: 34px; } }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .eyebrow .rule { width: 26px; height: 1px; background: var(--line-2); }
+
+  .hero h1 {
+    /* capped so the longest single word ("CONTROLLER") always fits its column
+       — a wide grotesque at 800 weight has no soft-wrap escape hatch */
+    font-size: clamp(38px, 4.9vw, 65px);
+    font-stretch: 114%; font-weight: 800;
+    margin: 20px 0 0; max-width: 12ch;
+  }
+  .hero h1 .trail {
+    color: var(--accent); position: relative; display: inline-block;
+  }
+  /* the underline is a motion trail, not a decoration: it sweeps once on load */
+  .hero h1 .trail::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: .06em; height: .07em;
+    background: linear-gradient(90deg, transparent, var(--accent));
+    transform-origin: left; animation: sweep 1.1s var(--ease) .35s both;
+  }
+  @keyframes sweep { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  .hero .tagline {
+    font-size: clamp(17px, 1.9vw, 20.5px); color: var(--ink);
+    margin: 26px 0 0; max-width: 46ch; font-weight: 500; line-height: 1.48;
+  }
+  .hero .blurb { font-size: 15px; color: var(--ink-2); margin: 16px 0 0; max-width: 54ch; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 28px; }
+
+  /* ── The court plate: the hero's centrepiece ───────────────────────────── */
+  .plate {
+    position: relative; border-radius: var(--r-xl); overflow: hidden;
+    border: 1px solid var(--line); background: var(--plate-tint);
+    box-shadow: var(--sh-2);
+  }
+  .plate-head {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 11px 15px; border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
+  }
+  .plate-head .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none;
+    animation: blip 2.4s ease-in-out infinite;
+  }
+  @keyframes blip { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+  .plate-body { position: relative; }
+  .plate-body svg { width: 100%; height: auto; display: block; }
+  .plate-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap; padding: 11px 15px; border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
+  }
+
+  /* the tracked landmark travelling its arc + the trail drawing behind it */
+  .trail-path {
+    stroke-dasharray: 260; stroke-dashoffset: 260;
+    animation: draw 3.6s var(--ease) infinite;
+  }
+  @keyframes draw {
+    0%   { stroke-dashoffset: 260; opacity: 0; }
+    12%  { opacity: 1; }
+    46%  { stroke-dashoffset: 0; opacity: 1; }
+    78%  { stroke-dashoffset: 0; opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+  .landmark { animation: ride 3.6s var(--ease) infinite; }
+  @keyframes ride {
+    0%   { transform: translate(0,0); opacity: 0; }
+    12%  { opacity: 1; }
+    46%  { transform: translate(96px,-62px); opacity: 1; }
+    78%  { transform: translate(96px,-62px); opacity: 1; }
+    100% { transform: translate(96px,-62px); opacity: 0; }
+  }
+  .arm-swing { animation: arm 3.6s var(--ease) infinite; transform-origin: 168px 104px; }
+  @keyframes arm {
+    0%, 12% { transform: rotate(0deg); }
+    46%, 78% { transform: rotate(-46deg); }
+    100% { transform: rotate(0deg); }
+  }
+  .fires { animation: fire 3.6s steps(1) infinite; }
+  @keyframes fire { 0%, 45% { opacity: .18; } 46%, 84% { opacity: 1; } 85%, 100% { opacity: .18; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .trail-path, .landmark, .arm-swing, .fires, .plate-head .dot, .hero h1 .trail::after {
+      animation: none !important;
+    }
+    .trail-path { stroke-dashoffset: 0; }
+    .landmark { transform: translate(96px,-62px); }
+    .arm-swing { transform: rotate(-46deg); }
+    .fires { opacity: 1; }
+    .hero h1 .trail::after { transform: scaleX(1); }
+    * { transition-duration: .001s !important; }
+  }
+
+  .readout {
+    margin: 0; padding: 14px 16px; font-family: var(--mono);
+    font-size: 11.5px; line-height: 1.75; color: var(--ink-2);
+    overflow-x: auto;
+  }
+  .readout .k { color: var(--accent); }
+  .readout .s { color: var(--ink); }
+  .readout .n { color: var(--unval); }
+  .readout .c { color: var(--ink-3); }
+
+  /* ── The signal key — introduces the three-state convention, once ──────── */
+  .keyband {
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .keyband-in {
+    max-width: var(--maxw); margin: 0 auto; padding: 20px 22px;
+    display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 26px;
+    align-items: start;
+  }
+  @media (max-width: 1000px) { .keyband-in { grid-template-columns: 1fr 1fr; gap: 20px; } }
+  @media (max-width: 620px) { .keyband-in { grid-template-columns: 1fr; gap: 16px; } }
+  .keyband .khead {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ink-3); line-height: 1.6;
+    padding-right: 22px; border-right: 1px solid var(--line); white-space: nowrap;
+  }
+  @media (max-width: 1000px) { .keyband .khead { border-right: 0; max-width: none; grid-column: 1 / -1; } }
+  .keyband .kitem p { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+
+  /* ── Sections, numbered like a broadcast rundown ───────────────────────── */
+  .section, .hero { scroll-margin-top: 78px; }
+  .section { padding: 74px 0; position: relative; }
+  .section.alt { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+  .shead { margin-bottom: 34px; max-width: 74ch; }
+  .shead .num {
+    display: block; font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+    letter-spacing: .18em; color: var(--accent); margin-bottom: 14px;
+  }
+  .shead .num::after {
+    content: ''; display: inline-block; vertical-align: middle;
+    width: 40px; height: 1px; background: var(--line-2); margin-left: 12px;
+  }
+  .shead h2 { font-size: clamp(28px, 4.2vw, 46px); max-width: 20ch; }
+  .shead .lead { color: var(--ink-2); margin: 18px 0 0; font-size: 15.5px; max-width: 68ch; }
+
+  /* ── Ledger (tables, as instrument readouts) ───────────────────────────── */
+  .ledger-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
+  .section.alt .ledger-scroll { background: var(--court); }
+  .ledger { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 620px; }
+  .ledger th {
+    font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ink-3); text-align: left;
+    padding: 12px 16px; border-bottom: 1px solid var(--line-2); background: var(--surface-2);
+  }
+  .section.alt .ledger th { background: var(--surface-2); }
+  .ledger td { padding: 13px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .ledger tr:last-child td { border-bottom: 0; }
+  .ledger tr:hover td { background: var(--surface-2); }
+  .ledger td:first-child { font-weight: 600; color: var(--ink); }
+  .ledger td.note { color: var(--ink-2); }
+  .ledger td.st { white-space: nowrap; }
+  .ledger code { font-size: .86em; color: var(--ink); }
+  .ledger tr.pick td { background: var(--accent-dim); }
+  .ledger tr.pick:hover td { background: var(--accent-dim); }
+  .ledger tr.pick td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+  .num-cell { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; color: var(--ink-2); }
+  .num-hot { font-family: var(--mono); font-size: 12.5px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .lic {
+    display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: var(--r-sm); white-space: nowrap; border: 1px solid;
+  }
+  .lic.ok { color: var(--live); background: var(--live-dim); border-color: var(--live-line); }
+  .lic.bad { color: var(--accent); background: var(--accent-dim); border-color: var(--accent-line); }
+  .lic.warn { color: var(--unval); background: var(--unval-dim); border-color: var(--unval-line); }
+
+  /* ── Cards ─────────────────────────────────────────────────────────────── */
+  .cards { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+  @media (max-width: 940px) { .cards { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); padding: 24px; transition: background .2s; }
+  .section.alt .card { background: var(--court); }
+  .card:hover { background: var(--surface-2); }
+  .card .chead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .card h3 { font-size: 16px; }
+  .card h3 code { font-family: var(--mono); font-size: .95em; font-weight: 700; }
+  .card p { color: var(--ink-2); font-size: 14px; }
+  .card code { font-size: .87em; color: var(--ink); }
+  .card .tag { display: block; margin-bottom: 9px; }
+
+  /* ── Stat strip — the scoreboard ───────────────────────────────────────── */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 1px;
+    background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg);
+    overflow: hidden; margin-top: 30px;
+  }
+  @media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  .stat { background: var(--surface); padding: 20px 18px; }
+  .section.alt .stat { background: var(--court); }
+  .stat .v {
+    font-family: var(--display); font-weight: 800; font-stretch: 118%;
+    font-size: clamp(28px, 3.6vw, 40px); line-height: 1; letter-spacing: -.02em;
+    color: var(--ink); display: block;
+  }
+  .stat .v.hot { color: var(--accent); }
+  .stat .l { margin-top: 9px; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
+
+  /* ── Diagram plates ────────────────────────────────────────────────────── */
+  .diagram {
+    border: 1px solid var(--line); border-radius: var(--r-lg);
+    background: var(--surface); overflow: hidden; box-shadow: var(--sh-1);
+  }
+  .section.alt .diagram { background: var(--court); }
+  .diagram-scroll { overflow-x: auto; padding: 26px 22px; }
+  .diagram-scroll svg { min-width: 660px; width: 100%; height: auto; }
+  .diagram-foot {
+    display: flex; flex-wrap: wrap; gap: 8px 22px; padding: 12px 20px;
+    border-top: 1px solid var(--line); background: var(--surface-2);
+    font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: .04em;
+  }
+  .diagram-foot span { display: inline-flex; align-items: center; gap: 7px; }
+  .diagram-foot i { width: 9px; height: 9px; border-radius: 2px; flex: none; display: inline-block; }
+
+  /* ── Reduction cascade — the pipeline, drawn to scale ──────────────────── */
+  .cascade { display: grid; gap: 0; margin-top: 26px; border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+  .casc {
+    display: grid; grid-template-columns: 148px minmax(0,1fr) 128px;
+    align-items: center; gap: 18px; padding: 15px 20px;
+    background: var(--surface); border-bottom: 1px solid var(--line);
+  }
+  .section.alt .casc { background: var(--court); }
+  .casc:last-child { border-bottom: 0; }
+  @media (max-width: 700px) {
+    .casc { grid-template-columns: 1fr; gap: 8px; }
+    .casc .cbar { order: 3; }
+  }
+  .casc .cname { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--ink); }
+  .casc .cname small { display: block; font-weight: 400; color: var(--ink-3); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; margin-top: 3px; }
+  .casc .cbar { height: 12px; background: var(--surface-3); border-radius: 2px; overflow: hidden; }
+  .casc .cfill { height: 100%; border-radius: 2px; }
+  .casc .cval { font-family: var(--mono); font-size: 13px; font-weight: 700; text-align: right; color: var(--ink); }
+  .casc .cval small { display: block; font-weight: 400; font-size: 10.5px; color: var(--ink-3); }
+
+  /* ── Screenshot frame ──────────────────────────────────────────────────── */
+  .frame { border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--surface); box-shadow: var(--sh-2); }
+  .frame-bar {
+    display: flex; align-items: center; gap: 6px; padding: 9px 13px;
+    border-bottom: 1px solid var(--line); background: var(--surface-2);
+  }
+  .frame-bar i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); flex: none; }
+  .frame-bar .url {
+    margin-left: 10px; font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .frame img { width: 100%; height: auto; display: block; }
+
+  /* ── Annotation blocks ─────────────────────────────────────────────────── */
+  .note {
+    font-size: 13.5px; color: var(--ink-2); line-height: 1.68;
+    border-left: 2px solid var(--line-2); padding: 2px 0 2px 16px; margin: 16px 0 0;
+  }
+  .note b { color: var(--ink); }
+  .note.hot { border-left-color: var(--accent); }
+  .note.warn { border-left-color: var(--unval); }
+
+  .callout {
+    border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    background: var(--surface); border-radius: 0 var(--r-md) var(--r-md) 0;
+    padding: 18px 20px; margin: 22px 0 0;
+  }
+  .section.alt .callout { background: var(--court); }
+  .callout .tag { display: block; margin-bottom: 8px; color: var(--accent); }
+  .callout p { font-size: 14.5px; color: var(--ink-2); }
+  .callout.warn { border-left-color: var(--unval); }
+  .callout.warn .tag { color: var(--unval); }
+
+  /* ── Splits & lists ────────────────────────────────────────────────────── */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; align-items: start; }
+  @media (max-width: 900px) { .split { grid-template-columns: 1fr; gap: 26px; } }
+  .split.wide-left { grid-template-columns: 1.3fr 1fr; }
+  @media (max-width: 900px) { .split.wide-left { grid-template-columns: 1fr; } }
+
+  .stack { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+  .stack li { background: var(--surface); padding: 17px 20px; }
+  .section.alt .stack li { background: var(--court); }
+  .stack li b { display: block; font-size: 14.5px; margin-bottom: 5px; color: var(--ink); }
+  .stack li span { color: var(--ink-2); font-size: 14px; }
+  .stack .metric { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent); }
+
+  .gapstack { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+  .gapstack li { background: var(--surface); padding: 18px 20px; display: grid; grid-template-columns: 128px minmax(0,1fr); gap: 20px; align-items: start; }
+  .section.alt .gapstack li { background: var(--court); }
+  @media (max-width: 700px) { .gapstack li { grid-template-columns: 1fr; gap: 9px; } }
+  .gapstack b { display: block; font-size: 14.5px; margin-bottom: 5px; color: var(--ink); }
+  .gapstack span { color: var(--ink-2); font-size: 14px; }
+
+  /* ── Games ─────────────────────────────────────────────────────────────── */
+  .games { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; margin-top: 26px; }
+  @media (max-width: 880px) { .games { grid-template-columns: 1fr; } }
+  .game { background: var(--surface); padding: 24px; }
+  .section.alt .game { background: var(--court); }
+  .game.live { box-shadow: inset 0 3px 0 var(--live); }
+  .game h3 { font-size: 20px; margin: 10px 0 9px; text-transform: uppercase; font-stretch: 112%; font-weight: 800; }
+  .game p { color: var(--ink-2); font-size: 14px; }
+  .game .breaks { margin-top: 15px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--ink-2); }
+  .game .breaks .tag { display: block; margin-bottom: 5px; }
+
+  /* ── Code block ────────────────────────────────────────────────────────── */
+  .codeblock { border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--surface); }
+  .section.alt .codeblock { background: var(--court); }
+  .codeblock .bar { display: flex; align-items: center; gap: 10px; padding: 10px 15px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+  .codeblock pre { margin: 0; padding: 18px 20px; overflow-x: auto; font-size: 12.5px; line-height: 1.9; color: var(--ink); }
+  .codeblock .c { color: var(--ink-3); }
+  .codeblock .p { color: var(--accent); }
+
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+  .steps li { display: grid; grid-template-columns: 30px minmax(0,1fr); gap: 14px; align-items: start; }
+  .steps .n {
+    width: 30px; height: 30px; border-radius: var(--r-sm); border: 1px solid var(--accent-line);
+    background: var(--accent-dim); color: var(--accent);
+    font-family: var(--mono); font-weight: 700; font-size: 12px;
+    display: grid; place-items: center;
+  }
+  .steps b { display: block; font-size: 15px; }
+  .steps span { color: var(--ink-2); font-size: 13.5px; }
+
+  /* ── Phases ────────────────────────────────────────────────────────────── */
+  .phases { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+  @media (max-width: 880px) { .phases { grid-template-columns: 1fr; } }
+  .phase { background: var(--surface); padding: 24px; }
+  .section.alt .phase { background: var(--court); }
+  .phase h3 { font-size: 19px; margin: 9px 0 16px; text-transform: uppercase; font-stretch: 112%; font-weight: 800; }
+  .phase ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 11px; }
+  .phase li { font-size: 13.5px; color: var(--ink-3); display: grid; grid-template-columns: 14px minmax(0,1fr); gap: 10px; align-items: start; }
+  .phase li::before { content: '○'; font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--spec); }
+  .phase li.done { color: var(--ink-2); }
+  .phase li.done::before { content: '●'; color: var(--live); }
+
+  /* ── Vulos band + footer ───────────────────────────────────────────────── */
+  .vulos-band {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+    padding: 32px; display: grid; grid-template-columns: 50px minmax(0,1fr); gap: 22px; align-items: start;
+  }
+  @media (max-width: 700px) { .vulos-band { grid-template-columns: 1fr; padding: 24px; } }
+  .vulos-band img { width: 50px; height: 50px; border-radius: var(--r-md); }
+  .vulos-band h3 { font-size: 19px; margin-bottom: 10px; text-transform: uppercase; font-stretch: 112%; font-weight: 800; }
+  .vulos-band p { color: var(--ink-2); font-size: 14.5px; max-width: 78ch; }
+  .vulos-band .more { display: inline-flex; margin-top: 14px; margin-right: 20px; color: var(--accent); font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .vulos-band .more:hover { color: var(--accent-hi); }
+
+  .site-footer { border-top: 1px solid var(--line); padding: 30px 0; }
+  .foot { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+  .foot .left { display: flex; align-items: center; gap: 10px; color: var(--ink-3); font-size: 13px; }
+  .foot .left img { width: 18px; height: 18px; border-radius: var(--r-sm); }
+  .foot .left a { color: var(--ink-2); }
+  .foot .links { display: flex; gap: 20px; flex-wrap: wrap; }
+  .foot .links a { color: var(--ink-3); font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+  .foot .links a:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/products/magnetite/wibbly" aria-label="wibbly home">
+      <span class="plaque">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 61 V33 A12 12 0 0 1 33 21 H61"/>
+            <path d="M139 21 H167 A12 12 0 0 1 179 33 V61"/>
+            <path d="M179 139 V167 A12 12 0 0 1 167 179 H139"/>
+            <path d="M61 179 H33 A12 12 0 0 1 21 167 V139"/>
+          </g>
+          <path d="M55 148 Q92 142 118 114" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" opacity=".4"/>
+          <path d="M66 154 Q108 149 134 117" fill="none" stroke="var(--accent)" stroke-width="17" stroke-linecap="round"/>
+          <circle cx="138" cy="113" r="18" fill="var(--accent)"/>
+        </svg>
+      </span>
+      <span class="brand-word">wibbly</span>
+    </a>
+
+    <span class="grow"></span>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#status">Status</a>
+      <a href="#play">Play</a>
+      <a href="#seams">Seams</a>
+      <a href="#models">Models</a>
+      <a href="#runtime">Runtime</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#gaps">Gaps</a>
+      <a href="/products/wibbly/docs">Docs</a>
+      <a href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </nav>
+
+    <!-- 3-way Light / Dark / System selector -->
+    <div class="seg" role="group" aria-label="Colour theme">
+      <button type="button" data-set="light" title="Light" aria-label="Light theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button type="button" data-set="dark" title="Dark" aria-label="Dark theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <button type="button" data-set="system" title="System" aria-label="Match system theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+      </button>
+    </div>
+
+    <a class="vulos-btn" href="/products" target="_top" title="Back to the Vulos suite">
+      <img src="/products/wibbly/assets/vulos-logo.png" alt="" aria-hidden="true" width="18" height="18" />
+      <span><span class="lead">Part of&nbsp;</span>Vulos</span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <!-- ═══ HERO ═══════════════════════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow">
+            <span class="rule" aria-hidden="true"></span>
+            Camera-gesture game on magnetite · MIT OR Apache-2.0 · free · early
+          </span>
+
+          <h1>Your camera is the <span class="trail">controller</span></h1>
+
+          <p class="tagline">A gesture is an input event like any other — and the frames it came from never leave the device.</p>
+
+          <p class="blurb">wibbly is a camera-gesture game built on <a class="link" href="/products/magnetite" target="_top">magnetite</a>, the decentralized, self-hostable Rust games platform — magnetite is the platform, wibbly is what building on it looks like when your controller is a webcam. Pose estimation runs in a plain browser tab: no console, no download, no dongle. <code>@vulos/wibbly-input</code> implements all four seams behind 86 unit tests that run without a camera, and tennis consumes it like any third-party game would. Free and dual-licensed, everything is <a class="link" href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">MIT OR Apache-2.0 on GitHub</a> — no wagers, no tournament pools, no ads.</p>
+
+          <div class="cta-row">
+            <a class="btn btn-primary btn-lg" href="/products/wibbly/play/" target="_top">▶ Play it in your browser</a>
+            <a class="btn btn-ghost btn-lg" href="#status">What's actually built</a>
+          </div>
+        </div>
+
+        <!-- The court plate: one tracked landmark, one arc, one event -->
+        <div class="plate">
+          <div class="plate-head">
+            <span class="dot" aria-hidden="true"></span>
+            <span class="tag">Live · in-tab · 0 bytes uploaded</span>
+          </div>
+          <div class="plate-body">
+            <svg viewBox="0 0 460 300" role="img" aria-label="Diagram of the wibbly pipeline in one frame: a tracked skeleton on a court, the right wrist sweeping through an arc, and the resulting swing gesture event.">
+              <defs>
+                <linearGradient id="trailgrad" x1="0" y1="1" x2="1" y2="0">
+                  <stop offset="0" stop-color="var(--accent)" stop-opacity="0"/>
+                  <stop offset="1" stop-color="var(--accent)" stop-opacity="1"/>
+                </linearGradient>
+                <linearGradient id="floorfade" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="var(--chalk-hi)"/>
+                  <stop offset="1" stop-color="var(--chalk)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+
+              <!-- court floor in perspective: baseline, service line, sidelines -->
+              <g stroke="var(--chalk-hi)" stroke-width="1.25" fill="none">
+                <path d="M40 268 H420"/>
+                <path d="M96 214 H364"/>
+                <path d="M136 176 H324"/>
+                <path d="M40 268 L136 176"/>
+                <path d="M420 268 L324 176"/>
+                <path d="M230 268 V176"/>
+              </g>
+              <rect x="40" y="176" width="380" height="92" fill="url(#floorfade)" opacity=".5"/>
+
+              <!-- viewfinder brackets: this is a camera's view -->
+              <g fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" opacity=".55">
+                <path d="M18 46 V26 A8 8 0 0 1 26 18 H46"/>
+                <path d="M414 18 H434 A8 8 0 0 1 442 26 V46"/>
+                <path d="M442 254 V274 A8 8 0 0 1 434 282 H414"/>
+                <path d="M46 282 H26 A8 8 0 0 1 18 274 V254"/>
+              </g>
+
+              <!-- skeleton: 17 keypoints, drawn as the tracker sees them -->
+              <g stroke="var(--ink-3)" stroke-width="3.5" stroke-linecap="round" fill="none">
+                <path d="M168 104 H124"/>
+                <path d="M146 104 V162"/>
+                <path d="M146 162 L126 224"/>
+                <path d="M146 162 L172 224"/>
+                <path d="M124 104 L104 142"/>
+              </g>
+              <g fill="var(--ink-3)">
+                <circle cx="146" cy="82" r="12" fill="none" stroke="var(--ink-3)" stroke-width="3.5"/>
+                <circle cx="124" cy="104" r="4.5"/><circle cx="104" cy="142" r="4.5"/>
+                <circle cx="168" cy="104" r="4.5"/><circle cx="146" cy="162" r="4.5"/>
+                <circle cx="126" cy="224" r="4.5"/><circle cx="172" cy="224" r="4.5"/>
+              </g>
+
+              <!-- the swinging arm rotates about the right shoulder -->
+              <g class="arm-swing">
+                <path d="M168 104 L212 138" stroke="var(--ink-3)" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+              </g>
+
+              <!-- the trail: the ONLY saturated mark, and it marks motion -->
+              <path class="trail-path" d="M212 138 Q262 122 308 76"
+                    fill="none" stroke="url(#trailgrad)" stroke-width="5" stroke-linecap="round"/>
+
+              <!-- the tracked landmark riding the arc -->
+              <g class="landmark">
+                <circle cx="212" cy="138" r="9" fill="var(--accent)"/>
+                <circle cx="212" cy="138" r="16" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity=".45"/>
+              </g>
+
+              <!-- readout: what the landmark resolves into -->
+              <g font-family="ui-monospace, monospace" class="fires">
+                <rect x="300" y="92" width="146" height="66" rx="6"
+                      fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1"/>
+                <text x="313" y="113" font-size="11" font-weight="700" fill="var(--accent)">swing · p1</text>
+                <text x="313" y="130" font-size="9.5" fill="var(--ink-2)">confidence 0.86</text>
+                <text x="313" y="146" font-size="9.5" fill="var(--ink-2)">vector +0.71 −0.34</text>
+              </g>
+
+              <g font-family="ui-monospace, monospace" fill="var(--ink-3)" font-size="9.5">
+                <text x="82" y="70">right_wrist</text>
+                <text x="40" y="292">1080p RGBA · discarded after inference</text>
+              </g>
+            </svg>
+          </div>
+          <div class="plate-foot">
+            <span class="tag">MoveNet MultiPose · WebGL</span>
+            <span class="sig sig-live">Runs today</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ THE SIGNAL KEY — honesty, as a designed system ═════════════════ -->
+  <div class="keyband">
+    <div class="keyband-in">
+      <div class="khead">How to read this page</div>
+      <div class="kitem">
+        <span class="sig sig-live">Live</span>
+        <p>Runs today, on a real machine, and you can go and check. Nothing here is aspirational.</p>
+      </div>
+      <div class="kitem">
+        <span class="sig sig-unval">Unvalidated</span>
+        <p>The code exists and is under test — against <em>synthetic fixtures</em>. It has never met reality. Implemented is not the same as working.</p>
+      </div>
+      <div class="kitem">
+        <span class="sig sig-spec">Spec</span>
+        <p>Written down, argued for, and not built. No code. Naming it is the point; hiding it would be the lie.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 01 · STATUS ════════════════════════════════════════════════════ -->
+  <section class="section" id="status">
+    <div class="wrap">
+      <div class="shead">
+        <span class="num">01 / Status</span>
+        <h2>Audited against the tree, not the pitch</h2>
+        <p class="lead">Three states, not two — because <em>“implemented and unit-tested”</em> and <em>“known to work”</em> are different claims, and collapsing them is how software lies. wibbly is early and this table is where that is said out loud. Full detail in the <a class="link" href="/products/wibbly/docs/overview">docs</a>.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span class="v hot">86</span><div class="l">Seam tests, green, and none of them need a camera</div></div>
+        <div class="stat"><span class="v">1</span><div class="l">Playable game · 1 gesture · 1 player</div></div>
+        <div class="stat"><span class="v">0</span><div class="l">Bytes of video that leave the device, ever</div></div>
+        <div class="stat"><span class="v">0</span><div class="l">Lines of network code in the shipping path</div></div>
+      </div>
+
+      <div class="ledger-scroll" style="margin-top:26px">
+        <table class="ledger">
+          <thead><tr><th>Capability</th><th>What it is</th><th>State</th></tr></thead>
+          <tbody>
+            <tr><td><code>@vulos/wibbly-input</code></td><td class="note">The four seams plus Calibration, as an importable MIT package</td><td class="st"><span class="sig sig-live">86 tests green</span></td></tr>
+            <tr><td>Browser pose tracking</td><td class="note">TF.js MoveNet on the WebGL backend, running in the tab</td><td class="st"><span class="sig sig-live">Working</span></td></tr>
+            <tr><td>Tennis reference game</td><td class="note">Ball physics, court GLB, player rig, AI opponent, chase camera</td><td class="st"><span class="sig sig-live">Playable</span></td></tr>
+            <tr><td><code>swing</code> gesture</td><td class="note">Pure <code>detectSwing</code> over landmark history — no camera needed to test</td><td class="st"><span class="sig sig-live">24 tests</span></td></tr>
+            <tr><td>Left-handed play</td><td class="note">Handedness as a sign flip, not a duplicated branch</td><td class="st"><span class="sig sig-live">15 tests</span></td></tr>
+            <tr><td>Adaptive frame pacing</td><td class="note">Replaces the fixed 15&nbsp;fps / every-third-frame throttle</td><td class="st"><span class="sig sig-live">9 tests</span></td></tr>
+            <tr><td>Firebase Analytics</td><td class="note">Central tracking, inherited from the original build</td><td class="st"><span class="sig sig-live">Removed</span></td></tr>
+            <tr><td>Multi-person tracking</td><td class="note">MoveNet <code>MultiPose.Lightning</code>, up to 6 skeletons per frame</td><td class="st"><span class="sig sig-unval">Fixtures only</span></td></tr>
+            <tr><td><code>SpatialBinder</code></td><td class="note">Durable <code>PlayerId</code>s across frames, claim zones, occlusion timeout</td><td class="st"><span class="sig sig-unval">Fixtures only</span></td></tr>
+            <tr><td>Verified multi-person play</td><td class="note">Several real people, a real camera, a real room</td><td class="st"><span class="sig sig-unval">Never validated</span></td></tr>
+            <tr><td>2-player tennis</td><td class="note">The binder is multi-player; the game drives <code>player_1</code> only</td><td class="st"><span class="sig sig-unval">Next up</span></td></tr>
+            <tr><td>Magnetite integration</td><td class="note"><code>@vulos/wibbly-authority</code> — a real magnetite <code>AuthoritativeGame</code> compiled to wasm, run client-side as a <code>Topology::SingleRoom</code> match with no server; does not verify gesture input or add anti-cheat; refused in demo mode (CSP blocks wasm)</td><td class="st"><span class="sig sig-live">Built, running</span></td></tr>
+            <tr><td>Tauri desktop shell</td><td class="note">Rust-side capture and inference</td><td class="st"><span class="sig sig-spec">Phase 3</span></td></tr>
+            <tr><td>Soccer, Boxing</td><td class="note">Second and third reference games — tracked backlog, §8</td><td class="st"><span class="sig sig-spec">No code</span></td></tr>
+            <tr><td>Hand landmarks</td><td class="note">MediaPipe HandLandmarker, pinch and point recognizers, 21 points per hand; not composed by <code>WibblyInput</code>'s pipeline, not wired to any game, thresholds unvalidated against a real camera</td><td class="st"><span class="sig sig-unval">Built, not wired</span></td></tr>
+            <tr><td>Networked play</td><td class="note">Peer-to-peer: host-authoritative browser tab, <code>GestureEvent</code>s over WebRTC, no backend. Transport built and unit-tested, wired into tennis off by default — no lobby UI</td><td class="st"><span class="sig sig-unval">Transport built, no lobby</span></td></tr>
+            <tr><td>Release build</td><td class="note">Installer, image or hosted deployment</td><td class="st"><span class="sig sig-spec">Source only</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <span class="tag">The one thing to take away</span>
+        <p>Phase 1 has landed: the old 480-line detector that injected its own DOM is gone, replaced by <code>@vulos/wibbly-input</code> — MoveNet <em>MultiPose</em>, a spatial player binder, handedness as a sign flip, and an adaptive frame pacer, under 86 passing tests. What those tests prove is the logic, not a room: every multi-person test runs against synthetic skeleton fixtures, so <b>the tracker and binder have never seen two real people</b>. Tennis drives one player, with one gesture. Hand tracking exists as a standalone, unit-tested library but is not composed into the pipeline or wired to any game; the peer-to-peer networked-play transport exists and is wired into tennis but has no lobby UI; a desktop shell and a release build do not exist.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 02 · PLAY ══════════════════════════════════════════════════════ -->
+  <section class="section alt" id="play">
+    <div class="wrap">
+      <div class="shead">
+        <span class="num">02 / The demo</span>
+        <h2>One game runs by gesture. A fourth exists, waiting on hands.</h2>
+        <p class="lead">Tennis exists to prove the seams carry a real game rather than a demo loop. It needs no server and no account — pose estimation and the model both run in your tab. Stand about two metres back, get your upper body in frame, and swing. Soccer and Boxing are backlog with no code; Palmworks is folded-in, playable code with no gesture wiring yet.</p>
+      </div>
+
+      <div class="split wide-left">
+        <div>
+          <div class="frame">
+            <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span class="url">/products/wibbly/play/</span></div>
+            <img src="/products/wibbly/shots/tennis.png" width="1600" height="1000" alt="The wibbly tennis reference game: a Three.js court rendered in a browser tab, with the player rig near the baseline and an AI opponent across the net." loading="lazy" decoding="async" />
+          </div>
+          <p class="note"><b>What this shot does and does not show.</b> A real, unedited capture — the Three.js court, the player rig, the AI opponent, the in-game chrome. It was taken in headless Chromium against a <em>synthetic</em> camera stream (a rolling test pattern, not a person), so TensorFlow.js could not initialise a WebGL backend: there is no skeleton overlay and no camera preview panel, because neither had anything to draw. The status pill still reads <code>STARTING…</code> for exactly that reason. Nothing here is composited or staged — which is also why the pose overlay above is drawn as a schematic rather than faked as a screenshot.</p>
+        </div>
+        <div>
+          <div class="callout">
+            <span class="tag">Before you click play</span>
+            <p>It will ask for your camera. Nothing is uploaded — there is no upload path in the code. The MoveNet weights (~9.3&nbsp;MiB) ship <em>with</em> the app and load same-origin from <code>models/</code> — no CDN, no third-party request; the demo build refuses the CDN outright under its <code>default-src&nbsp;'self'</code> CSP. Everything the tracker needs is served from the same place the page is.</p>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-primary btn-lg" href="/products/wibbly/play/" target="_top">▶ Launch the demo</a>
+          </div>
+          <p class="note">Solo only. The peer-to-peer transport for a second player is built and wired in behind the scenes, but there is no lobby screen to turn it into a button — see <a class="link" href="#gaps">the gaps</a>.</p>
+        </div>
+      </div>
+
+      <div class="games">
+        <div class="game live">
+          <span class="tag">Reference game 01</span>
+          <h3>Tennis</h3>
+          <span class="sig sig-live">Playable now</span>
+          <p style="margin-top:12px">Single player, right or left handed, one gesture. Ball physics, court GLB, a player rig, an AI opponent and a chase camera. It consumes <code>@vulos/wibbly-input</code> like any third-party game would.</p>
+          <div class="breaks"><span class="tag">Assumption it relies on</span>One player, one dominant hand, one upper-body gesture. Everything the library assumes today, tennis happens to satisfy.</div>
+        </div>
+        <div class="game">
+          <span class="tag">Reference game 02</span>
+          <h3>Soccer</h3>
+          <span class="sig sig-spec">Backlog, no code</span>
+          <p style="margin-top:12px">Chosen as the second game because a kick is not a swing — it is a <em>lower-body</em> gesture, and nothing in the library currently looks below the waist.</p>
+          <div class="breaks"><span class="tag">Assumption it breaks</span><code>SwingRecognizer</code> reads wrist velocity and ignores leg keypoints entirely. A kick forces <code>GestureRecognizer</code> to be plural in practice rather than in the type signature.</div>
+        </div>
+        <div class="game">
+          <span class="tag">Reference game 03</span>
+          <h3>Boxing</h3>
+          <span class="sig sig-spec">Backlog, no code</span>
+          <p style="margin-top:12px">Chosen third because it needs <em>two independent gesture streams from one player</em> — left and right hand, tracked separately with per-arm cooldowns.</p>
+          <div class="breaks"><span class="tag">Assumption it breaks</span><code>Calibration.handedness</code> models a single dominant hand. Boxing contradicts that outright, and — being head-to-head by nature — is also the natural first test of two-player local play.</div>
+        </div>
+        <div class="game">
+          <span class="tag">Folded in</span>
+          <h3>Palmworks</h3>
+          <span class="sig sig-unval">Playable, no hands</span>
+          <p style="margin-top:12px">An industrial factory-building game folded into <code>games/palmworks</code> with its full history and its own build. Real, playable code — but <b>hands are not wired to it</b>: no <code>game.json</code>, no gesture recognizer, no camera control yet.</p>
+          <div class="breaks"><span class="tag">What it's waiting on</span><code>HandLandmarkTracker</code> plus pinch/point recognizers now exist in <code>packages/wibbly-input</code>, but nothing wires them into Palmworks yet. Until then it plays like any other web app, by mouse and keyboard.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 03 · SEAMS ═════════════════════════════════════════════════════ -->
+  <section class="section" id="seams">
+    <div class="wrap">
+      <div class="shead">
+        <span class="num">03 / Architecture</span>
+        <h2>Four seams, one game — not a platform</h2>
+        <p class="lead">Game code never names a model, a runtime or a vendor — it sees four interfaces, and every seam ships a working default. Read left to right and the story is a <em>reduction</em>: pixels narrow into landmarks, landmarks narrow into identity, identity narrows into a few dozen bytes of intent. That reduction is the architecture and the privacy guarantee at once — and it is wibbly's own input pipeline, not something it sells to other developers. The platform underneath is <a class="link" href="/products/magnetite" target="_top">magnetite</a>.</p>
+      </div>
+
+      <div class="diagram">
+        <div class="diagram-scroll">
+          <svg viewBox="0 0 940 250" role="img" aria-label="The wibbly input pipeline. FrameSource produces frames, PoseTracker produces skeletons, PlayerBinder assigns durable player identities, and GestureRecognizer emits GestureEvents to the game. All four stages run inside the device; only the GestureEvent is ever eligible to leave it.">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="var(--line-2)"/>
+              </marker>
+            </defs>
+            <g font-family="ui-monospace, monospace">
+              <!-- device boundary -->
+              <rect x="2" y="14" width="936" height="184" rx="10" fill="none"
+                    stroke="var(--accent)" stroke-width="1.25" stroke-dasharray="6 6" opacity=".6"/>
+              <text x="18" y="34" font-size="10.5" font-weight="700" fill="var(--accent)" letter-spacing="1.4">YOUR DEVICE — NOTHING INSIDE THIS LINE IS EVER TRANSMITTED</text>
+
+              <!-- 01 FrameSource -->
+              <rect x="14" y="50" width="188" height="88" rx="8" fill="var(--surface-2)" stroke="var(--line-2)"/>
+              <text x="30" y="72" font-size="9.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 01</text>
+              <text x="30" y="93" font-size="14" font-weight="700" fill="var(--ink)">FrameSource</text>
+              <text x="30" y="112" font-size="10.5" fill="var(--ink-2)">getUserMedia</text>
+              <text x="30" y="128" font-size="10.5" fill="var(--ink-2)">1080p RGBA @ 30fps</text>
+
+              <!-- 02 PoseTracker -->
+              <rect x="250" y="50" width="188" height="88" rx="8" fill="var(--surface-2)" stroke="var(--line-2)"/>
+              <text x="266" y="72" font-size="9.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 02</text>
+              <text x="266" y="93" font-size="14" font-weight="700" fill="var(--ink)">PoseTracker</text>
+              <text x="266" y="112" font-size="10.5" fill="var(--ink-2)">MoveNet MultiPose</text>
+              <text x="266" y="128" font-size="10.5" fill="var(--ink-2)">Person[] · 17 pts each</text>
+
+              <!-- 04 PlayerBinder -->
+              <rect x="486" y="50" width="188" height="88" rx="8" fill="var(--surface-2)" stroke="var(--line-2)"/>
+              <text x="502" y="72" font-size="9.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 04</text>
+              <text x="502" y="93" font-size="14" font-weight="700" fill="var(--ink)">PlayerBinder</text>
+              <text x="502" y="112" font-size="10.5" fill="var(--ink-2)">SpatialBinder</text>
+              <text x="502" y="128" font-size="10.5" fill="var(--ink-2)">durable PlayerId</text>
+
+              <!-- 03 GestureRecognizer -->
+              <rect x="722" y="50" width="204" height="88" rx="8" fill="var(--accent-dim)" stroke="var(--accent)"/>
+              <text x="738" y="72" font-size="9.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 03</text>
+              <text x="738" y="93" font-size="14" font-weight="700" fill="var(--ink)">GestureRecognizer</text>
+              <text x="738" y="112" font-size="10.5" fill="var(--ink-2)">detectSwing()</text>
+              <text x="738" y="128" font-size="10.5" font-weight="700" fill="var(--accent)">GestureEvent → game</text>
+
+              <g stroke="var(--line-2)" stroke-width="1.75" marker-end="url(#ah)" fill="none">
+                <path d="M206 94 H244"/>
+                <path d="M442 94 H480"/>
+                <path d="M678 94 H716"/>
+              </g>
+
+              <!-- state strip, using the page's signal vocabulary -->
+              <g font-size="9.5" font-weight="700" letter-spacing="1.2">
+                <circle cx="34" cy="166" r="4" fill="var(--live)"/>
+                <text x="46" y="170" fill="var(--live)">LIVE</text>
+                <circle cx="270" cy="166" r="4" fill="var(--unval)"/>
+                <text x="282" y="170" fill="var(--unval)">SINGLE LIVE / MULTI UNVALIDATED</text>
+                <circle cx="506" cy="166" r="4" fill="var(--unval)"/>
+                <text x="518" y="170" fill="var(--unval)">FIXTURES ONLY</text>
+                <circle cx="742" cy="166" r="4" fill="var(--live)"/>
+                <text x="754" y="170" fill="var(--live)">LIVE</text>
+              </g>
+
+              <text x="18" y="228" font-size="10.5" fill="var(--ink-3)">Only the GestureEvent may leave — and only once networked play exists, which it does not today.</text>
+            </g>
+          </svg>
+        </div>
+        <div class="diagram-foot">
+          <span><i style="background:var(--live)"></i> Runs today</span>
+          <span><i style="background:var(--unval)"></i> Implemented, fixtures only</span>
+          <span><i style="background:var(--accent)"></i> The only interface a game sees</span>
+        </div>
+      </div>
+
+      <!-- the reduction, drawn to scale -->
+      <div class="cascade">
+        <div class="casc">
+          <div class="cname">Camera frame<small>Seam 01</small></div>
+          <div class="cbar"><div class="cfill" style="width:100%;background:var(--accent)"></div></div>
+          <div class="cval">8 MB<small>per frame</small></div>
+        </div>
+        <div class="casc">
+          <div class="cname">Landmark set<small>Seam 02</small></div>
+          <div class="cbar"><div class="cfill" style="width:48%;background:var(--unval)"></div></div>
+          <div class="cval">~1 KB<small>per frame</small></div>
+        </div>
+        <div class="casc">
+          <div class="cname">Bound skeleton<small>Seam 04</small></div>
+          <div class="cbar"><div class="cfill" style="width:46%;background:var(--unval)"></div></div>
+          <div class="cval">~1 KB<small>+ player id</small></div>
+        </div>
+        <div class="casc">
+          <div class="cname">GestureEvent<small>Seam 03</small></div>
+          <div class="cbar"><div class="cfill" style="width:12%;background:var(--live)"></div></div>
+          <div class="cval">≈64 B<small>per gesture</small></div>
+        </div>
+      </div>
+      <p class="note">Bars are on a log scale — 8&nbsp;MB to 64&nbsp;bytes is five orders of magnitude and would be invisible drawn linearly. The point is the direction, not the pixel widths: <b>each stage destroys information the next stage does not need</b>, and by the last one there is nothing left worth intercepting.</p>
+
+      <div class="cards" style="margin-top:30px">
+        <div class="card">
+          <span class="tag">Seam 01</span>
+          <div class="chead"><h3><code>FrameSource</code></h3><span class="sig sig-live">Shipped</span></div>
+          <p>Where pixels come from. <code>WebcamFrameSource</code> wraps <code>getUserMedia</code> and owns its own capture loop; a native Rust capture path arrives with the desktop shell. The detector no longer appends a preview widget to your <code>&lt;body&gt;</code> — the overlay is a component you place.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Seam 02</span>
+          <div class="chead"><h3><code>PoseTracker</code></h3><span class="sig sig-unval">Multi untested</span></div>
+          <p>Pixels to skeletons, returning <code>Person[]</code> — the plural is the entire design decision. <code>MoveNetMultiPoseTracker</code> pins <code>modelType: 'MultiPose.Lightning'</code> and returns up to six skeletons with landmarks normalised to [0,1], which is what unblocked every multi-player capability.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Seam 03</span>
+          <div class="chead"><h3><code>GestureRecognizer</code></h3><span class="sig sig-live">Shipped</span></div>
+          <p>Skeletons to game events. <code>detectSwing</code> is a pure function over landmark history, so 24 of its tests run in CI with no camera, no GPU and nobody waving at a laptop. Handedness is a sign flip — the left-handed <code>TODO</code> is gone.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Seam 04</span>
+          <div class="chead"><h3><code>PlayerBinder</code></h3><span class="sig sig-unval">Fixtures only</span></div>
+          <p>Which skeleton is which player — the hard problem demos skip. <code>SpatialBinder</code> does greedy nearest-centroid matching over torso centroids, with a claim zone per player and a forget timeout for occlusion. It is covered by 18 tests; it has not yet met four real people in a real room.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Support</span>
+          <div class="chead"><h3><code>Calibration</code></h3><span class="sig sig-live">Shipped</span></div>
+          <p>Per-player setup keyed to a <code>PlayerId</code> and persisted locally: handedness, reach envelope, torso scale, plus framing and lighting warnings via <code>checkFraming</code>. This is what killed the old <code>isRightHanded = true</code> hardcode — 15 tests cover it.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Support</span>
+          <div class="chead"><h3><code>AdaptivePacer</code></h3><span class="sig sig-live">Shipped</span></div>
+          <p>The original detector targeted 15&nbsp;fps <em>and</em> additionally processed only every third frame — a fixed guess that was wrong on both fast and slow machines. <code>AdaptivePacer</code> measures real inference time and adjusts, so a fast laptop is not throttled to a phone's budget.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 04 · MODELS ════════════════════════════════════════════════════ -->
+  <section class="section alt" id="models">
+    <div class="wrap">
+      <div class="shead">
+        <span class="num">04 / Model selection</span>
+        <h2>Why MoveNet, and why not the better models</h2>
+        <p class="lead">A couch game has an unusual requirement: the cost of tracking must not depend on how many friends turn up. That single property eliminates most of the field before accuracy is even discussed — and licensing eliminates most of what survives. The full reasoning is in the <a class="link" href="/products/wibbly/docs/models">model docs</a>; this is the short version.</p>
+      </div>
+
+      <div class="split wide-left" style="margin-bottom:36px">
+        <div>
+          <h3 style="font-size:20px;margin-bottom:12px">The property that decides it: flat cost</h3>
+          <p style="color:var(--ink-2);font-size:15px">Pose models come in two shapes. <b style="color:var(--ink)">Top-down</b> models detect people first, then run a pose network per person — so four players cost roughly four times one player. <b style="color:var(--ink)">Bottom-up</b> models find all joints in one pass and group them afterwards, so cost is flat regardless of how many people are in frame.</p>
+          <p style="color:var(--ink-2);font-size:15px">MoveNet MultiPose is bottom-up, and TensorFlow.js explicitly documents that person count does not affect inference speed. For a game where two more people can walk into frame at any moment, a flat curve is not an optimisation — it is the difference between a design that works and one that degrades exactly when the party starts.</p>
+          <p style="color:var(--ink-2);font-size:15px">It is also the only multi-person model with published <em>in-browser</em> FPS numbers. Every other candidate publishes server-GPU figures that tell you nothing about a laptop running Chrome.</p>
+        </div>
+        <div>
+          <div class="ledger-scroll">
+            <table class="ledger" style="min-width:0">
+              <thead><tr><th>Device (WebGL)</th><th>Single</th><th>Multi</th></tr></thead>
+              <tbody>
+                <tr><td>MacBook Pro 15"</td><td class="num-cell">104 fps</td><td class="num-hot">54 fps</td></tr>
+                <tr><td>Desktop i9-10900K</td><td class="num-cell">87 fps</td><td class="num-hot">62 fps</td></tr>
+                <tr><td>iPhone 12</td><td class="num-cell">51 fps</td><td class="num-hot">24 fps</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note">MoveNet Lightning, vendor-published in the <a class="link" href="https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/src/movenet/README.md" target="_blank" rel="noopener noreferrer">tfjs-models README</a>. Vendor numbers, but browser-real and reproducible — which is more than any rejected candidate offers. Those multi-person figures hold whether one person or six are in frame.</p>
+        </div>
+      </div>
+
+      <h3 style="font-size:20px;margin-bottom:8px">Rejected, and the reason on the record</h3>
+      <p class="note" style="border:0;padding-left:0;margin:0 0 20px;max-width:70ch">Several of these are technically better models. They were still rejected — mostly on licences that make commercial use impossible, which is a trap that catches a lot of computer-vision projects late.</p>
+
+      <div class="ledger-scroll">
+        <table class="ledger">
+          <thead><tr><th>Model</th><th>Licence</th><th>Why it lost</th></tr></thead>
+          <tbody>
+            <tr class="pick"><td>MoveNet MultiPose Lightning<br /><span class="sig sig-live" style="margin-top:6px">Chosen · in use</span></td><td><span class="lic ok">Apache 2.0</span></td><td class="note">Bottom-up, flat cost, up to 6 people, published in-browser FPS. Not the most accurate — the only one that meets the actual requirement.</td></tr>
+            <tr class="pick"><td>MediaPipe HandLandmarker<br /><span class="sig sig-unval" style="margin-top:6px">Chosen · built, not wired</span></td><td><span class="lic ok">Apache 2.0</span></td><td class="note">21 landmarks per hand, multi-hand, first-class web support. The only realistic browser hand option. Its 8 canned gestures were too thin for games, so <code>PinchRecognizer</code>/<code>PointRecognizer</code> classify from raw landmarks instead.</td></tr>
+            <tr><td>RTMO<br /><span class="tag">bottom-up · CVPR 2024</span></td><td><span class="lic ok">Apache 2.0</span></td><td class="note">Architecturally the right answer — 0.677–0.724 COCO AP at 8.9–19.1&nbsp;ms. But those are <b>V100</b> numbers, and there is no browser port and no WebGPU benchmark. Unproven engineering, not a drop-in. Kept as the documented phase-3 upgrade behind <code>PoseTracker</code>.</td></tr>
+            <tr><td>YOLOv8 / YOLO11-pose</td><td><span class="lic bad">AGPL-3.0</span></td><td class="note">Browser demos exist and it is fast. But AGPL-3.0 compliance requires open-sourcing the entire derivative work; a commercial non-starter without an Enterprise licence. <b>A licence trap, not a technical one.</b></td></tr>
+            <tr><td>WiLoR<br /><span class="tag">best hand model</span></td><td><span class="lic bad">CC BY-NC-ND 4.0</span></td><td class="note">Non-commercial <em>and</em> no-derivatives — unusable twice over. Also depends on Ultralytics, which drags AGPL back in anyway.</td></tr>
+            <tr><td>HaMeR</td><td><span class="lic bad">Research only</span></td><td class="note">Research/non-commercial terms, and MANO independently restricts commercial use.</td></tr>
+            <tr><td>MediaPipe PoseLandmarker</td><td><span class="lic ok">Apache 2.0</span></td><td class="note">Licence is fine; the architecture is not. Top-down, so cost scales with people. Documented failure mode: <b>two people within ~75&nbsp;cm at 3.5&nbsp;m drop a detection</b> — which is precisely the couch case. Google publishes no latency numbers for it at all.</td></tr>
+            <tr><td>ViTPose</td><td><span class="lic warn">Varies</span></td><td class="note">~1 FPS on a 2080&nbsp;Ti. Not real-time by any definition, let alone in a tab.</td></tr>
+            <tr><td>MediaPipe Holistic</td><td><span class="lic ok">Apache 2.0</span></td><td class="note">Single-person only, no published benchmarks, and has carried a stale “upgraded version coming soon” banner since 2023. Stability risk.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <span class="tag">One correction worth publishing</span>
+        <p>MediaPipe Tasks Web's “GPU” delegate is <b>WebGL, not WebGPU</b> — WebGPU for vision tasks remains an open upstream feature request. Anyone planning around “MediaPipe GPU” in the browser is planning around WebGL. If we want real WebGPU we are on ONNX Runtime Web, which is production-viable but materially more work. Every MoveNet number above is WebGL.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 05 · RUNTIME ═══════════════════════════════════════════════════ -->
+  <section class="section" id="runtime">
+    <div class="wrap">
+      <div class="shead">
+        <span class="num">05 / Runtime targets</span>
+        <h2>Browser-first, and why the desktop shortcut fails</h2>
+        <p class="lead">Zero install is the platform's single biggest asset: a link, a wave, a game. The tempting alternative — wrap it in Tauri and get a “real app” — was researched and rejected as an architecture, not as a preference. It fails for four independent reasons, and the last one is arithmetic.</p>
+      </div>
+
+      <div class="split">
+        <div>
+          <ul class="stack">
+            <li><b>No WebGPU on macOS/Linux WebKit</b><span>WebKitGTK has none, and per a WebKit developer “nobody is working on it.” WKWebView on macOS 26 is unconfirmed — an open question we intend to test empirically rather than assume. Net effect: CPU-WASM only, roughly <span class="metric">3–5× slower</span>.</span></li>
+            <li><b>The Linux camera is broken by default</b><span>Distro WebKitGTK ships without WebRTC/media-stream. Making <code>getUserMedia</code> work at all means compiling WebKitGTK yourself, X11-only. That is not a shippable install story.</span></li>
+            <li><b>macOS permission bugs</b><span>Double prompts, and cases where the permission prompt never appears at all (<code>wry#1195</code>, <code>tauri#11951</code> — both open as of research).</span></li>
+            <li><b>You cannot escape it by shipping frames to Rust</b><span>The natural fix is to keep the webview for UI and do capture and inference in native code. Tauri's IPC is JSON-serialized, so this is where the arithmetic ends the argument.</span></li>
+          </ul>
+          <p class="note"><b>The signal that settled it:</b> no open-source Tauri app does webcam ML inside the webview. The closest one, Lazyeat, pairs Tauri with a separate Python computer-vision process — which is to say it also concluded the webview cannot do this.</p>
+        </div>
+
+        <div>
+          <div class="diagram">
+            <div style="padding:24px">
+              <span class="tag">The IPC arithmetic</span>
+              <p style="margin:14px 0 20px;color:var(--ink-2);font-size:14.5px">A 1080p RGBA frame is about 8&nbsp;MB. Thirty of them a second is about 250&nbsp;MB/s of JSON-serialized IPC. Measured reality on Windows: <b style="color:var(--ink)">10&nbsp;MB takes roughly 200&nbsp;ms</b>. The budget is not tight — it is off by orders of magnitude.</p>
+
+              <div class="cascade" style="margin:0">
+                <div class="casc" style="grid-template-columns:150px minmax(0,1fr) 110px">
+                  <div class="cname">Frames over IPC<small>rejected</small></div>
+                  <div class="cbar"><div class="cfill" style="width:100%;background:var(--accent)"></div></div>
+                  <div class="cval">250<small>MB/s</small></div>
+                </div>
+                <div class="casc" style="grid-template-columns:150px minmax(0,1fr) 110px">
+                  <div class="cname">Landmarks over IPC<small>the design</small></div>
+                  <div class="cbar"><div class="cfill" style="width:1.2%;background:var(--live)"></div></div>
+                  <div class="cval">30<small>KB/s</small></div>
+                </div>
+              </div>
+
+              <p style="margin:20px 0 0;color:var(--ink-2);font-size:14.5px">Which is the whole design of phase 2: Tauri is right for the <em>app</em> and wrong for the <em>webview ML</em>. Capture with <code>nokhwa</code> and infer with <code>ort</code> in the Rust core, and <b style="color:var(--ink)">only landmarks cross IPC</b> — kilobytes at 30&nbsp;Hz, trivially cheap. That also sidesteps WebKitGTK entirely via V4L2, and unlocks RTMO, which the browser cannot reach.</p>
+            </div>
+          </div>
+          <p class="note">Interim step worth taking first: a <b>daemon plus browser UI</b> — the Jellyfin / IPFS Desktop pattern. It solves the persistent-node problem, uses the user's real browser so WebGPU and the camera just work, and is nearly free once the browser build exists. <b>None of this is built.</b></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 06 · PRIVACY ═══════════════════════════════════════════════════ -->
+  <section class="section alt" id="privacy">
+    <div class="wrap">
+      <div class="shead">
+        <span class="num">06 / The boundary</span>
+        <h2>Camera frames never leave the device</h2>
+        <p class="lead">This is wibbly's strongest property, so it deserves a mechanism rather than a slogan. The claim is not “we promise not to look at your camera” — it is that <b style="color:var(--ink)">there is no code path that could send a frame anywhere</b>, and the reason is structural: by the time the pipeline produces something worth transmitting, the pixels are already gone.</p>
+      </div>
+
+      <div class="diagram">
+        <div class="diagram-scroll">
+          <svg viewBox="0 0 900 300" role="img" aria-label="Privacy boundary diagram. Inside the device, the camera produces frames, MoveNet reduces them to landmarks, the recognizer reduces those to a GestureEvent, and the frame is discarded. Only the GestureEvent, about 64 bytes, is eligible to cross the network boundary — and no network code exists today.">
+            <g font-family="ui-monospace, monospace">
+              <rect x="4" y="26" width="558" height="248" rx="10" fill="var(--surface-2)" stroke="var(--line-2)"/>
+              <text x="22" y="50" font-size="10" fill="var(--ink-3)" letter-spacing="1.6">YOUR DEVICE · BROWSER TAB</text>
+
+              <rect x="26" y="72" width="112" height="62" rx="7" fill="var(--surface)" stroke="var(--line)"/>
+              <text x="42" y="99" font-size="12" fill="var(--ink)" font-weight="700">Camera</text>
+              <text x="42" y="119" font-size="10" fill="var(--ink-3)">1080p RGBA</text>
+
+              <rect x="176" y="72" width="120" height="62" rx="7" fill="var(--surface)" stroke="var(--line)"/>
+              <text x="192" y="99" font-size="12" fill="var(--ink)" font-weight="700">MoveNet</text>
+              <text x="192" y="119" font-size="10" fill="var(--ink-3)">WebGL, in-tab</text>
+
+              <rect x="334" y="72" width="128" height="62" rx="7" fill="var(--surface)" stroke="var(--line)"/>
+              <text x="350" y="99" font-size="12" fill="var(--ink)" font-weight="700">Recognizer</text>
+              <text x="350" y="119" font-size="10" fill="var(--ink-3)">pure function</text>
+
+              <g stroke="var(--line-2)" stroke-width="1.75" marker-end="url(#ah)" fill="none">
+                <path d="M142 103 H170"/>
+                <path d="M300 103 H328"/>
+              </g>
+              <text x="140" y="93" font-size="9.5" fill="var(--ink-3)">8 MB</text>
+              <text x="298" y="93" font-size="9.5" fill="var(--ink-3)">1 KB</text>
+
+              <path d="M232 138 V176" stroke="var(--accent)" stroke-width="1.75" fill="none" marker-end="url(#ah)" stroke-dasharray="5 4"/>
+              <rect x="140" y="180" width="186" height="52" rx="7" fill="var(--accent-dim)" stroke="var(--accent)"/>
+              <text x="156" y="203" font-size="11.5" fill="var(--accent)" font-weight="700">FRAME DISCARDED</text>
+              <text x="156" y="221" font-size="10" fill="var(--ink-2)">never stored or buffered</text>
+
+              <rect x="352" y="164" width="196" height="90" rx="7" fill="var(--surface)" stroke="var(--accent)"/>
+              <text x="366" y="188" font-size="11.5" fill="var(--ink)" font-weight="700">GestureEvent</text>
+              <text x="366" y="208" font-size="9.5" fill="var(--ink-3)">{ playerId, kind,</text>
+              <text x="366" y="224" font-size="9.5" fill="var(--ink-3)">  confidence, vector,</text>
+              <text x="366" y="240" font-size="9.5" fill="var(--ink-3)">  tCapture }</text>
+              <path d="M398 138 V158" stroke="var(--line-2)" stroke-width="1.75" fill="none" marker-end="url(#ah)"/>
+
+              <path d="M580 16 V288" stroke="var(--accent)" stroke-width="1.75" stroke-dasharray="7 6"/>
+              <text x="590" y="38" font-size="10" fill="var(--accent)" font-weight="700" letter-spacing="1.6">NETWORK BOUNDARY</text>
+
+              <rect x="590" y="56" width="302" height="92" rx="8" fill="none" stroke="var(--line-2)" stroke-dasharray="5 5"/>
+              <text x="608" y="82" font-size="12" fill="var(--ink-2)" font-weight="700">Other players (spec)</text>
+              <text x="608" y="103" font-size="10" fill="var(--ink-3)">receives: GestureEvent only</text>
+              <text x="608" y="120" font-size="10" fill="var(--ink-3)">≈ 64 bytes per event</text>
+              <text x="608" y="139" font-size="10" fill="var(--unval)" font-weight="700">NOT BUILT — NO NETWORK CODE</text>
+
+              <path d="M552 208 H576 Q596 208 596 190 V160" stroke="var(--accent)" stroke-width="1.75" fill="none" marker-end="url(#ah)"/>
+
+              <text x="610" y="192" font-size="10.5" fill="var(--ink-3)">Never crosses this line:</text>
+              <text x="610" y="212" font-size="10.5" fill="var(--accent)" font-weight="700">— camera frames</text>
+              <text x="610" y="230" font-size="10.5" fill="var(--accent)" font-weight="700">— landmark skeletons</text>
+              <text x="610" y="248" font-size="10.5" fill="var(--accent)" font-weight="700">— video of any kind</text>
+            </g>
+          </svg>
+        </div>
+        <div class="diagram-foot">
+          <span><i style="background:var(--accent)"></i> The reduction that makes the guarantee structural</span>
+          <span><i style="background:var(--unval)"></i> Spec — no transport exists</span>
+        </div>
+      </div>
+
+      <div class="split" style="margin-top:32px">
+        <div>
+          <h3 style="font-size:20px;margin-bottom:12px">Why this is structural, not a policy</h3>
+          <p style="color:var(--ink-2);font-size:15px">Inference is local because it <em>has</em> to be. A browser tab has nowhere to send 250&nbsp;MB/s of frames that would be fast enough to play against, so the architecture that makes the game feel good is the same architecture that makes it private — the two requirements point the same way.</p>
+          <p style="color:var(--ink-2);font-size:15px">The pipeline is also lossy in the useful direction: a <code>GestureEvent</code> carries a player id, a gesture name, a confidence and a 2D vector. You cannot reconstruct a room, a face or a person from that, because the information was destroyed three stages upstream, in the tab, before anything was eligible to be sent.</p>
+        </div>
+        <div>
+          <ul class="gapstack">
+            <li><span class="sig sig-live">Today</span><div><b>Local inference</b><span>Every frame is captured by <code>getUserMedia</code>, run through MoveNet in the tab, and dropped. No frame is uploaded, stored or proxied. True of the code as it exists now, not of a future version.</span></div></li>
+            <li><span class="sig sig-unval">Transport built, no lobby</span><div><b>Events on the wire</b><span>Networked play is peer-to-peer: one player's browser tab is authoritative, and each client tracks its own camera and transmits only gesture events over a WebRTC <code>DataChannel</code> — no backend wibbly runs, and no magnetite dependency anywhere in this path (<code>packages/wibbly-p2p</code>). The transport is built and unit-tested; what's missing is a lobby screen. Separately, a real magnetite game module — the reference arena-shooter, compiled to wasm — runs client-side today as the authority for solo tennis (<code>@vulos/wibbly-authority</code>); that link has nothing to do with hosting a second player's connection.</span></div></li>
+            <li><span class="sig sig-unval">Caveat</span><div><b>What we won't hide</b><span>The build used to initialise Firebase Analytics — central tracking, in a product whose thesis is the opposite. The SDK and its dependency are gone. Hosting is still Firebase, so the claim holds for your camera and your page views but not your DNS lookups. The MoveNet weights ship with the app and load same-origin — no third-party CDN, and the demo build refuses one outright.</span></div></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="tag">The cost of this design, stated plainly</span>
+        <p>Local inference buys privacy and gives up verifiability. Magnetite's replay verification assumes deterministic input; a camera is a nondeterministic sensor stream and <b>cannot be replay-verified</b>. So when networked play arrives, gesture games will run <b>client-attested</b>: whoever holds authority — a host's browser tab, or in principle a dedicated server — simulates over received events, and events are rate-limited and plausibility-checked against human-reachable velocities and cooldowns — but a determined cheater can synthesise them. Centralizing authority would not buy back that guarantee, since the cheat surface sits upstream, at the sensor — which is also the case for running wibbly's own multiplayer host-in-browser instead of on a server. That is a real limitation of putting the tracker on the player's machine, and it is the honest price of frames never leaving the device.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 07 · GAPS ══════════════════════════════════════════════════════ -->
+  <section class="section" id="gaps">
+    <div class="wrap">
+      <div class="shead">
+        <span class="num">07 / The gaps</span>
+        <h2>What's spec'd, not built</h2>
+        <p class="lead">Said plainly, so nobody has to reverse-engineer it from the pitch. This list is deliberately the same size as the feature list.</p>
+      </div>
+
+      <ul class="gapstack">
+        <li><span class="sig sig-unval">Unvalidated</span><div><b>Multi-person play</b><span>The tracker returns six skeletons and the binder assigns stable ids, both under unit test — but neither has been validated against real cameras and real people. Fixtures are not a living room. Treat couch multiplayer as implemented and unproven, which is not the same as working.</span></div></li>
+        <li><span class="sig sig-unval">Unvalidated</span><div><b>Two-player tennis</b><span>The binder is configured for two claim zones; the game reads gestures for <code>player_1</code> and ignores the rest. Nobody can currently join by standing in the right half of the frame.</span></div></li>
+        <li><span class="sig sig-unval">Built, not wired</span><div><b>Hand tracking</b><span>MediaPipe HandLandmarker is chosen, licence-cleared, and now implemented: <code>HandLandmarkTracker</code>, <code>PinchRecognizer</code> and <code>PointRecognizer</code> exist and are unit-tested, including distance-from-camera and rotation invariance. Two things are still not true: their thresholds are derived from geometry, not measured against a real hand, since no hand-tracking session has run against a live camera yet; and <code>WibblyInput</code>'s pipeline does not compose the hand tracker, so nothing — including <a class="link" href="#play">Palmworks</a> — is gesture-driven by hands yet.</span></div></li>
+        <li><span class="sig sig-unval">Transport built, no lobby</span><div><b>Peer-to-peer networked play</b><span>The settled design — host authority in one player's browser tab, guest <code>GestureEvent</code>s over a WebRTC <code>DataChannel</code>, copy-paste/QR signalling (Trystero optional), zero backend wibbly runs — is implemented and unit-tested in <code>packages/wibbly-p2p</code> (<code>PeerSession</code>, offer/answer helpers, a link-sized codec; no magnetite dependency), and tennis wires an optional <code>PeerSession</code> in already, off unless a host page supplies a transport. What is not built: a lobby screen. Nothing turns the transport into a button a visitor can click. Free STUN, but <b>no free TURN</b>: peers behind symmetric NAT or CGNAT will not connect, with no workaround. Same-network play is unaffected. Two more things worth knowing ahead of time: WebRTC hands your IP address to the peer you connect to (and to the STUN server) by design — normal for any direct peer connection, and only a TURN relay hides it, which is exactly the infrastructure this design avoids running. This path needs no magnetite node, and never did.</span></div></li>
+        <li><span class="sig sig-spec">Spec</span><div><b>Soccer and Boxing</b><span>Both are tracked backlog items with a stated rationale, not works in progress. No soccer code and no boxing code exists. Where the app surfaces them as “coming soon”, that label now points at real backlog entries rather than at nothing — which is the most that can honestly be said for it.</span></div></li>
+        <li><span class="sig sig-spec">Spec</span><div><b>A desktop shell</b><span>Tauri with Rust-side capture and inference is phase 3. Nothing has been started.</span></div></li>
+        <li><span class="sig sig-spec">Spec</span><div><b>A release build</b><span>No installer, no Docker image, no hosted deployment beyond the browser demo. Clone it and run the dev server. Hosting is still configured for Firebase, though the analytics SDK is gone.</span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 08 · QUICK START ═══════════════════════════════════════════════ -->
+  <section class="section alt" id="quickstart">
+    <div class="wrap">
+      <div class="shead">
+        <span class="num">08 / Quick start</span>
+        <h2>Clone it, allow the camera, stand back</h2>
+        <p class="lead">Source-only — there is no release build to install. If you just want to try it, the <a class="link" href="/products/wibbly/play/">browser demo</a> needs none of this.</p>
+      </div>
+
+      <div class="split wide-left">
+        <div class="codeblock">
+          <div class="bar"><span class="tag">bash</span></div>
+<pre><span class="p">git</span> clone https://github.com/vul-os/wibbly
+<span class="p">cd</span> wibbly
+
+<span class="p">npm</span> install
+<span class="p">npm</span> test            <span class="c"># 86 seam tests, no camera required</span>
+<span class="p">npm</span> run dev
+
+<span class="c"># open http://localhost:5173, allow camera access,</span>
+<span class="c"># stand ~2 m back and swing. Set handedness in the</span>
+<span class="c"># camera preview — it applies on the next frame.</span></pre>
+        </div>
+        <ol class="steps">
+          <li><span class="n">01</span><div><b>Clone and install</b><span>Node 20+, React 19, Vite, Three.js. The MoveNet weights are vendored under <code>public/models/</code> and served same-origin — no CDN to reach on first load.</span></div></li>
+          <li><span class="n">02</span><div><b>Run the seam tests</b><span>The recognizers, binder, pacer and calibration are pure logic, so they verify in about two seconds with no camera and no GPU. That is the point of the refactor.</span></div></li>
+          <li><span class="n">03</span><div><b>Stand back and swing</b><span>About two metres, upper body in frame, even lighting. Tennis drives one player today, either handedness. Details in the <a class="link" href="/products/wibbly/docs/getting-started">docs</a>.</span></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 09 · ROADMAP ═══════════════════════════════════════════════════ -->
+  <section class="section" id="roadmap">
+    <div class="wrap">
+      <div class="shead">
+        <span class="num">09 / Roadmap</span>
+        <h2>Three phases, in risk order</h2>
+        <p class="lead">The ordering is deliberate: the library blocks everything, and the highest-risk component inside it — the player binder — was built early rather than deferred. Full backlog in the <a class="link" href="/products/wibbly/docs/roadmap">roadmap docs</a>.</p>
+      </div>
+
+      <div class="phases">
+        <div class="phase">
+          <span class="tag">Phase 1 — the library</span>
+          <h3>Mostly landed</h3>
+          <ul>
+            <li class="done"><code>wibbly-input</code> scaffold, all DOM injection stripped</li>
+            <li class="done">MoveNet MultiPose replaces SinglePose</li>
+            <li class="done"><code>SpatialBinder</code> — highest risk, done early</li>
+            <li class="done"><code>SwingRecognizer</code> as a pure, testable function</li>
+            <li class="done">Handedness fixed; adaptive pacing replaces the throttle</li>
+            <li class="done"><code>HandLandmarkTracker</code> + pinch / point recognizers — built, not yet composed by the pipeline</li>
+          </ul>
+        </div>
+        <div class="phase">
+          <span class="tag">Phase 2 — the platform</span>
+          <h3>Partly started</h3>
+          <ul>
+            <li class="done">Firebase Analytics removed</li>
+            <li class="done">Playable browser demo, no server, no account</li>
+            <li class="done">Real magnetite link — <code>AuthoritativeGame</code> compiled to wasm, running client-side as tennis's authority, no server</li>
+            <li>Tennis on the seam with 2-player local, one camera</li>
+            <li>Palmworks folded in, not yet gesture-driven</li>
+            <li>Soccer — first non-swing, lower-body gesture</li>
+            <li>Boxing — two gesture streams from one player</li>
+          </ul>
+        </div>
+        <div class="phase">
+          <span class="tag">Phase 3 — depth</span>
+          <h3>Partly started</h3>
+          <ul>
+            <li><code>RtmoOnnxTracker</code> on ONNX Runtime Web + WebGPU, benchmarked against MoveNet — not started</li>
+            <li>Tauri shell with <code>nokhwa</code> capture and <code>ort</code> inference — not started</li>
+            <li class="done">Peer-to-peer networked play — host-authoritative browser, WebRTC <code>DataChannel</code>, no backend; transport built and wired into tennis, no lobby UI yet</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="tag">Two questions we have not answered</span>
+        <p>Whether <code>navigator.gpu</code> exists in WKWebView on macOS 26 is unresolved in our research and needs testing empirically, not assuming. And there are no in-browser benchmarks for RTMO or YOLO-pose at any player count anywhere — if phase 3 proceeds we will have to produce those numbers ourselves, because there are none to inherit.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ VULOS ══════════════════════════════════════════════════════════ -->
+  <section class="section alt">
+    <div class="wrap">
+      <div class="vulos-band">
+        <img src="/products/wibbly/assets/vulos-logo.png" alt="Vulos logo" width="50" height="50" />
+        <div>
+          <h3>Listed alongside the Vulos suite</h3>
+          <p><a href="/products" target="_top" style="color:var(--ink);font-weight:600">Vulos</a> is a family of open, self-hostable software. wibbly is fully independent — it runs on a machine you control, needs no Vulos account and no Vulos infrastructure, and needs no payment of any kind — and shares the suite's posture that computation should happen where the data already is. Magnetite is the platform underneath it, providing identity, discovery, lobbies and hosting to whoever wants them; wibbly is a game built on top, not a second platform.</p>
+          <p style="margin-top:14px"><b style="color:var(--ink)">Where magnetite fits.</b> A real magnetite <code>AuthoritativeGame</code> — the reference arena-shooter template, compiled to wasm — runs client-side, in the browser tab, as the authority for solo tennis: <code>@vulos/wibbly-authority</code> loads it and steps it as a <code>Topology::SingleRoom</code> match, the bottom rung of magnetite's own topology ladder, with no server anywhere. That's what makes "built on magnetite" literally true today, not a stated intention. It changes nothing about anti-cheat: magnetite still types camera gestures <code>InputClass::Attested</code> — never replay-verifiable — because determinism is a property of the simulation given its inputs, not of the inputs themselves. Separately, wibbly's own multiplayer is peer-to-peer in the browser (see <a class="link" href="#gaps">the gaps</a>) and has <b style="color:var(--ink)">no magnetite dependency at all</b>. Magnetite is worth running on its own terms regardless: a deterministic authoritative runtime, a WASM sandbox, replay verification, and bring-any-server hosting.</p>
+          <a class="more" href="/products/magnetite" target="_top">See magnetite →</a>
+          <a class="more" href="/products" target="_top">Explore Vulos →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap foot">
+    <div class="left">
+      <img src="/products/wibbly/assets/vulos-logo.png" alt="" aria-hidden="true" width="18" height="18" />
+      <span>Listed on <a href="/products" target="_top">Vulos</a> — open, self-hostable software. wibbly is standalone, free, MIT OR Apache-2.0, and early.</span>
+    </div>
+    <div class="links">
+      <a href="/products/wibbly/play/" target="_top">Play</a>
+      <a href="/products/wibbly/docs">Docs</a>
+      <a href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="/products" target="_top">vulos.org</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var mql = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function resolve(pref) { return pref === 'system' ? (mql.matches ? 'dark' : 'light') : pref; }
+    function currentPref() { try { return localStorage.getItem('vulos-theme') || 'system'; } catch (e) { return 'system'; } }
+
+    function paintSeg(pref) {
+      document.querySelectorAll('.seg button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.set === pref));
+      });
+    }
+    function apply(pref) {
+      root.setAttribute('data-theme', resolve(pref));
+      root.setAttribute('data-theme-pref', pref);
+      paintSeg(pref);
+    }
+
+    document.querySelectorAll('.seg button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var pref = b.dataset.set;
+        try { localStorage.setItem('vulos-theme', pref); } catch (e) {}
+        apply(pref);
+      });
+    });
+    mql.addEventListener('change', function () { if (currentPref() === 'system') apply('system'); });
+    apply(currentPref());
+  })();
+</script>
+</body>
+</html>
