@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary meta. Kept to what is true of this build: one playable game,
+         one gesture, tracking on-device. No ratings, no play counts — there is
+         no telemetry in this product and therefore nothing to count. -->
+    <title>wibbly — your camera is the controller</title>
+    <meta name="description" content="Camera gesture games in a browser tab. Swing your arm to play tennis; pose tracking runs on your device and camera frames are never uploaded. Early build: one game, one gesture." />
+    <meta name="author" content="wibbly" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="wibbly" />
+    <meta property="og:title" content="wibbly — your camera is the controller" />
+    <meta property="og:description" content="Camera gesture games in a browser tab. Tracking runs on your device; frames are never uploaded." />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="wibbly — your camera is the controller" />
+    <meta name="twitter:description" content="Camera gesture games in a browser tab. Tracking runs on your device; frames are never uploaded." />
+
+    <meta name="application-name" content="wibbly" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="wibbly" />
+    <meta name="theme-color" content="#0D0A10" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Only files that actually exist are linked. The three PNG icon sizes and
+         the apple-touch-icon that used to be listed here had no source in the
+         repo, so every load requested four URLs that could only 404 — visible
+         noise in any network trace, and wrong-path requests once the app is
+         served from a sub-path. -->
+    <link rel="icon" type="image/svg+xml" href="/products/wibbly/play/favicon.svg" />
+    <link rel="manifest" href="/products/wibbly/play/site.webmanifest" />
+
+    <style>
+      /* Boot screen only. The app's real design system is src/style.css —
+         these few rules exist so the first paint is already the right colour
+         instead of a white flash followed by a dark app.
+
+         "Court Lights": night-court neutrals, one magenta motion trail. */
+      html { background: #0d0a10; }
+      body {
+        margin: 0;
+        background: #0d0a10;
+        color: #f3eff7;
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root { min-height: 100vh; }
+
+      .wibbly-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.1rem;
+        background: radial-gradient(120% 80% at 50% 0%, rgba(255, 77, 157, 0.1) 0%, transparent 60%), #0d0a10;
+        z-index: 9999;
+        transition: opacity 0.35s ease-out;
+      }
+      .wibbly-loader.hidden { opacity: 0; pointer-events: none; }
+
+      .loader-logo {
+        font-size: 2.6rem;
+        font-weight: 800;
+        letter-spacing: -0.045em;
+        background: linear-gradient(100deg, #f3eff7 30%, #ff4d9d 130%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .loader-tagline {
+        font-size: 0.72rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: #6e6479;
+        font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      }
+      /* One magenta trail crossing a chalk line — the product's only motif. */
+      .loader-progress {
+        width: 220px;
+        height: 2px;
+        background: rgba(243, 239, 247, 0.09);
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+      }
+      .loader-progress::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -40%;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, #ff4d9d, transparent);
+        animation: trail 1.4s ease-in-out infinite;
+      }
+      @keyframes trail {
+        0% { left: -40%; }
+        100% { left: 100%; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .loader-progress::before { animation: none; left: 0; width: 100%; opacity: 0.5; }
+      }
+
+      ::selection { background: rgba(255, 77, 157, 0.3); color: #f3eff7; }
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #131017; }
+      ::-webkit-scrollbar-thumb { background: #3e3451; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #ff4d9d; }
+    </style>
+    <script type="module" crossorigin src="/products/wibbly/play/assets/index-C4Uv3bg_.js"></script>
+    <link rel="stylesheet" crossorigin href="/products/wibbly/play/assets/index-Hz6p7YSe.css">
+  </head>
+  <body>
+    <div class="wibbly-loader" id="loader">
+      <div class="loader-logo">wibbly</div>
+      <div class="loader-tagline">your camera is the controller</div>
+      <div class="loader-progress"></div>
+    </div>
+
+    <div id="root"></div>
+
+    <script>
+      // Hide as soon as the app has actually painted. The old shell held this
+      // screen for an extra 1.2s "for a more dramatic effect", which is 1.2s of
+      // lying about how long the app took to load.
+      window.addEventListener('load', function () {
+        var loader = document.getElementById('loader');
+        if (!loader) return;
+        loader.classList.add('hidden');
+        setTimeout(function () { loader.remove(); }, 400);
+      });
+    </script>
+  </body>
+</html>

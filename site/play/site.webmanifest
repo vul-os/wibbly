@@ -1,0 +1,23 @@
+{
+  "name": "wibbly — camera gesture games",
+  "short_name": "wibbly",
+  "description": "Camera gesture games in a browser tab. Tracking runs on your device; camera frames are never uploaded.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D0A10",
+  "theme_color": "#0D0A10",
+  "orientation": "landscape-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["games", "sports"],
+  "icons": [],
+  "shortcuts": [
+    {
+      "name": "Play tennis",
+      "short_name": "Play",
+      "url": "/play"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
