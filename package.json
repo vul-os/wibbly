@@ -11,7 +11,7 @@
     "dev": "vite",
     "dev:demo": "VITE_WIBBLY_MODE=demo vite",
     "build": "vite build",
-    "build:demo": "VITE_WIBBLY_MODE=demo WIBBLY_BASE=/products/magnetite/wibbly/play/ WIBBLY_OUTDIR=dist-demo vite build",
+    "build:demo": "VITE_WIBBLY_MODE=demo WIBBLY_BASE=/products/wibbly/play/ WIBBLY_OUTDIR=dist-demo vite build",
     "preview": "vite preview",
     "screenshots": "node scripts/screenshots.mjs",
     "vendor:hands": "node scripts/vendor-hand-assets.mjs",
