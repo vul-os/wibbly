@@ -83,6 +83,7 @@ Audited against the tree, not against the pitch.
 | Left-handed play | **Built** | The `isRightHanded = true` hardcode is gone; handedness is a live per-player lookup |
 | Tennis reference game | **Built** | Three.js court, ball physics, AI opponent, ported onto the seams |
 | Firebase Analytics | **Removed** | The central tracking beacon is deleted, not replaced |
+| Firebase Hosting | **Removed** | `firebase.json`, `.firebaserc` and the deploy workflow are gone. `dist/` is static files; a self-host path (nginx, Caddy, `npm run preview`) is documented in [Deploying it](#deploying-it). No hosted service in the deploy path |
 | **Multi-player on one camera** | **Partial** | The binder handles 2 players and the game requests 2 claim zones — but tennis still routes only `player_1` to the racket. **Untested with two humans.** |
 | **Gesture vocabulary beyond swing** | **Partial** | `pinch` and `point` are built and unit-tested (`packages/wibbly-input/src/recognizers/`) — but not composed into `WibblyInput`'s pipeline and not driving any game yet. `punch` and `kick` remain unbuilt. |
 | **Hand tracking** (MediaPipe HandLandmarker) | **Built, not wired** | `HandLandmarkTracker` exists and is unit-tested, including distance-from-camera and rotation invariance — but thresholds are derived from geometry, not a real hand, since no hand-tracking session has run against a live camera yet, and the pipeline doesn't compose it in. Its assets (the `.task` model + MediaPipe Wasm runtime, ~40 MiB) vendor same-origin on demand via `npm run vendor:hands`; the tracker already defaults to those vendored paths, so `init()` works once it's run. Not committed by default — nothing composes hands in yet, unlike the always-needed MoveNet pose model. |
@@ -92,7 +93,7 @@ Audited against the tree, not against the pitch.
 | **Tauri native shell** | *Planned (phase 2)* | Researched and specified; no Rust in this repo |
 | **RTMO / ONNX / WebGPU tracker** | *Planned (phase 3)* | No browser port exists to benchmark against |
 | **Vendored pose model** | **Built** | MoveNet MultiPose Lightning checked in at `public/models/` (~9.3 MiB) and served same-origin. Byte-verified against its own weight manifest by `npm run verify:model`. The TF Hub CDN is now an explicit opt-in, not the default. |
-| **Demo mode** (`VITE_WIBBLY_MODE=demo`) | **Built** | A separate single-surface build for embedding at `vulos.org/products/magnetite/wibbly/play/`: instant start, no router, no persistent storage, magnetite hard-disabled, local model only. Verified end-to-end under the real production CSP by `npm run verify:demo` — **26/26 checks, zero external network requests**. |
+| **Demo mode** (`VITE_WIBBLY_MODE=demo`) | **Built** | A separate single-surface build for embedding at `vulos.org/products/wibbly/play/`: instant start, no router, no persistent storage, magnetite hard-disabled, local model only. Verified end-to-end under the real production CSP by `npm run verify:demo` — **26/26 checks, zero external network requests**. |
 | Title screen, setup flow, in-game menu | **Built** | `src/pages/` is now four surfaces: title, first-run setup, play, 404. The marketing shell (`home`, `about`, `game-menu`, `game-container`) is deleted, along with the fabricated JSON-LD rating and play count that were still in `index.html`. The canonical public writing is `site/landing.html`. |
 | **Soccer** | **In progress — reasoned, not coded** | Tracked backlog, not vague "someday": it's next because a kick is the first gesture below the waist, and `SwingRecognizer` ignores leg keypoints entirely — it forces `GestureRecognizer` to be genuinely plural. No code exists. Shows on the title screen as **Planned**, non-selectable. |
 | **Boxing** | **In progress — reasoned, not coded** | Tracked backlog: it's the first game needing two independent gesture streams from one player (left and right hand, per-arm cooldowns) rather than one dominant hand, which is what `Calibration.handedness` assumes today. No code exists. Shows on the title screen as **Planned**, non-selectable. See [`src/components/catalogue.js`](src/components/catalogue.js) for both entries verbatim. |
@@ -156,7 +157,7 @@ model fails to load, which is the correct degradation.
 ```bash
 npm run build          # production bundle → dist/
 npm run preview        # serve dist/
-npm test               # 338 unit tests (input seams + wibbly-p2p + wibbly-authority + app), no camera required
+npm test               # 363 unit tests (221 input seams + 73 wibbly-p2p + 5 wibbly-authority + 64 app), no camera required
 npm run typecheck
 npm run screenshots    # requires: npm i -D playwright && npx playwright install chromium
 ```
@@ -164,7 +165,7 @@ npm run screenshots    # requires: npm i -D playwright && npx playwright install
 ### The embeddable demo
 
 ```bash
-npm run build:demo     # → dist-demo/, based at /products/magnetite/wibbly/play/
+npm run build:demo     # → dist-demo/, based at /products/wibbly/play/
 npm run verify:demo    # builds it, serves it at that sub-path under the REAL
                        # production CSP, and drives it with Chromium
 npm run verify:model   # re-check the vendored weights against their manifest
@@ -195,6 +196,62 @@ Demo builds reject that setting rather than producing a build that cannot work.
 
 ---
 
+## Deploying it
+
+**There is no hosted service anywhere in wibbly's deploy path, and no account to create.**
+`npm run build` emits `dist/` — HTML, JS, CSS, the vendored MoveNet weights, one GLB and one
+wasm module. No server component, no database, no API. Any static file server hosts it.
+
+wibbly used to configure Firebase Hosting (`firebase.json`, `.firebaserc`, an auto-generated
+deploy workflow). That is gone. Nothing replaced it with another vendor: hosting is now a
+question you answer, not one this repo answers for you.
+
+The bundle asks a server for exactly two things:
+
+| Requirement | Why |
+|---|---|
+| Serve `index.html` for unknown paths | `react-router-dom` owns `/setup` and `/play` client-side. A hard refresh on one of those asks for a file that does not exist on disk. |
+| Serve `.wasm` as `application/wasm` | `@vulos/wibbly-authority` calls `WebAssembly.compile`; a wrong MIME type fails it. Most servers already do this. |
+
+Neither applies to the demo bundle — it has no router and no wasm.
+
+```bash
+npm run build && npm run preview      # Vite's own static server, SPA fallback included
+python3 -m http.server -d dist 8080   # dev only: no SPA fallback, so deep links 404
+```
+
+```nginx
+# nginx
+server {
+  root /srv/wibbly;                    # contents of dist/
+  location / { try_files $uri $uri/ /index.html; }
+}
+```
+
+```
+# Caddy
+wibbly.example.com {
+  root * /srv/wibbly
+  try_files {path} /index.html
+  file_server
+}
+```
+
+**Reaching it from outside your LAN** is a separate question, and for wibbly it is often not one
+you need to answer: same-network peer play is the case that always works (see
+[Multiplayer](site/docs/MULTIPLAYER.md)). If you do want it reachable further without renting a
+CDN, the suite's option is an [Ephor](https://github.com/vul-os/ephor) instance **you run** — a
+content-blind broker, pre-alpha. wibbly contains no code that knows about Ephor and does not
+depend on it; that is deployment advice, not an integration.
+
+The two properties worth keeping when you deploy — the demo's `default-src 'self'` CSP and the
+vendored pose weights — travel with the files, and `npm run verify:demo` / `npm run verify:model`
+check them against the exact artifact you are about to ship. `.github/workflows/release.yml`
+builds both bundles, runs both verifications, and attaches checksummed tarballs to a GitHub
+Release; it does not deploy anywhere.
+
+---
+
 ## Demo mode
 
 `VITE_WIBBLY_MODE=demo` builds a different shell, not the app with bits hidden. It exists
@@ -203,7 +260,7 @@ constraints the normal app does not.
 
 ```bash
 npm run dev:demo       # http://localhost:5173
-npm run build:demo     # → dist-demo/, base /products/magnetite/wibbly/play/
+npm run build:demo     # → dist-demo/, base /products/wibbly/play/
 npm run verify:demo    # the proof, below
 ```
 
@@ -258,7 +315,7 @@ CSP blocks wasm) and has no bearing on whether a second player can join.
 
 ### What `npm run verify:demo` actually proves
 
-It builds the demo, serves `dist-demo/` **under `/products/magnetite/wibbly/play/`** (not at the
+It builds the demo, serves `dist-demo/` **under `/products/wibbly/play/`** (not at the
 root, and not through `vite preview`, which knows the base and would hide a base
 mistake), applies the **real production CSP** copied verbatim from
 `vulos-management/pkg/cproutes/spa.go`, and drives it with Chromium using a synthetic
@@ -267,15 +324,15 @@ camera. 26 checks, all passing:
 - **Zero external network requests.** Every request in the run, in full:
 
   ```
-  /products/magnetite/wibbly/play/
-  /products/magnetite/wibbly/play/assets/index-*.js
-  /products/magnetite/wibbly/play/assets/index-*.css
-  /products/magnetite/wibbly/play/assets/pose-detection.esm-*.js
-  /products/magnetite/wibbly/play/assets/shared-*.js
-  /products/magnetite/wibbly/play/models/court.glb
-  /products/magnetite/wibbly/play/models/TennisCourt_BaseColor.png
-  /products/magnetite/wibbly/play/models/movenet-multipose-lightning/model.json
-  /products/magnetite/wibbly/play/models/movenet-multipose-lightning/group1-shard{1,2,3}of3.bin
+  /products/wibbly/play/
+  /products/wibbly/play/assets/index-*.js
+  /products/wibbly/play/assets/index-*.css
+  /products/wibbly/play/assets/pose-detection.esm-*.js
+  /products/wibbly/play/assets/shared-*.js
+  /products/wibbly/play/models/court.glb
+  /products/wibbly/play/models/TennisCourt_BaseColor.png
+  /products/wibbly/play/models/movenet-multipose-lightning/model.json
+  /products/wibbly/play/models/movenet-multipose-lightning/group1-shard{1,2,3}of3.bin
   ```
 
 - the detector initialises **from the local model**, on the **WebGL** backend
@@ -456,7 +513,7 @@ retired in favor of it.
 
 ```
 packages/wibbly-input/     the seams — TypeScript library, no DOM injection, 221 tests
-packages/wibbly-p2p/       peer-to-peer multiplayer transport (WebRTC, no magnetite dependency), 70 tests
+packages/wibbly-p2p/       peer-to-peer multiplayer transport (WebRTC, no magnetite dependency), 73 tests
 packages/wibbly-authority/ the real magnetite link — AuthoritativeGame compiled to wasm, run client-side
 src/game/                tennis: court, ball physics, player rig, AI opponent, camera rig
 src/pages/               title, setup, play, 404 — the whole app shell

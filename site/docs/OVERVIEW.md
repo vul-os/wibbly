@@ -57,7 +57,7 @@ way — using the three states below.
 
 | Capability | State |
 |---|---|
-| `@vulos/wibbly-input` — four seams + Calibration, importable | **Implemented**, 86 tests green |
+| `@vulos/wibbly-input` — four seams + Calibration, importable | **Implemented**, 221 tests green |
 | Browser pose tracking (TF.js MoveNet, WebGL) | **Working** |
 | Multi-person tracking (`MultiPose.Lightning`, up to 6) | **Implemented**, synthetic fixtures only |
 | `SpatialBinder` — durable `PlayerId`s, claim zones, occlusion | **Implemented**, synthetic fixtures only |
@@ -74,10 +74,10 @@ way — using the three states below.
 | Networked play (peer-to-peer, browser-hosted) | **Transport implemented**, unit-tested, wired into tennis (off by default) — no lobby UI, so nothing turns it into a click-to-play flow |
 | Tauri desktop shell | **Phase 3** |
 | Release build | **Source only** |
-| Firebase Hosting | **Still Firebase** — migration queued |
+| Hosting | **Self-hosted, no service** — `dist/` is static files; any static server works. No Firebase, no CDN account, nothing hosted in the deploy path |
 
 The distinction the table draws twice is worth stating directly: **implemented and unit-tested is not
-the same as working.** The multi-person path has 18 binder tests and 11 tracker tests behind it, and
+the same as working.** The multi-person path has 18 binder tests and 29 tracker tests behind it, and
 has never been pointed at four people in a room. Unit tests prove that the logic is what we meant;
 they say nothing about whether MoveNet holds identity when somebody walks behind the sofa.
 
@@ -131,7 +131,8 @@ nowhere fast enough to send frames. The networked design — peer-to-peer, one p
 authoritative, no backend — preserves that property by transmitting `GestureEvent`s — tens of
 bytes — rather than video. Networked play is not built yet, so treat that half as a design
 commitment rather than a shipped feature. The local half is real: the analytics SDK that used to
-contradict it has been removed, though hosting is still Firebase.
+contradict it has been removed, and so has the hosted deploy path — `dist/` is static files served
+by whatever server you point at them.
 
 **Games see interfaces, never vendors.** Game code names no model, no runtime and no vendor. It
 consumes four seams, each of which ships a working default. This one is now demonstrable rather than

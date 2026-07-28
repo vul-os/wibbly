@@ -138,9 +138,11 @@ npm test              # from the repo root
 npm run typecheck     # tsc --noEmit over the package
 ```
 
-Seventy-seven tests across five files: the pose tracker, the spatial binder, the swing recognizer,
-the adaptive pacer and calibration. They need no camera, no GPU and no display, because every seam
-they cover is a pure function over landmark history. That property is the whole reason the refactor
+363 tests, of which 221 cover the seams across eleven files: the frame source, the pose tracker,
+the spatial binder, the swing/pinch/point recognizers, the hand tracker, the pipeline, the adaptive
+pacer and calibration. The rest are the peer transport (73), the magnetite authority (5) and the
+app itself (64). They need no camera, no GPU and no display, because every seam they cover is a
+pure function over landmark history. That property is the whole reason the refactor
 happened — see [Architecture](/products/magnetite/wibbly/docs/architecture).
 
 What they do not cover is the capture path, the WebGL backend, or anything that requires a human

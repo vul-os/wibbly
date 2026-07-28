@@ -159,6 +159,62 @@ lighting checks. It is what makes handedness a runtime setting instead of a cons
 
 ## Hosting
 
-The build deploys to **Firebase Hosting** via a GitHub Actions workflow. Firebase *Analytics* has been
-removed — the SDK is gone and the dependency is out of `package.json` — but the hosting target and
-workflow remain. Migrating off is queued; see the [roadmap](/products/magnetite/wibbly/docs/roadmap).
+`npm run build` produces `dist/` — plain files: HTML, JS, CSS, the vendored MoveNet weights, the
+GLB court, and one wasm module. There is no server component, no database and no API, so **any
+static file server hosts wibbly**, and wibbly names no host of its own. There is no hosted service
+in the deploy path and no account to create.
+
+The only two requirements the files impose on a server:
+
+| Requirement | Why |
+|---|---|
+| Serve `index.html` for unknown paths (SPA fallback) | `react-router-dom` owns `/setup`, `/play`, `/404` client-side; a hard refresh on one of those asks the server for a file that does not exist. |
+| Serve `.wasm` as `application/wasm` | `@vulos/wibbly-authority` uses `WebAssembly.compile`; a wrong MIME type fails the compile. Most servers already do this. |
+
+Neither applies to the demo bundle (`npm run build:demo`, `dist-demo/`): it has no router and no
+wasm, so it is a directory of files any server can hand out unmodified.
+
+**Local, no install:**
+
+```sh
+npm run build
+python3 -m http.server 8080 --directory dist   # dev only: no SPA fallback, so deep links 404
+```
+
+`npm run preview` is the better dev option — it is Vite's own static server and does do the SPA
+fallback.
+
+**nginx:**
+
+```nginx
+server {
+  root /srv/wibbly;                       # contents of dist/
+  types { application/wasm wasm; }        # usually already in mime.types
+  location / { try_files $uri $uri/ /index.html; }
+}
+```
+
+**Caddy:**
+
+```
+wibbly.example.com {
+  root * /srv/wibbly
+  try_files {path} /index.html
+  file_server
+}
+```
+
+**Reaching it from outside your own network** is a separate question from hosting it. Serving from
+a machine you control on your own LAN needs nothing further — and for wibbly specifically that is
+often the whole answer, since same-network peer play is the case that always works (see
+[Multiplayer](/products/magnetite/wibbly/docs/multiplayer)). If you want it reachable beyond that
+without renting a CDN, the suite's own option is an [Ephor](https://github.com/vul-os/ephor)
+instance **you run** — a content-blind broker, pre-alpha, not a hosted service. wibbly contains no
+code that knows about Ephor and does not depend on it; this is a deployment option, not an
+integration.
+
+Two things this does *not* configure, because they are properties of the bundle rather than of the
+host: the demo's Content-Security-Policy (`default-src 'self'`, meta tag, asserted by
+`npm run verify:demo`) and the vendored pose weights (`public/models/`, byte-checked by
+`npm run verify:model`). Both travel with the files, so they hold on whatever server you point at
+them.

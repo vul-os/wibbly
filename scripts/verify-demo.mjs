@@ -2,7 +2,7 @@
 /**
  * wibbly — demo build verifier
  *
- * The demo is embedded at `vulos.org/products/magnetite/wibbly/play/` inside a
+ * The demo is embedded at `vulos.org/products/wibbly/play/` inside a
  * same-origin iframe on a page served under `default-src 'self'`. Two things
  * about that are easy to get wrong and impossible to notice by eye:
  *
@@ -13,7 +13,7 @@
  *      asset and renders a blank page.
  *
  * So this script does not test the dev server or the root path. It serves
- * `dist-demo/` UNDER `/products/magnetite/wibbly/play/`, exactly as it will be deployed,
+ * `dist-demo/` UNDER `/products/wibbly/play/`, exactly as it will be deployed,
  * drives it with Chromium, and asserts:
  *
  *   · every single network request is same-origin — the headline assertion
@@ -51,13 +51,29 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist-demo');
 const SHOTS = path.join(ROOT, 'docs', 'screenshots');
 
-const PREFIX = '/products/magnetite/wibbly/play/';
+// MUST equal the `WIBBLY_BASE` that `npm run build:demo` passes (package.json).
+// A build based at one sub-path and served under another 404s every hashed
+// asset, and this script's whole point is to catch that — so it cannot be
+// allowed to disagree with the build by hand. Asserted below against the built
+// index.html rather than trusted.
+const PREFIX = '/products/wibbly/play/';
 const PORT = 4187;
 const ORIGIN = `http://127.0.0.1:${PORT}`;
 const BASE = `${ORIGIN}${PREFIX}`;
 
 const NO_BUILD = process.argv.includes('--no-build');
 const HEADED = process.argv.includes('--headed');
+
+/**
+ * How many checks a complete run must record. Asserted at the end, because
+ * "all checks passed" is worthless if the number of checks quietly fell to two
+ * — which is exactly what happened while PREFIX disagreed with the build base:
+ * the page never booted, the run died mid-way, and only the checks that had
+ * already run were ever counted. A gate that can pass by doing less is not a
+ * gate. Raise this deliberately when adding a check; never lower it to make a
+ * run go green.
+ */
+const EXPECTED_CHECKS = 26;
 
 /**
  * The REAL production policy, copied verbatim from
@@ -200,6 +216,37 @@ async function main() {
     console.error('dist-demo/index.html missing — build first.');
     process.exit(1);
   }
+
+  /* ── PREFIX must match the base the bundle was actually built for ─────────
+     This script serves dist-demo/ under PREFIX and 404s everything outside it,
+     which is the point: it catches a wrong `base`. But that only works while
+     PREFIX and `WIBBLY_BASE` (package.json → build:demo) agree. When they last
+     drifted apart, every hashed asset 404'd, the page never booted, and the run
+     died on a Playwright timeout in check #3 — a red gate, but one that named
+     the wrong cause and reported "2 checks" instead of 26. So: read the base
+     out of the built index.html and refuse to run at all if it disagrees.
+     Fails closed and says exactly what does not line up. */
+  const builtHtml = readFileSync(path.join(DIST, 'index.html'), 'utf8');
+  const assetRefs = [...builtHtml.matchAll(/(?:src|href)="(\/[^"]*)"/g)].map((m) => m[1]);
+  const offBase = assetRefs.filter((u) => !u.startsWith(PREFIX));
+  if (assetRefs.length === 0) {
+    console.error(
+      `dist-demo/index.html references no absolute asset URLs at all — cannot confirm the build's ` +
+        `base matches this script's PREFIX (${PREFIX}), so the sub-path check below would prove nothing.`,
+    );
+    process.exit(1);
+  }
+  if (offBase.length > 0) {
+    console.error(
+      `base mismatch: dist-demo/ was built for a different sub-path than this script serves.\n` +
+        `  verify-demo.mjs PREFIX : ${PREFIX}\n` +
+        `  built asset URLs       : ${[...new Set(offBase)].slice(0, 5).join(', ')}\n` +
+        `Set WIBBLY_BASE in package.json's build:demo and PREFIX here to the same value.`,
+    );
+    process.exit(1);
+  }
+  console.log(`base check: ${assetRefs.length} absolute asset URLs, all under ${PREFIX}`);
+
   mkdirSync(SHOTS, { recursive: true });
 
   const server = await serve();
@@ -409,7 +456,14 @@ async function main() {
     if (/Handling swing/.test(m.text())) swings.push(m.text());
     if (m.type() === 'error') p2Errors.push(m.text());
   });
-  await p2.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  // `?debug=1` — the documented opt-in in src/game/debug.js. The swing this
+  // check is looking for is observed through `debugLog('Handling swing!', …)`
+  // in game.jsx's `handleSwing`, and that hot-path logging is OFF by default
+  // for real players. Without the flag this check counted zero swings while
+  // the game was in fact swinging perfectly well (the magnetite-CTA check
+  // below only fires after six real swings, and it passed) — i.e. it failed
+  // for measuring a log that had been silenced, not for a broken fallback.
+  await p2.goto(`${BASE}?debug=1`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await p2.getByRole('button', { name: /play with the spacebar/i }).click();
   await p2.waitForTimeout(3_000);
   for (let i = 0; i < 5; i += 1) {
@@ -477,6 +531,18 @@ async function main() {
   console.log(`${results.length - failed.length}/${results.length} checks passed`);
   if (failed.length) {
     for (const f of failed) console.log(`  FAILED: ${f.label} — ${f.detail}`);
+    process.exit(1);
+  }
+  if (results.length !== EXPECTED_CHECKS) {
+    console.error(
+      `\nCOVERAGE FAILURE: ${results.length} checks ran, ${EXPECTED_CHECKS} expected.\n` +
+        (results.length < EXPECTED_CHECKS
+          ? `  ${EXPECTED_CHECKS - results.length} check(s) did not run, so this verification did NOT cover ` +
+            `everything it claims to. Every check that DID run passed, which is not the same thing.\n` +
+            `  Ran: ${results.map((r) => r.label).join(' | ')}`
+          : `  More checks ran than EXPECTED_CHECKS records. If that is intentional, raise ` +
+            `EXPECTED_CHECKS to ${results.length} in this file.`),
+    );
     process.exit(1);
   }
   console.log('demo verified: self-contained, ephemeral, iframe-safe, degradable.');

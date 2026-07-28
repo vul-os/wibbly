@@ -55,6 +55,46 @@ describe('InboundGate — happy path', () => {
     const g = new InboundGate({ minConfidence: 0.99, acceptedKinds: ['swing'] });
     expect(g.admit(stateMsg(1, { confidence: -999, kind: 'nonsense' }), 10_000).ok).toBe(true);
   });
+
+  it('rejects a state message with NO state field at all', () => {
+    // Opaque means "this gate does not read the value", not "this gate does
+    // not check the key is there". Before this check, the frame below was
+    // admitted and `onState(undefined)` reached the game — a missing state,
+    // not an opaque one, and the gesture branch has always required its
+    // `event` key the same way.
+    const g = new InboundGate();
+    expect(g.admit(JSON.stringify({ type: 'state', seq: 1 }), 10_000)).toMatchObject({
+      ok: false,
+      reason: 'malformed',
+    });
+  });
+
+  it('admits a state message whose state is explicitly null', () => {
+    // null is a real JSON value a game may broadcast; only an ABSENT key is
+    // the error. Pinning this so the presence check above is not tightened
+    // into a truthiness check by a later edit.
+    const g = new InboundGate();
+    const r = g.admit(JSON.stringify({ type: 'state', seq: 1, state: null }), 10_000);
+    expect(r.ok).toBe(true);
+    expect((r.message as { state: unknown }).state).toBeNull();
+  });
+
+  it('does not rate-limit REJECTED frames — documented, not accidental', () => {
+    // The module doc states this trade explicitly: the rate window records
+    // only accepted messages, so junk is rejected forever without ever
+    // consuming the peer's budget. That is what stops a flood of garbage from
+    // pushing a peer's own legitimate traffic out of the window and silencing
+    // them. This test exists so the behaviour is a pinned decision rather than
+    // an assumption someone "fixes" without reading why.
+    const g = new InboundGate({ maxMessagesPerSec: 2 });
+    for (let i = 0; i < 50; i += 1) {
+      expect(g.admit('not json', 10_000)).toMatchObject({ ok: false, reason: 'malformed' });
+    }
+    // The peer's real budget is untouched by all that noise.
+    expect(g.admit(gestureMsg(1), 10_000).ok).toBe(true);
+    expect(g.admit(gestureMsg(2), 10_000).ok).toBe(true);
+    expect(g.admit(gestureMsg(3), 10_000)).toMatchObject({ ok: false, reason: 'rate_exceeded' });
+  });
 });
 
 describe('InboundGate — malformed input', () => {

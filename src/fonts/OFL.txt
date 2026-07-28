@@ -17,7 +17,7 @@ Instrument Sans and JetBrains Mono, and so does this directory — the two
 surfaces are one product, a visitor reaches the app from the landing page in
 one click, and two different display voices across that one click would read
 as an accident rather than a decision. An earlier pass had the app on
-Bricolage Grotesque; that face is dropped here because ofisi already owns it
+Bricolage Grotesque; that face is dropped here because diwan already owns it
 suite-wide.
 
 NOTE ON DUPLICATION. site/fonts/ is the mini-site's asset root and is a

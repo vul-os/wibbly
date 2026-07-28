@@ -161,13 +161,6 @@ export interface BoundHand extends Hand {
   playerId: PlayerId;
 }
 
-/** Convenience: index a hand's landmarks by name. Mirrors `keypointMap`. */
-export function handLandmarkMap(hand: Hand): Record<string, Landmark> {
-  const map: Record<string, Landmark> = {};
-  for (const lm of hand.landmarks) map[lm.name] = lm;
-  return map;
-}
-
 /** Fetch a hand landmark by name, or undefined if absent/below `minScore`. Mirrors `keypoint`. */
 export function handLandmark(
   hand: Hand,

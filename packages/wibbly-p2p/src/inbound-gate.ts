@@ -13,10 +13,24 @@
  * whatever bytes it wants. This gate is what stands between that and the
  * game's sim or renderer.
  *
- * What it defends against: flooding (a firehose of messages), replay and
- * reorder (duplicate or stale sequence numbers), malformed or oversized
- * frames, and — for gesture events specifically — a guest connection claiming
- * a `playerId` that was not assigned to it.
+ * What it defends against: flooding with *accepted* messages (a firehose of
+ * well-formed traffic), replay and reorder (duplicate or stale sequence
+ * numbers), malformed or oversized frames, a `state` message with no state in
+ * it, and — for gesture events specifically — a guest connection claiming a
+ * `playerId` that was not assigned to it.
+ *
+ * A precise limit on that first one, stated rather than glossed: the rate
+ * window records only ACCEPTED messages, so `maxMessagesPerSec` bounds how
+ * fast a peer can reach the game — it does not bound how fast a peer can make
+ * this gate do work. A peer streaming garbage gets every frame rejected, but
+ * each rejection still costs a `JSON.parse` of up to `maxMessageChars`, with
+ * no ceiling on how many times per second. That is a deliberate trade, not an
+ * oversight: counting rejected frames in the same window would let a flood of
+ * junk push a peer's own legitimate traffic out of it, converting a nuisance
+ * into a way to silence someone. The cost of the trade is that this gate is
+ * not, and does not claim to be, a defense against a peer burning your main
+ * thread on parse work. Nothing downstream of it is reached, and a
+ * `DataChannel` you no longer want is one `PeerSession.close()` away.
  *
  * What it does NOT and cannot defend against: a fabricated-but-plausible
  * `GestureEvent`. Camera gesture input is `InputClass::Attested` in the sense
@@ -182,6 +196,15 @@ function validateShape(v: unknown): string | null {
   }
   if (o.type === 'gesture' && (typeof o.event !== 'object' || o.event === null)) {
     return 'gesture message missing event object';
+  }
+  // `state` is opaque — its VALUE is the game's business and nothing here
+  // inspects it. Its PRESENCE is this gate's business: without this check
+  // `{"type":"state","seq":1}` was admitted and the game's `onState` handler
+  // was called with `undefined`, which is not "an opaque state" but a missing
+  // one. `null` is allowed through deliberately: it is a real JSON value a
+  // game may legitimately broadcast, unlike an absent key.
+  if (o.type === 'state' && !('state' in o)) {
+    return 'state message missing state field';
   }
   return null;
 }

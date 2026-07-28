@@ -899,7 +899,7 @@
         <table class="ledger">
           <thead><tr><th>Capability</th><th>What it is</th><th>State</th></tr></thead>
           <tbody>
-            <tr><td><code>@vulos/wibbly-input</code></td><td class="note">The four seams plus Calibration, as an importable MIT package</td><td class="st"><span class="sig sig-live">86 tests green</span></td></tr>
+            <tr><td><code>@vulos/wibbly-input</code></td><td class="note">The four seams plus Calibration, as an importable MIT package</td><td class="st"><span class="sig sig-live">221 tests green</span></td></tr>
             <tr><td>Browser pose tracking</td><td class="note">TF.js MoveNet on the WebGL backend, running in the tab</td><td class="st"><span class="sig sig-live">Working</span></td></tr>
             <tr><td>Tennis reference game</td><td class="note">Ball physics, court GLB, player rig, AI opponent, chase camera</td><td class="st"><span class="sig sig-live">Playable</span></td></tr>
             <tr><td><code>swing</code> gesture</td><td class="note">Pure <code>detectSwing</code> over landmark history — no camera needed to test</td><td class="st"><span class="sig sig-live">24 tests</span></td></tr>
@@ -1316,7 +1316,7 @@
           <ul class="gapstack">
             <li><span class="sig sig-live">Today</span><div><b>Local inference</b><span>Every frame is captured by <code>getUserMedia</code>, run through MoveNet in the tab, and dropped. No frame is uploaded, stored or proxied. True of the code as it exists now, not of a future version.</span></div></li>
             <li><span class="sig sig-unval">Transport built, no lobby</span><div><b>Events on the wire</b><span>Networked play is peer-to-peer: one player's browser tab is authoritative, and each client tracks its own camera and transmits only gesture events over a WebRTC <code>DataChannel</code> — no backend wibbly runs, and no magnetite dependency anywhere in this path (<code>packages/wibbly-p2p</code>). The transport is built and unit-tested; what's missing is a lobby screen. Separately, a real magnetite game module — the reference arena-shooter, compiled to wasm — runs client-side today as the authority for solo tennis (<code>@vulos/wibbly-authority</code>); that link has nothing to do with hosting a second player's connection.</span></div></li>
-            <li><span class="sig sig-unval">Caveat</span><div><b>What we won't hide</b><span>The build used to initialise Firebase Analytics — central tracking, in a product whose thesis is the opposite. The SDK and its dependency are gone. Hosting is still Firebase, so the claim holds for your camera and your page views but not your DNS lookups. The MoveNet weights ship with the app and load same-origin — no third-party CDN, and the demo build refuses one outright.</span></div></li>
+            <li><span class="sig sig-unval">Caveat</span><div><b>What we won't hide</b><span>The build used to initialise Firebase Analytics — central tracking, in a product whose thesis is the opposite. The SDK and its dependency are gone, and so is the Firebase Hosting deploy path: <code>dist/</code> is static files, and whoever serves them is whoever you point at them. The MoveNet weights ship with the app and load same-origin — no third-party CDN, and the demo build refuses one outright. What that still cannot cover is the host you choose: a page served from someone else’s box tells them you asked for it, which is a property of the internet, not of wibbly.</span></div></li>
           </ul>
         </div>
       </div>
@@ -1344,7 +1344,7 @@
         <li><span class="sig sig-unval">Transport built, no lobby</span><div><b>Peer-to-peer networked play</b><span>The settled design — host authority in one player's browser tab, guest <code>GestureEvent</code>s over a WebRTC <code>DataChannel</code>, copy-paste/QR signalling (Trystero optional), zero backend wibbly runs — is implemented and unit-tested in <code>packages/wibbly-p2p</code> (<code>PeerSession</code>, offer/answer helpers, a link-sized codec; no magnetite dependency), and tennis wires an optional <code>PeerSession</code> in already, off unless a host page supplies a transport. What is not built: a lobby screen. Nothing turns the transport into a button a visitor can click. Free STUN, but <b>no free TURN</b>: peers behind symmetric NAT or CGNAT will not connect, with no workaround. Same-network play is unaffected. Two more things worth knowing ahead of time: WebRTC hands your IP address to the peer you connect to (and to the STUN server) by design — normal for any direct peer connection, and only a TURN relay hides it, which is exactly the infrastructure this design avoids running. This path needs no magnetite node, and never did.</span></div></li>
         <li><span class="sig sig-spec">Spec</span><div><b>Soccer and Boxing</b><span>Both are tracked backlog items with a stated rationale, not works in progress. No soccer code and no boxing code exists. Where the app surfaces them as “coming soon”, that label now points at real backlog entries rather than at nothing — which is the most that can honestly be said for it.</span></div></li>
         <li><span class="sig sig-spec">Spec</span><div><b>A desktop shell</b><span>Tauri with Rust-side capture and inference is phase 3. Nothing has been started.</span></div></li>
-        <li><span class="sig sig-spec">Spec</span><div><b>A release build</b><span>No installer, no Docker image, no hosted deployment beyond the browser demo. Clone it and run the dev server. Hosting is still configured for Firebase, though the analytics SDK is gone.</span></div></li>
+        <li><span class="sig sig-spec">Spec</span><div><b>A release build</b><span>No installer, no Docker image, no hosted service anywhere in the deploy path. Clone it and run the dev server, or build it and serve <code>dist/</code> from any static server — nginx, Caddy, or Vite’s own preview. The configuration docs give the two things such a server needs to do.</span></div></li>
       </ul>
     </div>
   </section>
@@ -1408,6 +1408,7 @@
           <h3>Partly started</h3>
           <ul>
             <li class="done">Firebase Analytics removed</li>
+            <li class="done">Firebase Hosting removed — static files, any server</li>
             <li class="done">Playable browser demo, no server, no account</li>
             <li class="done">Real magnetite link — <code>AuthoritativeGame</code> compiled to wasm, running client-side as tennis's authority, no server</li>
             <li>Tennis on the seam with 2-player local, one camera</li>

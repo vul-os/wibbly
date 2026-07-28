@@ -73,19 +73,21 @@ Nothing else could start until the input layer was importable. **This phase has 
       not yet compose the hand tracker — it still wires body pose and `SwingRecognizer` only. The
       MediaPipe hand model and Wasm runtime are also not vendored in this repo yet.
 
-Seventy-seven tests pass across the five seam suites. What none of them touch is a camera — see the
+221 tests pass across the eleven seam suites. What none of them touch is a camera — see the
 validation item at the top of phase 2.
 
 ## Phase 2 — the platform
 
 - [x] Tennis ported onto the seams. The game imports `WibblyInput` and names no model anywhere.
 - [x] Firebase Analytics removed — SDK gone, dependency out of `package.json`.
+- [x] Firebase Hosting removed — `firebase.json`, `.firebaserc` and the deploy workflow are gone.
+      `dist/` is static files; [Configuration → Hosting](/products/magnetite/wibbly/docs/configuration)
+      documents nginx, Caddy and dev-server paths. Nothing hosted is left in the deploy path.
 - [ ] **Validate multi-person against real people and real cameras.** The binder and tracker are
       implemented and unit-tested; neither has met a living room. This gates every claim about couch
       multiplayer and should come before new features.
 - [ ] 2-player local through one camera — the binder is already multi-player, but tennis reads
       gestures for `player_1` only.
-- [ ] Migrate hosting off Firebase; the deploy target and GitHub Actions workflow are still there.
 - [x] Static site in the Vulos house style; `src/pages/` has been shrunk to title, first-run setup,
       play and 404.
 - [x] A real magnetite link: `@vulos/wibbly-authority` compiles magnetite's reference

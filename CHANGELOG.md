@@ -71,7 +71,39 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   A later entry below covers `HandLandmarkTracker`/`PinchRecognizer`/`PointRecognizer` landing
   after this reframe was drafted — the docs were updated again to match rather than left stale.
 
+### Fixed
+
+- **`npm run verify:demo` was red on `main`, and had been since the demo slug moved.**
+  `build:demo` bases the bundle at `/products/wibbly/play/`, but `scripts/verify-demo.mjs`
+  still served `dist-demo/` under `/products/magnetite/wibbly/play/` and 404s everything
+  outside its mount point — so every hashed asset 404'd, the page never booted, and the run
+  died on a Playwright timeout after 2 checks. It failed loudly rather than silently, but it
+  named the wrong cause and covered almost nothing, while the README, the site and the docs
+  all cited "26/26 checks" as evidence. `PREFIX` now matches the build base, and two guards
+  stop the pair drifting again: the script reads the built `index.html` and refuses to start
+  if any absolute asset URL falls outside `PREFIX` (naming both values), and the verdict now
+  asserts a coverage count — 26 checks must actually have run, because "all checks passed" is
+  worthless when the number of checks can quietly fall to two. Verified: 26/26.
+
+- **The spacebar-fallback check was measuring a log that had been silenced.** It counted
+  `console` lines matching `Handling swing`, but that call was routed through the opt-in
+  `debugLog` (off by default for real players). Once the page booted again, the check read
+  0 swings while the game was in fact swinging — the *next* check, which only fires after six
+  real swings, passed. It now loads the demo with `?debug=1`, the documented opt-in.
+
 ### Removed
+
+- **Firebase Hosting — the last hosted third-party service in this repo.** `firebase.json`
+  (which pointed Firebase Hosting at `dist/` with an SPA rewrite), `.firebaserc` (the
+  `wibbly-io` project id) and `.github/workflows/firebase-hosting-merge.yml` are deleted. No
+  vendor replaced it: `dist/` is static files, and `README.md`'s new **Deploying it** section
+  plus `site/docs/CONFIGURATION.md`'s **Hosting** section give the self-host path — nginx,
+  Caddy, `npm run preview`, and the only two things the bundle asks of a server (SPA fallback,
+  `application/wasm`). Optional exposure beyond a LAN is an [Ephor](https://github.com/vul-os/ephor)
+  instance you run; wibbly contains no code that knows about Ephor. Firebase *Analytics* was
+  already gone (0.1.0); this removes the deploy path too, so nothing hosted remains. The only
+  surviving mentions of Firebase are this changelog and `WIBBLY.md` §1's dated audit snapshot,
+  both of which are records of what was true then.
 
 - **The signed-wire-to-a-live-node magnetite bridge.** `packages/wibbly-magnetite`'s
   `AttestedEventAdapter` (mapped a `GestureEvent` onto magnetite's exact `AttestedEvent` Rust
@@ -148,10 +180,17 @@ unit-tested input library.
   Firebase project is a legacy host kept as a manual-only
   (`workflow_dispatch`) deploy so it can no longer silently diverge from the
   canonical copy by auto-deploying on every push.
-- **Browser end-to-end test suite** — Playwright (chromium) drives the
-  production build (`vite preview`) with the backend mocked in-browser: a
-  boot guard across all gated top-level surfaces (ThemePicker, Login, IDE
-  analogue), plus core flows. 18 additional app-shell tests (`test/mode.test.js`).
+- **Demo-bundle verification** (`npm run verify:demo`) — Playwright (chromium)
+  drives the built `dist-demo/` under the real production CSP at its deploy
+  sub-path and asserts the bundle is self-contained: zero external requests,
+  no 4xx, the vendored model fetched locally, no storage or cookies left
+  behind, and the spacebar fallback still playable with the camera refused.
+  Plus 18 app-shell unit tests (`test/mode.test.js`). *(Corrected 2026-07-28:
+  this entry previously described a "browser end-to-end test suite" with a
+  mocked backend and a boot guard over "ThemePicker, Login, IDE analogue"
+  surfaces. wibbly has no backend and has never had any of those three
+  surfaces — the text was imported from another project's changelog and
+  described software that does not exist here. What did land is the above.)*
 - **Title screen, setup flow, in-game menu** — four real surfaces (title,
   first-run setup, play, 404); Soccer and Boxing appear on the title screen
   as non-selectable *Planned* items linking to the backlog, not fake content.

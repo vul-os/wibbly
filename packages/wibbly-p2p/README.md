@@ -214,7 +214,7 @@ Not a dependency of this package today.
 
 ## Tests
 
-`npm test --workspace @vulos/wibbly-p2p` — **70 tests**, vitest, node
+`npm test --workspace @vulos/wibbly-p2p` — **73 tests**, vitest, node
 environment, no camera, no DOM, no real WebRTC. Every WebRTC-shaped piece is
 exercised through an injected fake:
 
@@ -222,7 +222,9 @@ exercised through an injected fake:
 - `inbound-gate.test.ts` — malformed/oversized frames, flooding, duplicate
   and out-of-order sequence numbers, `playerId` authorization, gesture
   sanity (confidence, timestamp skew, kind allowlist), state messages
-  correctly bypassing gesture-only checks.
+  correctly bypassing gesture-only checks, a `state` message with no `state`
+  key rejected while an explicitly `null` one is admitted, and a pinned test
+  that rejected frames deliberately do NOT consume the peer's rate budget.
 - `codec.test.ts` — round-trips against this engine's *real*
   `CompressionStream` (Node has one; so does every browser wibbly targets),
   the uncompressed fallback with `CompressionStream` stubbed out, and a wide

@@ -23,7 +23,9 @@ That is not an oversight to fix later — it is the position. See §7's removal 
 
 ## 1. Where we are today (grounded audit, 2026-07-20 @ `67482e6`)
 
-~6k lines. React 19 + Vite + Three.js, deployed to Firebase Hosting via GitHub Actions.
+~6k lines. React 19 + Vite + Three.js, deployed to Firebase Hosting via GitHub Actions. *(That
+hosting path was removed on 2026-07-28 — see phase 2 below. This line records the audit's
+snapshot, not the current deploy.)*
 
 | Area | Reality |
 |---|---|
@@ -359,7 +361,12 @@ ads. Nothing in §0 or §2 depends on any of it existing.
       every claim about couch multiplayer.
 - [ ] 2-player local via one camera — the binder already supports two claim zones, but tennis
       still routes gestures for `player_1` only. **Next up.**
-- [x] Remove Firebase Analytics. *(Hosting migration off Firebase still open.)*
+- [x] Remove Firebase Analytics.
+- [x] Remove Firebase Hosting. `firebase.json`, `.firebaserc` and the auto-generated deploy
+      workflow are deleted; no Firebase reference remains outside this document's historical
+      audit and the changelog. `dist/` is static files — any static server hosts it, and the
+      two requirements it places on one (SPA fallback, `application/wasm`) are written down in
+      `site/docs/CONFIGURATION.md` alongside nginx and Caddy configs.
 - [x] Static site in the house style.
 - [x] Shrink `src/pages/` — the marketing shell is deleted; the app is now a title
       screen, a first-run camera setup flow, the play surface and a 404.
