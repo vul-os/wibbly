@@ -9,7 +9,7 @@ defaulted and overridable per seam.
 .wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
 :root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
 .wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
-.wbf svg{display:block;height:auto;width:100%;min-width:620px}
+.wbf svg{display:block;height:auto;width:100%;min-width:900px}
 .wbf img{display:block;width:100%;height:auto}
 .wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
 .wbf figcaption b{color:var(--tx)}
@@ -68,28 +68,28 @@ else is a change to one constructor argument.
 <div class="sc">
 <svg viewBox="0 0 900 150" width="900" role="img" aria-label="The four seams in the same order as Architecture, each labelled with which section of this configuration page owns its options: FrameSource has the frame block, PoseTracker maps to MoveNetMultiPoseTracker, GestureRecognizer maps to SwingRecognizer, PlayerBinder maps to SpatialBinder, and Calibration is its own section feeding the recognizer.">
   <g font-family="ui-monospace, monospace">
-    <text x="16" y="22" font-size="10" fill="var(--tx2)" letter-spacing="1.3">EACH OPTION SECTION BELOW OWNS ONE SEAM</text>
+    <text x="16" y="22" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">EACH OPTION SECTION BELOW OWNS ONE SEAM</text>
     <rect x="14" y="38" width="164" height="78" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="26" y="58" font-size="9" fill="var(--tx2)" letter-spacing="1">SEAM 01</text>
+    <text x="26" y="58" font-size="10.5" fill="var(--tx2)" letter-spacing="1">SEAM 01</text>
     <text x="26" y="76" font-size="11.5" font-weight="700" fill="var(--tx)">FrameSource</text>
-    <text x="26" y="94" font-size="9.5" fill="var(--a)">→ frame block</text>
+    <text x="26" y="94" font-size="10.5" fill="var(--a)">→ frame block</text>
     <rect x="202" y="38" width="164" height="78" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="214" y="58" font-size="9" fill="var(--tx2)" letter-spacing="1">SEAM 02</text>
+    <text x="214" y="58" font-size="10.5" fill="var(--tx2)" letter-spacing="1">SEAM 02</text>
     <text x="214" y="76" font-size="11.5" font-weight="700" fill="var(--tx)">PoseTracker</text>
-    <text x="214" y="94" font-size="9.5" fill="var(--a)">→ MoveNetMultiPoseTracker</text>
+    <text x="214" y="94" font-size="10.5" fill="var(--a)">→ MoveNetMultiPoseTracker</text>
     <rect x="390" y="38" width="164" height="78" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="402" y="58" font-size="9" fill="var(--tx2)" letter-spacing="1">SEAM 04</text>
+    <text x="402" y="58" font-size="10.5" fill="var(--tx2)" letter-spacing="1">SEAM 04</text>
     <text x="402" y="76" font-size="11.5" font-weight="700" fill="var(--tx)">PlayerBinder</text>
-    <text x="402" y="94" font-size="9.5" fill="var(--a)">→ SpatialBinder</text>
+    <text x="402" y="94" font-size="10.5" fill="var(--a)">→ SpatialBinder</text>
     <rect x="578" y="38" width="164" height="78" rx="8" fill="none" stroke="var(--a)" stroke-width="1.4"/>
-    <text x="590" y="58" font-size="9" fill="var(--tx2)" letter-spacing="1">SEAM 03</text>
+    <text x="590" y="58" font-size="10.5" fill="var(--tx2)" letter-spacing="1">SEAM 03</text>
     <text x="590" y="76" font-size="11.5" font-weight="700" fill="var(--tx)">GestureRecognizer</text>
-    <text x="590" y="94" font-size="9.5" fill="var(--a)">→ SwingRecognizer</text>
+    <text x="590" y="94" font-size="10.5" fill="var(--a)">→ SwingRecognizer</text>
     <rect x="766" y="38" width="120" height="78" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="778" y="58" font-size="9" fill="var(--tx2)" letter-spacing="1">FEEDS 03</text>
+    <text x="778" y="58" font-size="10.5" fill="var(--tx2)" letter-spacing="1">FEEDS 03</text>
     <text x="778" y="76" font-size="11.5" font-weight="700" fill="var(--tx)">Calibration</text>
-    <text x="778" y="94" font-size="9.5" fill="var(--a)">→ own section</text>
-    <text x="14" y="138" font-size="9.5" fill="var(--tx2)"><tspan fill="var(--am)">AdaptivePacer</tspan> sits across all of it, pacing every seam's call rate — it has its own section below too.</text>
+    <text x="778" y="94" font-size="10.5" fill="var(--a)">→ own section</text>
+    <text x="14" y="138" font-size="10.5" fill="var(--tx2)"><tspan fill="var(--am)">AdaptivePacer</tspan> sits across all of it, pacing every seam's call rate — it has its own section below too.</text>
   </g>
 </svg>
 </div>

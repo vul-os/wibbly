@@ -108,23 +108,23 @@
     --line-2:     #3A2C52;
     --ink:        #F5F1FA;
     --ink-2:      #ADA2BE;
-    --ink-3:      #6F6483;
+    --ink-3:      #8C839C;
 
     --accent:      #FF4D9D;
     --accent-hi:   #FF85BC;
     --accent-ink:  #14000A;
-    --accent-dim:  rgba(255,77,157,.12);
+    --accent-dim:  #2E1529;
     --accent-line: rgba(255,77,157,.34);
     --accent-glow: rgba(255,77,157,.30);
 
     --live:       #3FE08A;
-    --live-dim:   rgba(63,224,138,.11);
+    --live-dim:   #162425;
     --live-line:  rgba(63,224,138,.32);
     --unval:      #FFB020;
-    --unval-dim:  rgba(255,176,32,.11);
+    --unval-dim:  #2B1F1A;
     --unval-line: rgba(255,176,32,.32);
-    --spec:       #857A99;
-    --spec-dim:   rgba(133,122,153,.10);
+    --spec:       #8A7F9F;
+    --spec-dim:   #1D1826;
     --spec-line:  rgba(133,122,153,.28);
 
     --chalk:      rgba(245,241,250,.10);
@@ -145,23 +145,23 @@
     --line-2:     #BEB2CD;
     --ink:        #140F1B;
     --ink-2:      #544A61;
-    --ink-3:      #837791;
+    --ink-3:      #6D6378;
 
     --accent:      #C4006B;
     --accent-hi:   #9E0056;
     --accent-ink:  #FFFFFF;
-    --accent-dim:  rgba(196,0,107,.07);
+    --accent-dim:  #FBEDF5;
     --accent-line: rgba(196,0,107,.30);
     --accent-glow: rgba(196,0,107,.14);
 
     --live:       #0F7A3D;
-    --live-dim:   rgba(15,122,61,.08);
+    --live-dim:   #ECF4EF;
     --live-line:  rgba(15,122,61,.28);
     --unval:      #8A4B00;
-    --unval-dim:  rgba(138,75,0,.08);
+    --unval-dim:  #F6F1EB;
     --unval-line: rgba(138,75,0,.28);
     --spec:       #6E6480;
-    --spec-dim:   rgba(110,100,128,.07);
+    --spec-dim:   #F5F4F6;
     --spec-line:  rgba(110,100,128,.26);
 
     --chalk:      rgba(20,15,27,.07);
@@ -208,6 +208,7 @@
 
   /* The instrument voice — every label, status and measurement */
   .mono, code, pre { font-family: var(--mono); }
+  code { font-size: max(1em, 12px); }
   .tag {
     font-family: var(--mono); font-size: 10.5px; font-weight: 600;
     letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3);
@@ -221,7 +222,7 @@
   /* ── Signal vocabulary — the honesty system, as a designed component ───── */
   .sig {
     display: inline-flex; align-items: center; gap: 6px; flex: none;
-    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
     letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
     padding: 3px 8px 3px 6px; border-radius: var(--r-sm);
     border: 1px solid; vertical-align: 1px;
@@ -292,6 +293,7 @@
   .vulos-btn:hover { border-color: var(--accent-line); color: var(--ink); }
   .vulos-btn img { width: 18px; height: 18px; border-radius: var(--r-sm); }
   @media (max-width: 700px) { .vulos-btn .lead { display: none; } }
+  @media (max-width: 340px) { .vulos-btn > span { display: none; } .vulos-btn { padding: 5px 6px; } }
 
   /* ── Buttons ───────────────────────────────────────────────────────────── */
   .btn {
@@ -379,8 +381,8 @@
     animation: blip 2.4s ease-in-out infinite;
   }
   @keyframes blip { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
-  .plate-body { position: relative; }
-  .plate-body svg { width: 100%; height: auto; display: block; }
+  .plate-body { position: relative; overflow-x: auto; }
+  .plate-body svg { width: 100%; height: auto; display: block; min-width: 460px; }
   .plate-foot {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     flex-wrap: wrap; padding: 11px 15px; border-top: 1px solid var(--line);
@@ -481,7 +483,7 @@
   .section.alt .ledger-scroll { background: var(--court); }
   .ledger { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 620px; }
   .ledger th {
-    font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .16em;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: .16em;
     text-transform: uppercase; color: var(--ink-3); text-align: left;
     padding: 12px 16px; border-bottom: 1px solid var(--line-2); background: var(--surface-2);
   }
@@ -492,14 +494,14 @@
   .ledger td:first-child { font-weight: 600; color: var(--ink); }
   .ledger td.note { color: var(--ink-2); }
   .ledger td.st { white-space: nowrap; }
-  .ledger code { font-size: .86em; color: var(--ink); }
+  .ledger code { font-size: max(.86em, 12px); color: var(--ink); }
   .ledger tr.pick td { background: var(--accent-dim); }
   .ledger tr.pick:hover td { background: var(--accent-dim); }
   .ledger tr.pick td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
   .num-cell { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; color: var(--ink-2); }
   .num-hot { font-family: var(--mono); font-size: 12.5px; font-weight: 700; color: var(--accent); white-space: nowrap; }
   .lic {
-    display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 700;
+    display: inline-block; font-family: var(--mono); font-size: 10.5px; font-weight: 700;
     padding: 2px 7px; border-radius: var(--r-sm); white-space: nowrap; border: 1px solid;
   }
   .lic.ok { color: var(--live); background: var(--live-dim); border-color: var(--live-line); }
@@ -517,7 +519,7 @@
   .card h3 { font-size: 16px; }
   .card h3 code { font-family: var(--mono); font-size: .95em; font-weight: 700; }
   .card p { color: var(--ink-2); font-size: 14px; }
-  .card code { font-size: .87em; color: var(--ink); }
+  .card code { font-size: max(.87em, 12px); color: var(--ink); }
   .card .tag { display: block; margin-bottom: 9px; }
 
   /* ── Stat strip — the scoreboard ───────────────────────────────────────── */
@@ -556,7 +558,7 @@
   /* ── Reduction cascade — the pipeline, drawn to scale ──────────────────── */
   .cascade { display: grid; gap: 0; margin-top: 26px; border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
   .casc {
-    display: grid; grid-template-columns: 148px minmax(0,1fr) 128px;
+    display: grid; grid-template-columns: 148px minmax(0,1fr) 128px; min-width: 0;
     align-items: center; gap: 18px; padding: 15px 20px;
     background: var(--surface); border-bottom: 1px solid var(--line);
   }
@@ -620,7 +622,7 @@
   .stack .metric { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent); }
 
   .gapstack { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
-  .gapstack li { background: var(--surface); padding: 18px 20px; display: grid; grid-template-columns: 128px minmax(0,1fr); gap: 20px; align-items: start; }
+  .gapstack li { background: var(--surface); padding: 18px 20px; display: grid; grid-template-columns: 128px minmax(0,1fr); gap: 20px; align-items: start; min-width: 0; }
   .section.alt .gapstack li { background: var(--court); }
   @media (max-width: 700px) { .gapstack li { grid-template-columns: 1fr; gap: 9px; } }
   .gapstack b { display: block; font-size: 14.5px; margin-bottom: 5px; color: var(--ink); }
@@ -646,7 +648,7 @@
   .codeblock .p { color: var(--accent); }
 
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
-  .steps li { display: grid; grid-template-columns: 30px minmax(0,1fr); gap: 14px; align-items: start; }
+  .steps li { display: grid; grid-template-columns: 30px minmax(0,1fr); gap: 14px; align-items: start; min-width: 0; }
   .steps .n {
     width: 30px; height: 30px; border-radius: var(--r-sm); border: 1px solid var(--accent-line);
     background: var(--accent-dim); color: var(--accent);
@@ -841,11 +843,11 @@
                 <rect x="300" y="92" width="146" height="66" rx="6"
                       fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1"/>
                 <text x="313" y="113" font-size="11" font-weight="700" fill="var(--accent)">swing · p1</text>
-                <text x="313" y="130" font-size="9.5" fill="var(--ink-2)">confidence 0.86</text>
-                <text x="313" y="146" font-size="9.5" fill="var(--ink-2)">vector +0.71 −0.34</text>
+                <text x="313" y="130" font-size="10.5" fill="var(--ink-2)">confidence 0.86</text>
+                <text x="313" y="146" font-size="10.5" fill="var(--ink-2)">vector +0.71 −0.34</text>
               </g>
 
-              <g font-family="ui-monospace, monospace" fill="var(--ink-3)" font-size="9.5">
+              <g font-family="ui-monospace, monospace" fill="var(--ink-3)" font-size="10.5">
                 <text x="82" y="70">right_wrist</text>
                 <text x="40" y="292">1080p RGBA · discarded after inference</text>
               </g>
@@ -1000,7 +1002,7 @@
 
       <div class="diagram">
         <div class="diagram-scroll">
-          <svg viewBox="0 0 940 250" role="img" aria-label="The wibbly input pipeline. FrameSource produces frames, PoseTracker produces skeletons, PlayerBinder assigns durable player identities, and GestureRecognizer emits GestureEvents to the game. All four stages run inside the device; only the GestureEvent is ever eligible to leave it.">
+          <svg viewBox="0 0 940 250" style="min-width:940px" role="img" aria-label="The wibbly input pipeline. FrameSource produces frames, PoseTracker produces skeletons, PlayerBinder assigns durable player identities, and GestureRecognizer emits GestureEvents to the game. All four stages run inside the device; only the GestureEvent is ever eligible to leave it.">
             <defs>
               <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M0 0 L10 5 L0 10 z" fill="var(--line-2)"/>
@@ -1014,28 +1016,28 @@
 
               <!-- 01 FrameSource -->
               <rect x="14" y="50" width="188" height="88" rx="8" fill="var(--surface-2)" stroke="var(--line-2)"/>
-              <text x="30" y="72" font-size="9.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 01</text>
+              <text x="30" y="72" font-size="10.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 01</text>
               <text x="30" y="93" font-size="14" font-weight="700" fill="var(--ink)">FrameSource</text>
               <text x="30" y="112" font-size="10.5" fill="var(--ink-2)">getUserMedia</text>
               <text x="30" y="128" font-size="10.5" fill="var(--ink-2)">1080p RGBA @ 30fps</text>
 
               <!-- 02 PoseTracker -->
               <rect x="250" y="50" width="188" height="88" rx="8" fill="var(--surface-2)" stroke="var(--line-2)"/>
-              <text x="266" y="72" font-size="9.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 02</text>
+              <text x="266" y="72" font-size="10.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 02</text>
               <text x="266" y="93" font-size="14" font-weight="700" fill="var(--ink)">PoseTracker</text>
               <text x="266" y="112" font-size="10.5" fill="var(--ink-2)">MoveNet MultiPose</text>
               <text x="266" y="128" font-size="10.5" fill="var(--ink-2)">Person[] · 17 pts each</text>
 
               <!-- 04 PlayerBinder -->
               <rect x="486" y="50" width="188" height="88" rx="8" fill="var(--surface-2)" stroke="var(--line-2)"/>
-              <text x="502" y="72" font-size="9.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 04</text>
+              <text x="502" y="72" font-size="10.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 04</text>
               <text x="502" y="93" font-size="14" font-weight="700" fill="var(--ink)">PlayerBinder</text>
               <text x="502" y="112" font-size="10.5" fill="var(--ink-2)">SpatialBinder</text>
               <text x="502" y="128" font-size="10.5" fill="var(--ink-2)">durable PlayerId</text>
 
               <!-- 03 GestureRecognizer -->
               <rect x="722" y="50" width="204" height="88" rx="8" fill="var(--accent-dim)" stroke="var(--accent)"/>
-              <text x="738" y="72" font-size="9.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 03</text>
+              <text x="738" y="72" font-size="10.5" fill="var(--ink-3)" letter-spacing="1.4">SEAM 03</text>
               <text x="738" y="93" font-size="14" font-weight="700" fill="var(--ink)">GestureRecognizer</text>
               <text x="738" y="112" font-size="10.5" fill="var(--ink-2)">detectSwing()</text>
               <text x="738" y="128" font-size="10.5" font-weight="700" fill="var(--accent)">GestureEvent → game</text>
@@ -1047,7 +1049,7 @@
               </g>
 
               <!-- state strip, using the page's signal vocabulary -->
-              <g font-size="9.5" font-weight="700" letter-spacing="1.2">
+              <g font-size="10.5" font-weight="700" letter-spacing="1.2">
                 <circle cx="34" cy="166" r="4" fill="var(--live)"/>
                 <text x="46" y="170" fill="var(--live)">LIVE</text>
                 <circle cx="270" cy="166" r="4" fill="var(--unval)"/>
@@ -1246,50 +1248,50 @@
 
       <div class="diagram">
         <div class="diagram-scroll">
-          <svg viewBox="0 0 900 300" role="img" aria-label="Privacy boundary diagram. Inside the device, the camera produces frames, MoveNet reduces them to landmarks, the recognizer reduces those to a GestureEvent, and the frame is discarded. Only the GestureEvent, about 64 bytes, is eligible to cross the network boundary — and no network code exists today.">
+          <svg viewBox="0 0 900 300" style="min-width:900px" role="img" aria-label="Privacy boundary diagram. Inside the device, the camera produces frames, MoveNet reduces them to landmarks, the recognizer reduces those to a GestureEvent, and the frame is discarded. Only the GestureEvent, about 64 bytes, is eligible to cross the network boundary — and no network code exists today.">
             <g font-family="ui-monospace, monospace">
               <rect x="4" y="26" width="558" height="248" rx="10" fill="var(--surface-2)" stroke="var(--line-2)"/>
-              <text x="22" y="50" font-size="10" fill="var(--ink-3)" letter-spacing="1.6">YOUR DEVICE · BROWSER TAB</text>
+              <text x="22" y="50" font-size="10.5" fill="var(--ink-3)" letter-spacing="1.6">YOUR DEVICE · BROWSER TAB</text>
 
               <rect x="26" y="72" width="112" height="62" rx="7" fill="var(--surface)" stroke="var(--line)"/>
               <text x="42" y="99" font-size="12" fill="var(--ink)" font-weight="700">Camera</text>
-              <text x="42" y="119" font-size="10" fill="var(--ink-3)">1080p RGBA</text>
+              <text x="42" y="119" font-size="10.5" fill="var(--ink-3)">1080p RGBA</text>
 
               <rect x="176" y="72" width="120" height="62" rx="7" fill="var(--surface)" stroke="var(--line)"/>
               <text x="192" y="99" font-size="12" fill="var(--ink)" font-weight="700">MoveNet</text>
-              <text x="192" y="119" font-size="10" fill="var(--ink-3)">WebGL, in-tab</text>
+              <text x="192" y="119" font-size="10.5" fill="var(--ink-3)">WebGL, in-tab</text>
 
               <rect x="334" y="72" width="128" height="62" rx="7" fill="var(--surface)" stroke="var(--line)"/>
               <text x="350" y="99" font-size="12" fill="var(--ink)" font-weight="700">Recognizer</text>
-              <text x="350" y="119" font-size="10" fill="var(--ink-3)">pure function</text>
+              <text x="350" y="119" font-size="10.5" fill="var(--ink-3)">pure function</text>
 
               <g stroke="var(--line-2)" stroke-width="1.75" marker-end="url(#ah)" fill="none">
                 <path d="M142 103 H170"/>
                 <path d="M300 103 H328"/>
               </g>
-              <text x="140" y="93" font-size="9.5" fill="var(--ink-3)">8 MB</text>
-              <text x="298" y="93" font-size="9.5" fill="var(--ink-3)">1 KB</text>
+              <text x="140" y="93" font-size="10.5" fill="var(--ink-3)">8 MB</text>
+              <text x="298" y="93" font-size="10.5" fill="var(--ink-3)">1 KB</text>
 
               <path d="M232 138 V176" stroke="var(--accent)" stroke-width="1.75" fill="none" marker-end="url(#ah)" stroke-dasharray="5 4"/>
               <rect x="140" y="180" width="186" height="52" rx="7" fill="var(--accent-dim)" stroke="var(--accent)"/>
               <text x="156" y="203" font-size="11.5" fill="var(--accent)" font-weight="700">FRAME DISCARDED</text>
-              <text x="156" y="221" font-size="10" fill="var(--ink-2)">never stored or buffered</text>
+              <text x="156" y="221" font-size="10.5" fill="var(--ink-2)">never stored or buffered</text>
 
               <rect x="352" y="164" width="196" height="90" rx="7" fill="var(--surface)" stroke="var(--accent)"/>
               <text x="366" y="188" font-size="11.5" fill="var(--ink)" font-weight="700">GestureEvent</text>
-              <text x="366" y="208" font-size="9.5" fill="var(--ink-3)">{ playerId, kind,</text>
-              <text x="366" y="224" font-size="9.5" fill="var(--ink-3)">  confidence, vector,</text>
-              <text x="366" y="240" font-size="9.5" fill="var(--ink-3)">  tCapture }</text>
+              <text x="366" y="208" font-size="10.5" fill="var(--ink-3)">{ playerId, kind,</text>
+              <text x="366" y="224" font-size="10.5" fill="var(--ink-3)">  confidence, vector,</text>
+              <text x="366" y="240" font-size="10.5" fill="var(--ink-3)">  tCapture }</text>
               <path d="M398 138 V158" stroke="var(--line-2)" stroke-width="1.75" fill="none" marker-end="url(#ah)"/>
 
               <path d="M580 16 V288" stroke="var(--accent)" stroke-width="1.75" stroke-dasharray="7 6"/>
-              <text x="590" y="38" font-size="10" fill="var(--accent)" font-weight="700" letter-spacing="1.6">NETWORK BOUNDARY</text>
+              <text x="590" y="38" font-size="10.5" fill="var(--accent)" font-weight="700" letter-spacing="1.6">NETWORK BOUNDARY</text>
 
               <rect x="590" y="56" width="302" height="92" rx="8" fill="none" stroke="var(--line-2)" stroke-dasharray="5 5"/>
               <text x="608" y="82" font-size="12" fill="var(--ink-2)" font-weight="700">Other players (spec)</text>
-              <text x="608" y="103" font-size="10" fill="var(--ink-3)">receives: GestureEvent only</text>
-              <text x="608" y="120" font-size="10" fill="var(--ink-3)">≈ 64 bytes per event</text>
-              <text x="608" y="139" font-size="10" fill="var(--unval)" font-weight="700">NOT BUILT — NO NETWORK CODE</text>
+              <text x="608" y="103" font-size="10.5" fill="var(--ink-3)">receives: GestureEvent only</text>
+              <text x="608" y="120" font-size="10.5" fill="var(--ink-3)">≈ 64 bytes per event</text>
+              <text x="608" y="139" font-size="10.5" fill="var(--unval)" font-weight="700">NOT BUILT — NO NETWORK CODE</text>
 
               <path d="M552 208 H576 Q596 208 596 190 V160" stroke="var(--accent)" stroke-width="1.75" fill="none" marker-end="url(#ah)"/>
 

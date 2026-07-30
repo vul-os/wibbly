@@ -7,7 +7,7 @@ no hosted deployment — those arrive when the input library lands. What follows
 .wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
 :root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
 .wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
-.wbf svg{display:block;height:auto;width:100%;min-width:620px}
+.wbf svg{display:block;height:auto;width:100%;min-width:900px}
 .wbf img{display:block;width:100%;height:auto}
 .wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
 .wbf figcaption b{color:var(--tx)}
@@ -26,10 +26,10 @@ no hosted deployment — those arrive when the input library lands. What follows
 <div class="sc">
 <svg viewBox="0 0 900 260" width="900" role="img" aria-label="A framing guide: stand about two metres back from the camera with your upper body — shoulders, elbows and wrists — inside the frame, and even light on your face rather than a bright window behind you.">
   <g font-family="ui-monospace, monospace">
-    <text x="16" y="24" font-size="10" fill="var(--tx2)" letter-spacing="1.3">FRAMING GUIDE — SIDE VIEW</text>
+    <text x="16" y="24" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">FRAMING GUIDE — SIDE VIEW</text>
     <rect x="24" y="46" width="26" height="18" rx="3" fill="var(--sf)" stroke="var(--a)" stroke-width="1.4"/>
     <circle cx="37" cy="55" r="5" fill="var(--a)"/>
-    <text x="10" y="82" font-size="9" fill="var(--tx2)">camera</text>
+    <text x="10" y="82" font-size="10.5" fill="var(--tx2)">camera</text>
     <path d="M60 55 H700" stroke="var(--ln)" stroke-width="1.4" stroke-dasharray="5 5"/>
     <path d="M60 40 V70 M700 40 V70" stroke="var(--ln)" stroke-width="1.2"/>
     <text x="330" y="36" font-size="12" font-weight="700" fill="var(--tx)">≈ 2 metres</text>
@@ -38,9 +38,9 @@ no hosted deployment — those arrive when the input library lands. What follows
       <path d="M20 112 V178 M-20 138 H60 M20 178 L-6 230 M20 178 L46 230" transform="translate(0,0)" stroke="var(--tx)" stroke-width="2.2" fill="none"/>
     </g>
     <rect x="686" y="60" width="188" height="150" rx="10" fill="none" stroke="var(--ok)" stroke-width="1.6" stroke-dasharray="4 4"/>
-    <text x="694" y="76" font-size="9" fill="var(--ok)" font-weight="700">UPPER BODY IN FRAME</text>
-    <text x="694" y="234" font-size="9" fill="var(--tx2)">shoulders · elbows · wrists</text>
-    <text x="330" y="250" font-size="10" fill="var(--tx2)">Even light on you — not a bright window behind you.</text>
+    <text x="694" y="76" font-size="10.5" fill="var(--ok)" font-weight="700">UPPER BODY IN FRAME</text>
+    <text x="694" y="234" font-size="10.5" fill="var(--tx2)">shoulders · elbows · wrists</text>
+    <text x="330" y="250" font-size="10.5" fill="var(--tx2)">Even light on you — not a bright window behind you.</text>
   </g>
 </svg>
 </div>

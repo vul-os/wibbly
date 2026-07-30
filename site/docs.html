@@ -94,23 +94,23 @@
     --line-2:     #3A2C52;
     --ink:        #F5F1FA;
     --ink-2:      #ADA2BE;
-    --ink-3:      #6F6483;
+    --ink-3:      #8C839C;
 
     --accent:      #FF4D9D;
     --accent-hi:   #FF85BC;
     --accent-ink:  #14000A;
-    --accent-dim:  rgba(255,77,157,.12);
+    --accent-dim:  #2E1529;
     --accent-line: rgba(255,77,157,.34);
     --accent-glow: rgba(255,77,157,.30);
 
     --live:       #3FE08A;
-    --live-dim:   rgba(63,224,138,.11);
+    --live-dim:   #162425;
     --live-line:  rgba(63,224,138,.32);
     --unval:      #FFB020;
-    --unval-dim:  rgba(255,176,32,.11);
+    --unval-dim:  #2B1F1A;
     --unval-line: rgba(255,176,32,.32);
-    --spec:       #857A99;
-    --spec-dim:   rgba(133,122,153,.10);
+    --spec:       #8A7F9F;
+    --spec-dim:   #1D1826;
     --spec-line:  rgba(133,122,153,.28);
 
     --chalk:      rgba(245,241,250,.10);
@@ -131,23 +131,23 @@
     --line-2:     #BEB2CD;
     --ink:        #140F1B;
     --ink-2:      #544A61;
-    --ink-3:      #837791;
+    --ink-3:      #6D6378;
 
     --accent:      #C4006B;
     --accent-hi:   #9E0056;
     --accent-ink:  #FFFFFF;
-    --accent-dim:  rgba(196,0,107,.07);
+    --accent-dim:  #FBEDF5;
     --accent-line: rgba(196,0,107,.30);
     --accent-glow: rgba(196,0,107,.14);
 
     --live:       #0F7A3D;
-    --live-dim:   rgba(15,122,61,.08);
+    --live-dim:   #ECF4EF;
     --live-line:  rgba(15,122,61,.28);
     --unval:      #8A4B00;
-    --unval-dim:  rgba(138,75,0,.08);
+    --unval-dim:  #F6F1EB;
     --unval-line: rgba(138,75,0,.28);
     --spec:       #6E6480;
-    --spec-dim:   rgba(110,100,128,.07);
+    --spec-dim:   #F5F4F6;
     --spec-line:  rgba(110,100,128,.26);
 
     --chalk:      rgba(20,15,27,.07);
@@ -245,6 +245,11 @@
   .vulos-btn:hover { border-color: var(--accent-line); color: var(--ink); }
   .vulos-btn img { width: 18px; height: 18px; border-radius: var(--r-sm); }
   @media (max-width: 700px) { .vulos-btn .lead { display: none; } }
+  @media (max-width: 340px) { .vulos-btn > span { display: none; } .vulos-btn { padding: 5px 6px; } }
+  /* docs.html's topbar carries one more control (menu-toggle) than the
+     marketing pages, so it runs out of room sooner — drop the wordmark
+     and keep just the mark at the narrowest widths rather than overflow. */
+  @media (max-width: 370px) { .brand-word { display: none; } .brand { gap: 0; } }
 
   /* ── Mobile menu toggle — hidden on desktop ────────────────────────────── */
   .menu-toggle {
@@ -255,6 +260,10 @@
     letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
   }
   .menu-toggle:hover { color: var(--ink); border-color: var(--ink-3); }
+  /* Below ~480px the topbar (menu-toggle + brand + theme seg + vulos-btn) no
+     longer fits in one row with the "Menu" label included — drop the label
+     and go icon-only rather than letting the row force horizontal scroll. */
+  @media (max-width: 480px) { .menu-toggle span { display: none; } .menu-toggle { padding: 7px 9px; gap: 0; } }
 
   /* ═════ DOCS SHELL ═════════════════════════════════════════════════════ */
   .docs-shell {
@@ -271,7 +280,7 @@
   }
   .docs-nav .kicker {
     display: flex; align-items: center; gap: 8px;
-    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
     letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3);
     padding: 4px 10px 12px;
   }
@@ -280,7 +289,7 @@
     box-shadow: 0 0 0 3px var(--accent-dim);
   }
   .docs-nav .grp {
-    font-family: var(--mono); font-size: 9.5px; font-weight: 700;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
     letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3);
     padding: 14px 10px 6px; opacity: .85;
   }
@@ -292,7 +301,7 @@
     transition: color .15s, background .15s, box-shadow .15s;
   }
   .docs-nav a .idx {
-    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
     color: var(--ink-3); flex: none; letter-spacing: .04em;
   }
   .docs-nav a:hover { background: var(--surface-2); color: var(--ink); }
@@ -312,7 +321,7 @@
   }
   .crumb a { color: var(--ink-3); }
   .crumb a:hover { color: var(--accent); }
-  .crumb .sep { color: var(--line-2); }
+  .crumb .sep { color: var(--ink-3); }
   .crumb .cur { color: var(--accent); }
 
   /* ── Markdown — court telemetry, typeset ───────────────────────────────── */
@@ -355,7 +364,7 @@
   .markdown li::marker { color: var(--ink-3); }
 
   .markdown code {
-    font-family: var(--mono); font-size: .86em; color: var(--ink);
+    font-family: var(--mono); font-size: max(.86em, 12px); color: var(--ink);
     background: var(--surface-2); border: 1px solid var(--line);
     padding: 1px 6px; border-radius: var(--r-sm);
   }
@@ -380,7 +389,7 @@
     display: block; overflow-x: auto;
   }
   .markdown thead th {
-    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
     letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3);
     background: var(--surface-2); text-align: left;
   }
@@ -389,7 +398,7 @@
     vertical-align: top;
   }
   .markdown tbody tr:hover td { background: var(--surface-2); }
-  .markdown td code { font-size: .84em; }
+  .markdown td code { font-size: max(.84em, 12px); }
 
   .markdown img { border-radius: var(--r-lg); margin: 1.2em 0; border: 1px solid var(--line); }
   .markdown hr { border: none; border-top: 1px solid var(--line); margin: 2.2em 0; }
@@ -410,7 +419,7 @@
   .doc-footnav a:hover { border-color: var(--accent-line); background: var(--surface-2); }
   .doc-footnav a.next { text-align: right; margin-left: auto; }
   .doc-footnav .dir {
-    font-family: var(--mono); font-size: 9.5px; font-weight: 700;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
     letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3);
   }
   .doc-footnav .ttl { font-weight: 600; font-size: 14px; color: var(--ink); }

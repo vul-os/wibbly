@@ -15,7 +15,7 @@ anywhere in it: no wagers, no tournament pools, no revenue share, no ads.
 .wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
 :root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
 .wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
-.wbf svg{display:block;height:auto;width:100%;min-width:620px}
+.wbf svg{display:block;height:auto;width:100%;min-width:900px}
 .wbf img{display:block;width:100%;height:auto}
 .wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
 .wbf figcaption b{color:var(--tx)}
@@ -38,17 +38,17 @@ way — using the three states below.
 <div class="sc">
 <svg viewBox="0 0 900 190" width="900" role="img" aria-label="A key to the three-state honesty convention used throughout these docs: a filled dot means shipped and working, a half-filled dot means implemented but only unit-tested on synthetic fixtures and never validated with a camera, and a hollow ring means planned with no code.">
   <g font-family="ui-monospace, monospace">
-    <text x="16" y="22" font-size="10" fill="var(--tx2)" letter-spacing="1.3">HOW TO READ THE STATE COLUMN — ONE OF THREE GLYPHS, ALWAYS</text>
+    <text x="16" y="22" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">HOW TO READ THE STATE COLUMN — ONE OF THREE GLYPHS, ALWAYS</text>
     <circle cx="30" cy="52" r="11" fill="var(--ok)"/>
     <text x="56" y="49" font-size="13" font-weight="700" fill="var(--tx)">Shipped / working</text>
-    <text x="56" y="65" font-size="10" fill="var(--tx2)">Runs today, exercised by hand or by CI against real inputs.</text>
+    <text x="56" y="65" font-size="10.5" fill="var(--tx2)">Runs today, exercised by hand or by CI against real inputs.</text>
     <path d="M30 93 A11 11 0 0 1 30 115 Z" fill="var(--am)"/>
     <circle cx="30" cy="104" r="11" fill="none" stroke="var(--am)" stroke-width="1.6"/>
     <text x="56" y="101" font-size="13" font-weight="700" fill="var(--tx)">Implemented, unvalidated</text>
-    <text x="56" y="117" font-size="10" fill="var(--tx2)">Unit-tested on synthetic fixtures only — never run against a real camera.</text>
+    <text x="56" y="117" font-size="10.5" fill="var(--tx2)">Unit-tested on synthetic fixtures only — never run against a real camera.</text>
     <circle cx="30" cy="156" r="11" fill="none" stroke="var(--ln)" stroke-width="1.6"/>
     <text x="56" y="153" font-size="13" font-weight="700" fill="var(--tx)">Planned / spec</text>
-    <text x="56" y="169" font-size="10" fill="var(--tx2)">Written down, tracked in the backlog. No code exists yet.</text>
+    <text x="56" y="169" font-size="10.5" fill="var(--tx2)">Written down, tracked in the backlog. No code exists yet.</text>
   </g>
 </svg>
 </div>
@@ -96,23 +96,23 @@ Three claims, each with a mechanism rather than an adjective.
   <g font-family="ui-monospace, monospace">
     <rect x="8" y="16" width="276" height="138" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
     <text x="24" y="42" font-size="12" font-weight="700" fill="var(--a)">Zero install</text>
-    <text x="24" y="64" font-size="10" fill="var(--tx2)">beats native reach</text>
+    <text x="24" y="64" font-size="10.5" fill="var(--tx2)">beats native reach</text>
     <line x1="24" y1="78" x2="268" y2="78" stroke="var(--ln)"/>
-    <text x="24" y="98" font-size="9" fill="var(--tx2)" letter-spacing="1">MECHANISM</text>
+    <text x="24" y="98" font-size="10.5" fill="var(--tx2)" letter-spacing="1">MECHANISM</text>
     <text x="24" y="118" font-size="11" fill="var(--tx)">Runs in a browser tab —</text>
     <text x="24" y="136" font-size="11" fill="var(--tx)">a link, a wave, a game.</text>
     <rect x="312" y="16" width="276" height="138" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
     <text x="328" y="42" font-size="12" font-weight="700" fill="var(--a)">Frames never leave</text>
-    <text x="328" y="64" font-size="10" fill="var(--tx2)">the device</text>
+    <text x="328" y="64" font-size="10.5" fill="var(--tx2)">the device</text>
     <line x1="328" y1="78" x2="572" y2="78" stroke="var(--ln)"/>
-    <text x="328" y="98" font-size="9" fill="var(--tx2)" letter-spacing="1">MECHANISM</text>
+    <text x="328" y="98" font-size="10.5" fill="var(--tx2)" letter-spacing="1">MECHANISM</text>
     <text x="328" y="118" font-size="11" fill="var(--tx)">Inference runs in-tab;</text>
     <text x="328" y="136" font-size="11" fill="var(--tx)">only GestureEvents cross.</text>
     <rect x="616" y="16" width="276" height="138" rx="8" fill="none" stroke="var(--a)" stroke-width="1.4"/>
     <text x="632" y="42" font-size="12" font-weight="700" fill="var(--a)">Games see interfaces,</text>
-    <text x="632" y="64" font-size="10" fill="var(--tx2)">never vendors</text>
+    <text x="632" y="64" font-size="10.5" fill="var(--tx2)">never vendors</text>
     <line x1="632" y1="78" x2="876" y2="78" stroke="var(--ln)"/>
-    <text x="632" y="98" font-size="9" fill="var(--tx2)" letter-spacing="1">MECHANISM</text>
+    <text x="632" y="98" font-size="10.5" fill="var(--tx2)" letter-spacing="1">MECHANISM</text>
     <text x="632" y="118" font-size="11" fill="var(--tx)">Four seams, each with a</text>
     <text x="632" y="136" font-size="11" fill="var(--tx)">working default. See below.</text>
   </g>
