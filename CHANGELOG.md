@@ -13,7 +13,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **`@vulos/wibbly-authority` — a real magnetite authority, running client-side.** Loads
   magnetite's reference `AuthoritativeGame` (`game-templates/authoritative`), compiled to
-  `wasm32-unknown-unknown` (`public/magnetite/arena-authority.wasm`, ~247 KB), and drives it
+  `wasm32-unknown-unknown` (`public/magnetite/arena-authority.wasm`, ~275 KB), and drives it
   through the `mag_*` sandbox ABI as a `Topology::SingleRoom` match — the bottom rung of
   magnetite's own topology ladder, hosted by the browser tab with no server.
   `src/game/magnetite-authority.js` steps it once per tennis frame, fed by the match's own

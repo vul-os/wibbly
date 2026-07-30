@@ -211,7 +211,7 @@ dedicated server alike — spelled out in
 
 **`@vulos/wibbly-authority` is that conformance test, made concrete.** It loads a real magnetite
 `AuthoritativeGame` — the reference arena-shooter template, compiled to `wasm32-unknown-unknown`
-(`public/magnetite/arena-authority.wasm`, ~247 KB) — and runs it in the browser tab through nothing
+(`public/magnetite/arena-authority.wasm`, ~275 KB) — and runs it in the browser tab through nothing
 but the `mag_*` exports magnetite chose to expose, as a `Topology::SingleRoom` match: the bottom
 rung of magnetite's own topology ladder, hosted client-side with no server.
 `src/game/magnetite-authority.js` steps it once per tennis frame, fed by that match's own gesture

@@ -68,7 +68,7 @@ regardless of directory layout.
 
 **Concretely, wibbly now runs a real magnetite simulation, not just a design pointed at one.**
 `@vulos/wibbly-authority` loads magnetite's reference `AuthoritativeGame` — the arena-shooter game
-template, compiled to `wasm32-unknown-unknown` (`public/magnetite/arena-authority.wasm`, ~247 KB)
+template, compiled to `wasm32-unknown-unknown` (`public/magnetite/arena-authority.wasm`, ~275 KB)
 — and runs it client-side as a `Topology::SingleRoom` match: the bottom rung of magnetite's own
 topology ladder, hosted by the browser tab with no server. `src/game/magnetite-authority.js` steps
 it once per tennis frame, fed by that match's own gesture events. This is what makes "wibbly is
