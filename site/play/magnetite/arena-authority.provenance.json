@@ -1,0 +1,35 @@
+{
+  "$comment": "Provenance for the vendored magnetite game module beside it. Its absence for the previous vendor (e4a7a1d, unrecorded) is why a driver and a module silently disagreed for months. Re-verify with: shasum -a 256 public/magnetite/arena-authority.wasm dist/magnetite/arena-authority.wasm dist-demo/magnetite/arena-authority.wasm site/play/magnetite/arena-authority.wasm — all four must match this file's sha256.",
+  "module": "arena-authority.wasm",
+  "source_repo": "https://github.com/vul-os/magnetite",
+  "source_path": "game-templates/authoritative",
+  "source_commit": "d9efd454ac61d114e985bec91ac91b9228a5e716",
+  "source_commit_note": "magnetite main HEAD at build time. The ABI fix landed earlier in this history at 9c244934837650d7834d50d6f703808c9f886f2e ('abi: mag_* seven bug fixes, mag_abi_version, tick in mag_step, bare-JSON mag_restore, doc audit') and is an ancestor of d9efd45.",
+  "build_target": "wasm32-unknown-unknown",
+  "build_command": "cargo build --release --target wasm32-unknown-unknown --features wasm  (run from game-templates/authoritative)",
+  "build_toolchain": "rustc 1.94.0 (4a4ef493e 2026-03-02)",
+  "build_date": "2026-07-30T17:55:00Z",
+  "sha256": "52548e99bacea26e401968fbd0c7e971af42df2b3e0f2a6f6c4e8e66d3b8e4bd",
+  "size_bytes": 275112,
+  "mag_abi_version_declared": 1,
+  "mag_abi_version_verified_by": "calling the instantiated module's mag_abi_version() export directly in Node before vendoring; returned 1",
+  "wasm_module_imports": [],
+  "wasm_module_imports_note": "WebAssembly.Module.imports() is empty — instantiates under a plain WebAssembly.instantiate(bytes, {}) with no host functions, matching packages/wibbly-authority's requirement.",
+  "previous_vendor": {
+    "sha256": "6de62e617233b7463e5f0af301299414c82c0d4048ff0a4883d5ef67bdd3685e",
+    "source_commit": "unrecorded — only ever touched by e4a7a1d ('feat: wibbly now runs a real magnetite authority in the browser'), never updated since",
+    "status": "STALE as of this re-vendor. Predated: mag_abi_version (did not exist), 7 mag_* ABI bug fixes, the input-discarding-on-malformed-payload defect, the on_join-never-called defect, and the per-tick RNG derivation. Confirmed identical to the wasm32-unknown-unknown build already sitting in magnetite's own target/ directory from a 2026-07-21 build, which is how the sha256 above was cross-checked."
+  },
+  "abi_break_from_previous_vendor": [
+    "mag_step payload changed from a bare JSON array of [player_id, input] pairs to {\"tick\": N, \"inputs\": [...]}; the driver must send the wrapping object and a strictly-increasing tick",
+    "mag_step reply gained a \"tick\" field echoing the tick simulated (additive; no driver change required)",
+    "mag_restore framing is UNCHANGED — bare JSON, no length prefix on the way in. wibbly's driver already did this correctly; the host side was what had been wrong",
+    "mag_abi_version() is a new required export; the host must call it and refuse a module that does not report 1"
+  ],
+  "how_to_reproduce": [
+    "cd magnetite && git checkout d9efd454ac61d114e985bec91ac91b9228a5e716 -- game-templates/authoritative backend/magnetite-sdk",
+    "cd game-templates/authoritative && cargo build --release --target wasm32-unknown-unknown --features wasm",
+    "shasum -a 256 target/wasm32-unknown-unknown/release/game_template_authoritative.wasm",
+    "expect 52548e99bacea26e401968fbd0c7e971af42df2b3e0f2a6f6c4e8e66d3b8e4bd"
+  ]
+}

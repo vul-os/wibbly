@@ -71,5 +71,6 @@ not a demo of an offline-capable game.
 MoveNet is published by Google LLC through
 [tensorflow/tfjs-models](https://github.com/tensorflow/tfjs-models) under the
 Apache License 2.0. The files in this directory are unmodified copies of the
-published artefacts. wibbly's own code is MIT (see the repository
-[`LICENSE`](../../../LICENSE)); this directory is not.
+published artefacts. wibbly's own code is dual-licensed MIT OR Apache-2.0 (see
+[`LICENSE-MIT`](../../../LICENSE-MIT) and [`LICENSE-APACHE`](../../../LICENSE-APACHE));
+this directory is not.
