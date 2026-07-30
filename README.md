@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="site/product-logos/wibbly.svg" alt="wibbly" width="80" height="80">
+<img src="brand/logo.svg" alt="wibbly" width="80" height="80">
 
 # wibbly
 
@@ -529,6 +529,16 @@ WIBBLY.md                the spec and the program backlog
 - [`WIBBLY.md`](WIBBLY.md) — the spec: vision, seams, model research, runtime targets, phased backlog, open questions
 - [`site/docs/`](site/docs/) — overview, architecture, models, runtime targets, multiplayer, incentives, roadmap, getting started
 - [`docs/screenshots/README.md`](docs/screenshots/README.md) — what each screenshot shows and how it was captured
+
+## Brand
+
+The mark in [`brand/`](brand/) is the source of truth. Every icon this repo
+ships — favicon, PWA and app icons, the mark in the README and on the site — is
+rendered from `brand/logo.svg` rather than redrawn, so there is one approved
+drawing and no second copy to drift.
+
+Copy it outward, never edit a derived copy, and never edit `brand/` to match
+something downstream.
 
 ## License
 
