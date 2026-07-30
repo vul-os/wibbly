@@ -1,5 +1,2 @@
 User-agent: *
 Allow: /
-
-# Sitemap location
-Sitemap: https://plantviz.co.za/sitemap.xml

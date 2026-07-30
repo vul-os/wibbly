@@ -37,7 +37,7 @@ import {
   Droplets
 } from 'lucide-react';
 
-const PlantVisualization = () => {
+const PalmworksViz = () => {
   const [currentMode, setCurrentMode] = useState('select');
   const [selectedObjects, setSelectedObjects] = useState([]);
   const [gridSnap, setGridSnap] = useState(true);
@@ -846,4 +846,4 @@ const PlantVisualization = () => {
   );
 };
 
-export default PlantVisualization;
+export default PalmworksViz;

@@ -34,19 +34,19 @@ const lazyImport = (importFn) => {
 const NotFound = lazyImport(() => import('./pages/not-found'));
 
 // 3D Visualization
-const PlantVisualization = lazyImport(() => import('./pages/viz'));
+const PalmworksViz = lazyImport(() => import('./pages/viz'));
 
 const AppRoutes = () => {
   return (
     <CustomSuspense>
       <Routes>
         <Route element={<BlankLayout />}>
-          <Route path="/" element={<PlantVisualization />} />
+          <Route path="/" element={<PalmworksViz />} />
         </Route>
 
         {/* 3D Plant Visualization */}
         <Route element={<BlankLayout />}>
-          <Route path="/viz" element={<PlantVisualization />} />
+          <Route path="/viz" element={<PalmworksViz />} />
         </Route>
 
         {/* Global catch-all route */}
