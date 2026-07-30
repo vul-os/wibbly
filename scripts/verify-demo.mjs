@@ -35,9 +35,26 @@
  * CSP actually forces us onto. Software rasterisation is slow, which is why
  * the waits below are long.
  *
+ * A VERIFIER MUST NOT MODIFY ITS SUBJECT. The screenshots this script takes
+ * along the way are a debugging aid, not something it checks against — so by
+ * default they land in a gitignored scratch directory
+ * (`.verify-output/screenshots/`), never in the tracked `docs/screenshots/`
+ * mirror. Running `npm run verify:demo` twice in a row with zero source
+ * changes must leave `git status` clean; it did not always (see git history —
+ * it used to overwrite `docs/screenshots/demo-*.png` unconditionally on every
+ * run, which meant a plain verification run left the tree dirty). Regenerating
+ * the DOCUMENTED captures is a separate, explicit, opt-in action
+ * (`--update-screenshots`) — the same category as a formatter or a code
+ * generator, not a gate.
+ *
  *   node scripts/verify-demo.mjs
- *   node scripts/verify-demo.mjs --no-build     reuse an existing dist-demo/
+ *   node scripts/verify-demo.mjs --no-build            reuse an existing dist-demo/
  *   node scripts/verify-demo.mjs --headed
+ *   node scripts/verify-demo.mjs --update-screenshots   also refresh the committed
+ *                                                        docs/screenshots/demo-*.png
+ *                                                        (only these 5 checks-worth of
+ *                                                        captures; everything else this
+ *                                                        script does is unaffected)
  */
 
 import { chromium } from 'playwright';
@@ -49,7 +66,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist-demo');
-const SHOTS = path.join(ROOT, 'docs', 'screenshots');
+const DOCS_SHOTS = path.join(ROOT, 'docs', 'screenshots');
+const SCRATCH_SHOTS = path.join(ROOT, '.verify-output', 'screenshots');
 
 // MUST equal the `WIBBLY_BASE` that `npm run build:demo` passes (package.json).
 // A build based at one sub-path and served under another 404s every hashed
@@ -63,6 +81,12 @@ const BASE = `${ORIGIN}${PREFIX}`;
 
 const NO_BUILD = process.argv.includes('--no-build');
 const HEADED = process.argv.includes('--headed');
+// Opt-in only. Without it, captures go to a gitignored scratch dir so that
+// `npm run verify:demo` — a VERIFIER, run in CI on every push — can never
+// leave the tree dirty. This is the same distinction as a `--check` mirror
+// gate vs. its writeable counterpart, applied to screenshots instead of text.
+const UPDATE_SCREENSHOTS = process.argv.includes('--update-screenshots');
+const SHOTS = UPDATE_SCREENSHOTS ? DOCS_SHOTS : SCRATCH_SHOTS;
 
 /**
  * How many checks a complete run must record. Asserted at the end, because
@@ -201,7 +225,7 @@ async function shot(target, name) {
       animations: 'disabled',
       timeout: 90_000,
     });
-    console.log(`  saved docs/screenshots/${name}`);
+    console.log(`  saved ${path.relative(ROOT, SHOTS)}/${name}`);
   } catch (err) {
     console.log(`  screenshot ${name} failed: ${err.message.split('\n')[0]}`);
   }
@@ -248,6 +272,11 @@ async function main() {
   console.log(`base check: ${assetRefs.length} absolute asset URLs, all under ${PREFIX}`);
 
   mkdirSync(SHOTS, { recursive: true });
+  console.log(
+    UPDATE_SCREENSHOTS
+      ? 'screenshots: UPDATING committed docs/screenshots/ (--update-screenshots passed)'
+      : `screenshots: writing to gitignored ${path.relative(ROOT, SHOTS)}/ (pass --update-screenshots to refresh docs/screenshots/ instead)`,
+  );
 
   const server = await serve();
   console.log(`\nserving dist-demo/ at ${BASE}\n`);

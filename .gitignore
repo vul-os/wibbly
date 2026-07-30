@@ -2,5 +2,10 @@ node_modules
 dist
 dist-demo
 
+# verify-demo.mjs's own working captures — a verifier must not write to the
+# tracked docs/screenshots/ mirror as a side effect of running. Pass
+# --update-screenshots to refresh docs/screenshots/ explicitly instead.
+.verify-output/
+
 # Claude Code session state (local only)
 .claude/
