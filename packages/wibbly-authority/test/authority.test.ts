@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { describe, it, expect } from 'vitest';
-import { MagnetiteAuthority, makeInput, singleRoomConfig, type Input } from '../src/index';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { MagnetiteAuthority, makeInput, singleRoomConfig, EXPECTED_MAG_ABI_VERSION, type Input } from '../src/index';
 
 /**
  * These tests load the ACTUAL vendored magnetite module
@@ -86,5 +86,93 @@ describe('MagnetiteAuthority — a real magnetite game in the browser engine', (
       0x02, 0x07, 0x01, 0x01, 0x65, 0x01, 0x66, 0x00, 0x00, // import "e"."f" func 0
     ]);
     await expect(MagnetiteAuthority.instantiate(wat, singleRoomConfig())).rejects.toThrow(/host imports/i);
+  });
+
+  it('the vendored module actually declares mag_abi_version 1', async () => {
+    // Read it directly with the raw WebAssembly API, bypassing this package's
+    // own class entirely — this is a check on the ARTEFACT, independent of
+    // whether MagnetiteAuthority's own version guard is implemented correctly
+    // (that is covered separately below).
+    const module = await WebAssembly.compile(WASM);
+    const instance = await WebAssembly.instantiate(module, {});
+    const exports = instance.exports as { mag_abi_version(): number };
+    expect(exports.mag_abi_version()).toBe(1);
+    expect(EXPECTED_MAG_ABI_VERSION).toBe(1);
+  });
+
+  it('a restored player is never Unauthorized-rejected (the on_join defect this re-vendor closes)', async () => {
+    // Before magnetite 9c24493, on_join was never invoked by any production
+    // path; a module built before that fix rejects every input as
+    // Unauthorized because the executor never considered the player joined.
+    // restorePlayers seeds the snapshot directly and mag_step's own executor
+    // now treats "first sight of a player id in an input" as the join, so
+    // this must come back empty on tick 1 already — not just eventually.
+    const auth = await MagnetiteAuthority.instantiate(WASM, singleRoomConfig({ seed: 42 }));
+    auth.restorePlayers([{ id: 1, x: 0, y: 0 }]);
+    const out = auth.step([[1, moveRight(0)]]);
+    expect(out.rejects).toEqual([]);
+  });
+
+  describe('mag_abi_version guard (mocked instantiation — the artefact only ever declares 1, so a mismatch is simulated)', () => {
+    // A minimal, structurally valid empty wasm module: magic + version, no
+    // sections, hence zero imports and zero exports. Real enough to satisfy
+    // WebAssembly.compile / Module.imports (which instantiate() checks before
+    // ever touching mag_abi_version); WebAssembly.instantiate itself is mocked
+    // below to hand back exports this driver could never get from an empty
+    // module for real, so the version/export guards can be exercised without
+    // a second real magnetite build at a different ABI version.
+    const EMPTY_MODULE = new Uint8Array([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]);
+
+    function fakeExports(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+      const noop = () => 0;
+      return {
+        memory: new WebAssembly.Memory({ initial: 1 }),
+        mag_abi_version: () => 1,
+        mag_alloc: noop,
+        mag_free: () => {},
+        mag_init: () => {},
+        mag_step: noop,
+        mag_snapshot: noop,
+        mag_restore: () => {},
+        mag_view: noop,
+        ...overrides,
+      };
+    }
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('FAILS LOUDLY when the module reports a different mag_abi_version', async () => {
+      // instantiate() calls the (moduleObject, importObject) overload, which
+      // resolves directly to an Instance (unlike the BufferSource overload,
+      // which resolves to {module, instance}) — mock that exact shape.
+      vi.spyOn(WebAssembly, 'instantiate').mockResolvedValue(
+        { exports: fakeExports({ mag_abi_version: () => 2 }) } as unknown as WebAssembly.Instance,
+      );
+      await expect(MagnetiteAuthority.instantiate(EMPTY_MODULE, singleRoomConfig())).rejects.toThrow(
+        /mag_abi_version 2.*speaks 1/s,
+      );
+    });
+
+    it('FAILS LOUDLY when the module has no mag_abi_version export at all (the pre-fix, undeclared-ABI shape)', async () => {
+      const withoutVersion = fakeExports();
+      delete (withoutVersion as Record<string, unknown>).mag_abi_version;
+      vi.spyOn(WebAssembly, 'instantiate').mockResolvedValue(
+        { exports: withoutVersion } as unknown as WebAssembly.Instance,
+      );
+      await expect(MagnetiteAuthority.instantiate(EMPTY_MODULE, singleRoomConfig())).rejects.toThrow(
+        /missing required export `mag_abi_version`/,
+      );
+    });
+
+    it('accepts a module reporting exactly the expected version', async () => {
+      vi.spyOn(WebAssembly, 'instantiate').mockResolvedValue(
+        { exports: fakeExports() } as unknown as WebAssembly.Instance,
+      );
+      await expect(MagnetiteAuthority.instantiate(EMPTY_MODULE, singleRoomConfig())).resolves.toBeInstanceOf(
+        MagnetiteAuthority,
+      );
+    });
   });
 });

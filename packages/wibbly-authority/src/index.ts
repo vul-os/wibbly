@@ -28,15 +28,34 @@
  * given its inputs*, not of the inputs. Nothing about hosting the sim in the
  * browser makes an attested input trustworthy.
  *
- * ── The mag_* ABI (from magnetite-sandbox/src/lib.rs) ───────────────────────
+ * ── The mag_* ABI (from magnetite-sandbox/src/lib.rs, normatively
+ *    magnetite's site/docs/sandbox-abi.md) ─────────────────────────────────
+ *   mag_abi_version() -> u32        declared ABI version; MUST be 1. The host
+ *                                   (this file) refuses a module that reports
+ *                                   anything else — see EXPECTED_MAG_ABI_VERSION
+ *                                   below.
  *   mag_alloc(len) -> ptr           bump-allocate `len` bytes for host writes
  *   mag_free(ptr, len)              no-op for the bump allocator
  *   mag_init(cfg_ptr, cfg_len)      init from a JSON MatchConfig
- *   mag_step(in_ptr, in_len) -> ptr advance one tick; ptr → length-prefixed JSON
+ *   mag_step(p_ptr, p_len) -> ptr   advance one tick given `{tick, inputs}`;
+ *                                   ptr → length-prefixed JSON `{rejects,
+ *                                   state_hash, tick}`
  *   mag_snapshot() -> ptr           full state → length-prefixed JSON
- *   mag_restore(ptr, len)           replace state from length-prefixed JSON
+ *   mag_restore(ptr, len)           replace state from BARE (non-prefixed)
+ *                                   JSON — this is the one direction that did
+ *                                   NOT change between ABI versions
  *   mag_view(player_id) -> ptr      per-player view → length-prefixed JSON
  * Every `-> ptr` return points at `[u32 little-endian length][JSON bytes]`.
+ * Every buffer the HOST writes in (`mag_init`, `mag_step`, `mag_restore`) is
+ * bare — `len` already carries the length, so there is no prefix to add.
+ *
+ * ABI v1 broke wire-compatibility with the undeclared ABI this module used to
+ * speak: `mag_step`'s payload gained a `tick` field the host must supply and
+ * increase every call, and `mag_abi_version` itself is new. See
+ * `public/magnetite/arena-authority.provenance.json` for the magnetite commit
+ * this module was rebuilt from and why: a version-less module silently
+ * disagreeing with its driver is exactly the bug that made the previous vendor
+ * go stale for months with nothing to catch it.
  */
 
 /* ── magnetite JSON shapes (mirrors magnetite-sdk serde output) ───────────── */
@@ -179,6 +198,7 @@ export interface SpawnSpec {
 
 interface MagExports {
   memory: WebAssembly.Memory;
+  mag_abi_version(): number;
   mag_alloc(len: number): number;
   mag_free(ptr: number, len: number): void;
   mag_init(cfgPtr: number, cfgLen: number): void;
@@ -188,7 +208,28 @@ interface MagExports {
   mag_view(playerId: bigint): number;
 }
 
-const REQUIRED_EXPORTS = ['memory', 'mag_alloc', 'mag_free', 'mag_init', 'mag_step', 'mag_snapshot', 'mag_restore', 'mag_view'] as const;
+const REQUIRED_EXPORTS = [
+  'memory',
+  'mag_abi_version',
+  'mag_alloc',
+  'mag_free',
+  'mag_init',
+  'mag_step',
+  'mag_snapshot',
+  'mag_restore',
+  'mag_view',
+] as const;
+
+/**
+ * The `mag_*` ABI version this driver speaks. Sourced from magnetite's own
+ * `site/docs/sandbox-abi.md` §1 ("Must return `1`.") and
+ * `magnetite-sandbox::abi::MAG_ABI_VERSION`. A module built against a
+ * different (including the old, undeclared) ABI is refused at load — see
+ * `instantiate()` — rather than fed a payload shape it will silently misread.
+ * Bump this only in the same change that updates every call site below to
+ * match the new wire shape.
+ */
+export const EXPECTED_MAG_ABI_VERSION = 1;
 
 /**
  * A live magnetite authority backed by a wasm game module.
@@ -235,8 +276,29 @@ export class MagnetiteAuthority {
     const exports = instance.exports as unknown as MagExports;
     for (const name of REQUIRED_EXPORTS) {
       if (!(name in (instance.exports as object))) {
-        throw new Error(`magnetite module is missing required export \`${name}\``);
+        throw new Error(
+          `magnetite module is missing required export \`${name}\` — ` +
+            `if this is an old vendor built before mag_abi_version existed, that is ` +
+            `exactly the silent-disagreement failure this check exists to catch`,
+        );
       }
+    }
+    // FAIL LOUDLY on a version mismatch. This is the actual guard: a
+    // provenance file nobody reads does not stop a driver and a module from
+    // silently disagreeing, only a runtime check does. See
+    // public/magnetite/arena-authority.provenance.json for how this module was
+    // built and which magnetite commit declared this version.
+    const declaredVersion = exports.mag_abi_version();
+    if (declaredVersion !== EXPECTED_MAG_ABI_VERSION) {
+      throw new Error(
+        `magnetite module declares mag_abi_version ${declaredVersion}, but this driver ` +
+          `speaks ${EXPECTED_MAG_ABI_VERSION}. Refusing to run it: a version mismatch here ` +
+          `means the wire shape of mag_init/mag_step/mag_restore may disagree between host ` +
+          `and guest, and running anyway is how a driver and a module silently drift for ` +
+          `months. Re-vendor the module from a magnetite build that reports ` +
+          `${EXPECTED_MAG_ABI_VERSION}, or update EXPECTED_MAG_ABI_VERSION here alongside a ` +
+          `matching update to every mag_* call below.`,
+      );
     }
     const self = new MagnetiteAuthority(exports, config);
     self.writeInit(config);
@@ -305,9 +367,18 @@ export class MagnetiteAuthority {
   /**
    * Advance the simulation one authoritative tick given `(playerId, Input)`
    * pairs, and return the tick's `StepOutput` (rejects + `state_hash`).
+   *
+   * ABI v1's `mag_step` payload is `{"tick": N, "inputs": [...]}`, not a bare
+   * array — the module now REQUIRES a tick strictly ahead of the last one it
+   * saw (via `mag_init`/a fresh instance that starts at 0, or via
+   * `mag_restore`'s snapshot tick) and traps rather than silently absorbing a
+   * mis-sequenced or undecodable step. `this.stepCount` is the number of
+   * completed steps, so `stepCount + 1` is exactly the next tick — the guest's
+   * own convention that "the first step is tick 1".
    */
   step(inputs: Array<[number, Input]>): StepOutput {
-    const { ptr, len } = this.writeJson(inputs);
+    const tick = this.stepCount + 1;
+    const { ptr, len } = this.writeJson({ tick, inputs });
     const outPtr = this.exports.mag_step(ptr, len);
     this.stepCount += 1;
     const raw = this.readPrefixed(outPtr);
