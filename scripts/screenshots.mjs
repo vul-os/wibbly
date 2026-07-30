@@ -8,7 +8,7 @@
  *   1. `vite build` (unless dist/index.html already exists and --no-build is set)
  *   2. `vite preview` on port 4183 — the SPA, with react-router fallback
  *   3. A tiny static server on port 4184 for site/, mounted at the same
- *      `/products/magnetite/wibbly/` prefix the mini-site's font URLs assume
+ *      `/projects/wibbly/` prefix the mini-site's font URLs assume
  *   4. Drives Chromium over both, screenshots each route, tears everything down
  *
  * Camera:
@@ -182,7 +182,7 @@ const APP_ROUTES = [
 const SITE_ROUTES = [
   {
     name: 'site-landing',
-    path: '/products/magnetite/wibbly/landing.html',
+    path: '/projects/wibbly/landing.html',
     description: 'Mini-site landing page',
     themes: ['light', 'dark'],
     settleMs: 1_200,
@@ -252,13 +252,13 @@ const MIME = {
   '.md': 'text/markdown; charset=utf-8',
 }
 
-// Serve site/ under BOTH `/` and `/products/magnetite/wibbly/`. The landing page's font
+// Serve site/ under BOTH `/` and `/projects/wibbly/`. The landing page's font
 // and asset URLs are absolute and assume the deployed prefix, so serving it at
 // the root alone would photograph a page with fallback system fonts.
 async function startSiteServer() {
   siteServer = createServer((req, res) => {
     let rel = decodeURIComponent(new URL(req.url, SITE_BASE).pathname)
-    if (rel.startsWith('/products/magnetite/wibbly')) rel = rel.slice('/products/magnetite/wibbly'.length)
+    if (rel.startsWith('/projects/wibbly')) rel = rel.slice('/projects/wibbly'.length)
     if (rel === '' || rel === '/') rel = '/landing.html'
     const file = path.join(SITE, path.normalize(rel).replace(/^(\.\.[/\\])+/, ''))
     if (!file.startsWith(SITE) || !existsSync(file) || !statSync(file).isFile()) {
@@ -273,7 +273,7 @@ async function startSiteServer() {
     siteServer.once('error', reject)
     siteServer.listen(SITE_PORT, resolve)
   })
-  console.log(`  site ready at ${SITE_BASE}/products/magnetite/wibbly/`)
+  console.log(`  site ready at ${SITE_BASE}/projects/wibbly/`)
 }
 
 function teardown() {
@@ -361,7 +361,7 @@ async function main() {
 
   console.log('\nwibbly screenshotter')
   console.log(`  app      : ${APP_BASE}${EXTERNAL_URL ? ' (external)' : ''}`)
-  console.log(`  site     : ${SITE_BASE}/products/magnetite/wibbly/`)
+  console.log(`  site     : ${SITE_BASE}/projects/wibbly/`)
   console.log(`  output   : docs/screenshots/`)
   console.log(`  viewport : ${VIEWPORT.width}×${VIEWPORT.height} @2x`)
   console.log(`  browser  : ${HEADED ? 'headed (real GPU)' : 'headless (SwiftShader)'}`)
@@ -475,7 +475,7 @@ async function main() {
     '(`scripts/verify-demo.mjs`) — not from this one, so `npm run screenshots` neither',
     'produces nor refreshes them. They are captured at 1000×640, an iframe-shaped',
     'viewport rather than a desktop one, against `dist-demo/` served under the real',
-    '`/products/magnetite/wibbly/play/` sub-path with the production CSP applied, and with',
+    '`/projects/wibbly/play/` sub-path with the production CSP applied, and with',
     'ANGLE/SwiftShader enabled so TFJS gets a real (software) WebGL backend.',
     '',
     '| File | Surface |',

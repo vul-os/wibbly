@@ -23,7 +23,7 @@ anywhere in it: no wagers, no tournament pools, no revenue share, no ads.
 
 <figure class="wbf">
 <div class="sc">
-<img src="/products/magnetite/wibbly/shots/title.png" alt="Tennis is playable today from the title screen; soccer and boxing are listed as planned reference games with no code behind them yet." loading="lazy" decoding="async" />
+<img src="/projects/wibbly/shots/title.png" alt="Tennis is playable today from the title screen; soccer and boxing are listed as planned reference games with no code behind them yet." loading="lazy" decoding="async" />
 </div>
 <figcaption>The title screen, as it looks today. <b>Tennis is real and playable</b>; soccer and boxing are named on the same screen but are backlog entries, not games — see the status table below for what that distinction means everywhere else in these docs.</figcaption>
 </figure>
@@ -124,7 +124,7 @@ Three claims, each with a mechanism rather than an adjective.
 **Zero install beats native reach.** A link, a wave, a game. No store, no download, no dongle. For
 seeding a game library from nothing, that distribution property beats anything a native binary
 provides — which is why v1 is browser-first and non-negotiable. See
-[Runtime targets](/products/magnetite/wibbly/docs/runtime-targets).
+[Runtime targets](/projects/wibbly/docs/runtime-targets).
 
 **Camera frames never leave the device.** Inference runs in your tab because it has to; there is
 nowhere fast enough to send frames. The networked design — peer-to-peer, one player's browser
@@ -138,7 +138,7 @@ by whatever server you point at them.
 consumes four seams, each of which ships a working default. This one is now demonstrable rather than
 aspirational — `src/game/game.jsx` imports `WibblyInput`, `SpatialBinder`, `SwingRecognizer` and
 `Calibration`, and mentions no model anywhere. See
-[Architecture](/products/magnetite/wibbly/docs/architecture).
+[Architecture](/projects/wibbly/docs/architecture).
 
 ## What wibbly is not
 
@@ -150,7 +150,7 @@ aspirational — `src/game/game.jsx` imports `WibblyInput`, `SpatialBinder`, `Sw
   nondeterministic sensor stream that cannot be replay-verified. That used to be the argument for
   keeping two repos, but it has partly expired: magnetite now enforces the verifiable/attested
   boundary itself, in code, with `InputClass::{Deterministic, Attested}` and a `PlausibilityGate` —
-  see [Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer). The reason two repos
+  see [Multiplayer & anti-cheat](/projects/wibbly/docs/multiplayer). The reason two repos
   still make sense is different: staying separate is a **conformance test**. wibbly can only reach
   magnetite through whatever magnetite chose to publish, because a repo boundary is the one thing
   that makes reaching past that impossible by accident.
@@ -164,7 +164,7 @@ aspirational — `src/game/game.jsx` imports `WibblyInput`, `SpatialBinder`, `Sw
 
 ## Where to go next
 
-- [Getting started](/products/magnetite/wibbly/docs/getting-started) — clone, run, swing.
-- [Architecture](/products/magnetite/wibbly/docs/architecture) — the four seams and the data flow.
-- [Model selection](/products/magnetite/wibbly/docs/models) — the licence and benchmark reasoning.
-- [Roadmap](/products/magnetite/wibbly/docs/roadmap) — three phases and the open questions.
+- [Getting started](/projects/wibbly/docs/getting-started) — clone, run, swing.
+- [Architecture](/projects/wibbly/docs/architecture) — the four seams and the data flow.
+- [Model selection](/projects/wibbly/docs/models) — the licence and benchmark reasoning.
+- [Roadmap](/projects/wibbly/docs/roadmap) — three phases and the open questions.

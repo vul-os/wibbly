@@ -118,7 +118,7 @@ Implementations own their own capture loop and push frames to the tracker.
 - **Default — `WebcamFrameSource`.** `getUserMedia` in a browser tab. It owns its capture loop and
   no longer appends anything to your `document.body`; the preview is a component you place.
 - **Phase 3 — `NativeFrameSource`.** Rust-side `nokhwa` capture under Tauri. Frames never cross IPC;
-  see [Runtime targets](/products/magnetite/wibbly/docs/runtime-targets).
+  see [Runtime targets](/projects/wibbly/docs/runtime-targets).
 
 ## 2. `PoseTracker` — pixels to skeletons
 
@@ -136,7 +136,7 @@ the rest, which is what blocked every multi-player capability downstream.
 
 - **Default — `MoveNetMultiPoseTracker`.** Pins `modelType: 'MultiPose.Lightning'`, returns up to six
   people at flat inference cost, and normalises every landmark to `[0,1]` in image space with the
-  origin top-left. See [Model selection](/products/magnetite/wibbly/docs/models).
+  origin top-left. See [Model selection](/projects/wibbly/docs/models).
 - **Optional — `HandLandmarkTracker`.** MediaPipe, composable alongside the body tracker. Built and
   unit-tested as a standalone tracker, but `WibblyInput`'s pipeline does not compose it yet — it
   still wires body pose and `SwingRecognizer` only.
@@ -207,7 +207,7 @@ magnetite through whatever magnetite decided to publish — its crates, its `mag
 game templates — because a repo boundary is the one thing that makes reaching past that
 impossible by accident. Gesture games still run **client-attested**, on a host browser tab or a
 dedicated server alike — spelled out in
-[Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer).
+[Multiplayer & anti-cheat](/projects/wibbly/docs/multiplayer).
 
 **`@vulos/wibbly-authority` is that conformance test, made concrete.** It loads a real magnetite
 `AuthoritativeGame` — the reference arena-shooter template, compiled to `wasm32-unknown-unknown`

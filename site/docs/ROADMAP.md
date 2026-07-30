@@ -81,7 +81,7 @@ validation item at the top of phase 2.
 - [x] Tennis ported onto the seams. The game imports `WibblyInput` and names no model anywhere.
 - [x] Firebase Analytics removed — SDK gone, dependency out of `package.json`.
 - [x] Firebase Hosting removed — `firebase.json`, `.firebaserc` and the deploy workflow are gone.
-      `dist/` is static files; [Configuration → Hosting](/products/magnetite/wibbly/docs/configuration)
+      `dist/` is static files; [Configuration → Hosting](/projects/wibbly/docs/configuration)
       documents nginx, Caddy and dev-server paths. Nothing hosted is left in the deploy path.
 - [ ] **Validate multi-person against real people and real cameras.** The binder and tracker are
       implemented and unit-tested; neither has met a living room. This gates every claim about couch
@@ -124,12 +124,12 @@ validation item at the top of phase 2.
 - [ ] `RtmoOnnxTracker` on ONNX Runtime Web with WebGPU, benchmarked against MoveNet on our own
       hardware.
 - [ ] Tauri shell with `nokhwa` capture and `ort` inference. See
-      [Runtime targets](/products/magnetite/wibbly/docs/runtime-targets).
+      [Runtime targets](/projects/wibbly/docs/runtime-targets).
 - [x] Peer-to-peer networked play — host authority in the browser, guest `GestureEvent`s over a
       `RTCDataChannel`, copy-paste/QR signalling by default with Trystero as an optional
       zero-server alternative, free public STUN. No free TURN, so symmetric-NAT/CGNAT peers
       cannot connect — a stated limitation, not a gap to quietly patch later. See
-      [Multiplayer & anti-cheat](/products/magnetite/wibbly/docs/multiplayer). The transport
+      [Multiplayer & anti-cheat](/projects/wibbly/docs/multiplayer). The transport
       (`PeerSession`, offer/answer helpers, a link-sized codec) is built and unit-tested in
       `packages/wibbly-p2p` (no magnetite dependency), and tennis wires an optional `PeerSession` in already — off
       unless a host page supplies a transport. **Not true yet:** there is no lobby screen
@@ -140,7 +140,7 @@ validation item at the top of phase 2.
 Genuinely open. None of these has been decided.
 
 - ~~**The repo is private.**~~ **Resolved.** The repo is now public and MIT licensed (root `LICENSE`),
-  and `packages/wibbly-input` is MIT too. Publishing under `vulos.org/products/magnetite/wibbly` is therefore
+  and `packages/wibbly-input` is MIT too. Publishing under `vulos.org/projects/wibbly` is therefore
   no longer gated on a founder call.
 - **`navigator.gpu` in WKWebView on macOS 26.** Unresolved in research; needs an empirical test, not
   another citation.

@@ -2,7 +2,7 @@
   "title": "wibbly",
   "tagline": "Your camera is the controller. A gesture is an input event like any other.",
   "logo": "/product-logos/wibbly.svg",
-  "home": "/products/magnetite/wibbly/landing.html",
+  "home": "/projects/wibbly/landing.html",
   "repo": "https://github.com/vul-os/wibbly",
   "brand": {
     "accent": "#E11D80",
@@ -23,35 +23,35 @@
         "family": "Archivo Variable",
         "weight": "100 900",
         "style": "normal",
-        "src": "/products/magnetite/wibbly/fonts/archivo.woff2"
+        "src": "/projects/wibbly/fonts/archivo.woff2"
       },
       {
         "family": "Archivo Variable",
         "weight": "100 900",
         "style": "normal",
-        "src": "/products/magnetite/wibbly/fonts/archivo-ext.woff2"
+        "src": "/projects/wibbly/fonts/archivo-ext.woff2"
       },
       {
         "family": "Instrument Sans Variable",
         "weight": "400 700",
         "style": "normal",
-        "src": "/products/magnetite/wibbly/fonts/instrument-sans.woff2"
+        "src": "/projects/wibbly/fonts/instrument-sans.woff2"
       },
       {
         "family": "Instrument Sans Variable",
         "weight": "400 700",
         "style": "normal",
-        "src": "/products/magnetite/wibbly/fonts/instrument-sans-ext.woff2"
+        "src": "/projects/wibbly/fonts/instrument-sans-ext.woff2"
       },
       {
         "family": "JetBrains Mono Variable",
         "weight": "100 800",
         "style": "normal",
-        "src": "/products/magnetite/wibbly/fonts/jetbrains-mono.woff2"
+        "src": "/projects/wibbly/fonts/jetbrains-mono.woff2"
       }
     ]
   },
-  "docsBase": "/products/magnetite/wibbly/docs",
+  "docsBase": "/projects/wibbly/docs",
   "groups": [
     {
       "title": "Start here",

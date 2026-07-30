@@ -6,7 +6,7 @@ import { clearOwnedStorage } from '../mode.js';
 /**
  * Demo surface — the whole demo build, one route, no navigation.
  *
- * This is what gets embedded at `vulos.org/products/magnetite/wibbly/play/` in a
+ * This is what gets embedded at `vulos.org/projects/wibbly/play/` in a
  * same-origin iframe. It is not the app with bits hidden; it is a different
  * shell with different obligations:
  *

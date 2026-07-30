@@ -74,21 +74,21 @@ npm run preview   # serve the built bundle locally
 
 <figure class="wbf">
 <div class="sc">
-<img src="/products/magnetite/wibbly/shots/setup-intro.png" alt="Setup step 1: what the camera is for and why it stays on-device, shown before the browser&#x27;s camera permission prompt appears." loading="lazy" decoding="async" />
+<img src="/projects/wibbly/shots/setup-intro.png" alt="Setup step 1: what the camera is for and why it stays on-device, shown before the browser&#x27;s camera permission prompt appears." loading="lazy" decoding="async" />
 </div>
-<figcaption>Step 1 of 3. wibbly explains <b>why</b> it wants the camera before the browser asks permission for it — the pipeline described in <a href="/products/magnetite/wibbly/docs/architecture">Architecture</a> starts here.</figcaption>
+<figcaption>Step 1 of 3. wibbly explains <b>why</b> it wants the camera before the browser asks permission for it — the pipeline described in <a href="/projects/wibbly/docs/architecture">Architecture</a> starts here.</figcaption>
 </figure>
 
 <figure class="wbf">
 <div class="sc">
-<img src="/products/magnetite/wibbly/shots/setup-handedness.png" alt="Setup step 2: choosing left- or right-handed play, written to Calibration and keyed to your player id." loading="lazy" decoding="async" />
+<img src="/projects/wibbly/shots/setup-handedness.png" alt="Setup step 2: choosing left- or right-handed play, written to Calibration and keyed to your player id." loading="lazy" decoding="async" />
 </div>
-<figcaption>Step 2 of 3. Handedness is picked once here and persisted to <code>Calibration</code> — see <a href="/products/magnetite/wibbly/docs/configuration">Configuration</a> for how it flips the swing sign rather than branching the code.</figcaption>
+<figcaption>Step 2 of 3. Handedness is picked once here and persisted to <code>Calibration</code> — see <a href="/projects/wibbly/docs/configuration">Configuration</a> for how it flips the swing sign rather than branching the code.</figcaption>
 </figure>
 
 <figure class="wbf">
 <div class="sc">
-<img src="/products/magnetite/wibbly/shots/setup-framing.png" alt="Setup step 3: the live framing check running over the camera preview, verifying standing distance and that the upper body is in frame." loading="lazy" decoding="async" />
+<img src="/projects/wibbly/shots/setup-framing.png" alt="Setup step 3: the live framing check running over the camera preview, verifying standing distance and that the upper body is in frame." loading="lazy" decoding="async" />
 </div>
 <figcaption>Step 3 of 3, <code>checkFraming()</code> running live. <b>Honesty note:</b> this screenshot was captured in headless Chromium against a synthetic test-pattern camera, not a person — TF.js falls back to its CPU backend under SwiftShader. The preview and the live verdict are real; there is no person in frame, so the check correctly reports that it cannot see one. No skeleton is drawn here because none was detected.</figcaption>
 </figure>
@@ -101,7 +101,7 @@ npm run preview   # serve the built bundle locally
 
 <figure class="wbf">
 <div class="sc">
-<img src="/products/magnetite/wibbly/shots/play.png" alt="Tennis in play: the Three.js court and HUD during a rally." loading="lazy" decoding="async" />
+<img src="/projects/wibbly/shots/play.png" alt="Tennis in play: the Three.js court and HUD during a rally." loading="lazy" decoding="async" />
 </div>
 <figcaption>The tennis court and HUD, mid-rally. <b>Honesty note:</b> also captured against the synthetic test-pattern camera used across these screenshots, so no swing was actually detected in this frame — the racket state and score shown are whatever the demo was in when the screenshot was taken, not a live gesture. Treat this as a UI reference, not proof of a working swing.</figcaption>
 </figure>
@@ -129,7 +129,7 @@ Three limits are worth knowing before you conclude something is broken.
 | A second person hijacks the racket | Tennis only listens to `player_1`. Which skeleton holds that id is the binder's call, and claim zones are how you pin it down. |
 
 Every threshold above is an option on a seam rather than a constant in a file. They are listed in
-[Configuration](/products/magnetite/wibbly/docs/configuration).
+[Configuration](/projects/wibbly/docs/configuration).
 
 ## Run the tests
 
@@ -143,12 +143,12 @@ the spatial binder, the swing/pinch/point recognizers, the hand tracker, the pip
 pacer and calibration. The rest are the peer transport (73), the magnetite authority (5) and the
 app itself (64). They need no camera, no GPU and no display, because every seam they cover is a
 pure function over landmark history. That property is the whole reason the refactor
-happened — see [Architecture](/products/magnetite/wibbly/docs/architecture).
+happened — see [Architecture](/projects/wibbly/docs/architecture).
 
 What they do not cover is the capture path, the WebGL backend, or anything that requires a human
 being. Those still need somebody to stand in front of a webcam.
 
 ## Next
 
-- [Architecture](/products/magnetite/wibbly/docs/architecture) — the four seams and what phase 1 changed.
-- [Configuration](/products/magnetite/wibbly/docs/configuration) — every option on every seam.
+- [Architecture](/projects/wibbly/docs/architecture) — the four seams and what phase 1 changed.
+- [Configuration](/projects/wibbly/docs/configuration) — every option on every seam.

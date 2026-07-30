@@ -1,7 +1,7 @@
 /**
  * Run mode — 'full' or 'demo'.
  *
- * The demo build is the one embedded at `vulos.org/products/magnetite/wibbly/play/`
+ * The demo build is the one embedded at `vulos.org/projects/wibbly/play/`
  * inside a same-origin iframe on the marketing site. That surface imposes
  * constraints the normal app does not have, and every one of them is enforced
  * here rather than being left to the discipline of whoever edits a page next:
@@ -74,7 +74,7 @@ export function isDemo() {
  *
  * @param env      import.meta.env-shaped
  * @param win      window-shaped, or null
- * @param baseUrl  the build's base path, e.g. '/' or '/products/magnetite/wibbly/play/'
+ * @param baseUrl  the build's base path, e.g. '/' or '/projects/wibbly/play/'
  * @param href     the document URL to resolve relative paths against
  */
 export function resolveModelUrl(env = {}, win = null, baseUrl = '/', href = null) {
@@ -124,7 +124,7 @@ export function modelUrl() {
  * Resolve a path under `public/` against the build's base.
  *
  * Hardcoded absolute paths like `/models/court.glb` work at the root and break
- * the moment the app is served from `/products/magnetite/wibbly/play/` — the request
+ * the moment the app is served from `/projects/wibbly/play/` — the request
  * goes to the site root, 404s, and the game silently falls back to its
  * placeholder geometry. That is exactly the class of bug a sub-path deploy
  * introduces, so asset paths go through here.

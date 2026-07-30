@@ -20,14 +20,14 @@ a small, honest subset of it as a UI — the rest is construction-time only, as 
 
 <figure class="wbf">
 <div class="sc">
-<img src="/products/magnetite/wibbly/shots/in-game-menu-camera.png" alt="The in-game menu&#x27;s Camera tab: a real, wired handedness control sitting next to greyed-out controls for features that are planned but not built." loading="lazy" decoding="async" />
+<img src="/projects/wibbly/shots/in-game-menu-camera.png" alt="The in-game menu&#x27;s Camera tab: a real, wired handedness control sitting next to greyed-out controls for features that are planned but not built." loading="lazy" decoding="async" />
 </div>
 <figcaption>The Camera tab. <b>Handedness is the one live control here</b> — it writes straight to <code>Calibration</code>, the same seam covered below. The visibly disabled controls next to it correspond to hand tracking and multi-player camera options, which are planned or unvalidated, never silently working.</figcaption>
 </figure>
 
 <figure class="wbf">
 <div class="sc">
-<img src="/products/magnetite/wibbly/shots/in-game-menu-settings.png" alt="The in-game menu&#x27;s Settings tab: wired settings alongside visibly disabled ones for features that don&#x27;t exist yet." loading="lazy" decoding="async" />
+<img src="/projects/wibbly/shots/in-game-menu-settings.png" alt="The in-game menu&#x27;s Settings tab: wired settings alongside visibly disabled ones for features that don&#x27;t exist yet." loading="lazy" decoding="async" />
 </div>
 <figcaption>The Settings tab follows the same rule as the table on this page: <b>a control is either wired to a real option below, or it is disabled</b> rather than pretending to do something. Nothing in this UI is decorative.</figcaption>
 </figure>
@@ -93,7 +93,7 @@ else is a change to one constructor argument.
   </g>
 </svg>
 </div>
-<figcaption>Same four seams as <a href="/products/magnetite/wibbly/docs/architecture">Architecture</a>, relabelled with the option section that configures each one. If you are looking for a specific constant, find its seam here first.</figcaption>
+<figcaption>Same four seams as <a href="/projects/wibbly/docs/architecture">Architecture</a>, relabelled with the option section that configures each one. If you are looking for a specific constant, find its seam here first.</figcaption>
 </figure>
 
 ## `MoveNetMultiPoseTracker`
@@ -207,7 +207,7 @@ wibbly.example.com {
 **Reaching it from outside your own network** is a separate question from hosting it. Serving from
 a machine you control on your own LAN needs nothing further — and for wibbly specifically that is
 often the whole answer, since same-network peer play is the case that always works (see
-[Multiplayer](/products/magnetite/wibbly/docs/multiplayer)). If you want it reachable beyond that
+[Multiplayer](/projects/wibbly/docs/multiplayer)). If you want it reachable beyond that
 without renting a CDN, the suite's own option is an [Ephor](https://github.com/vul-os/ephor)
 instance **you run** — a content-blind broker, pre-alpha, not a hosted service. wibbly contains no
 code that knows about Ephor and does not depend on it; this is a deployment option, not an

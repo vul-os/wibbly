@@ -43,7 +43,7 @@
                   movement or a tracked landmark. It is never decoration.
        · signals  LIVE (green) · UNVALIDATED (amber) · SPEC (grey)
 
-     Every font is vendored under /products/magnetite/wibbly/fonts. The page issues no
+     Every font is vendored under /projects/wibbly/fonts. The page issues no
      network request of any kind at runtime — it is served under a
      `default-src 'self'` CSP and holds to it with room to spare.
      ═══════════════════════════════════════════════════════════════════════════ */
@@ -51,7 +51,7 @@
   /* ── Vendored variable fonts (SIL Open Font License 1.1, all three) ─────── */
   @font-face {
     font-family: 'Archivo Variable';
-    src: url('/products/magnetite/wibbly/fonts/archivo.woff2') format('woff2-variations');
+    src: url('/projects/wibbly/fonts/archivo.woff2') format('woff2-variations');
     font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap;
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
                    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
@@ -59,7 +59,7 @@
   }
   @font-face {
     font-family: 'Archivo Variable';
-    src: url('/products/magnetite/wibbly/fonts/archivo-ext.woff2') format('woff2-variations');
+    src: url('/projects/wibbly/fonts/archivo-ext.woff2') format('woff2-variations');
     font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap;
     unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
                    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
@@ -67,7 +67,7 @@
   }
   @font-face {
     font-family: 'Instrument Sans Variable';
-    src: url('/products/magnetite/wibbly/fonts/instrument-sans.woff2') format('woff2-variations');
+    src: url('/projects/wibbly/fonts/instrument-sans.woff2') format('woff2-variations');
     font-weight: 400 700; font-stretch: 75% 100%; font-style: normal; font-display: swap;
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
                    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
@@ -75,7 +75,7 @@
   }
   @font-face {
     font-family: 'Instrument Sans Variable';
-    src: url('/products/magnetite/wibbly/fonts/instrument-sans-ext.woff2') format('woff2-variations');
+    src: url('/projects/wibbly/fonts/instrument-sans-ext.woff2') format('woff2-variations');
     font-weight: 400 700; font-stretch: 75% 100%; font-style: normal; font-display: swap;
     unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
                    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
@@ -83,7 +83,7 @@
   }
   @font-face {
     font-family: 'JetBrains Mono Variable';
-    src: url('/products/magnetite/wibbly/fonts/jetbrains-mono.woff2') format('woff2-variations');
+    src: url('/projects/wibbly/fonts/jetbrains-mono.woff2') format('woff2-variations');
     font-weight: 100 800; font-style: normal; font-display: swap;
   }
 
@@ -697,7 +697,7 @@
 
 <header class="topbar">
   <div class="topbar-in">
-    <a class="brand" href="/products/magnetite/wibbly" aria-label="wibbly home">
+    <a class="brand" href="/projects/wibbly" aria-label="wibbly home">
       <span class="plaque">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <g fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
@@ -724,7 +724,7 @@
       <a href="#runtime">Runtime</a>
       <a href="#privacy">Privacy</a>
       <a href="#gaps">Gaps</a>
-      <a href="/products/magnetite/wibbly/docs">Docs</a>
+      <a href="/projects/wibbly/docs">Docs</a>
       <a href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">GitHub</a>
     </nav>
 
@@ -741,8 +741,8 @@
       </button>
     </div>
 
-    <a class="vulos-btn" href="/products" target="_top" title="Back to the Vulos suite">
-      <img src="/products/magnetite/wibbly/assets/vulos-logo.png" alt="" aria-hidden="true" width="18" height="18" />
+    <a class="vulos-btn" href="/projects" target="_top" title="Back to the Vulos suite">
+      <img src="/projects/wibbly/assets/vulos-logo.png" alt="" aria-hidden="true" width="18" height="18" />
       <span><span class="lead">Part of&nbsp;</span>Vulos</span>
     </a>
   </div>
@@ -763,10 +763,10 @@
 
           <p class="tagline">A gesture is an input event like any other — and the frames it came from never leave the device.</p>
 
-          <p class="blurb">wibbly is a camera-gesture game built on <a class="link" href="/products/magnetite" target="_top">magnetite</a>, the decentralized, self-hostable Rust games platform — magnetite is the platform, wibbly is what building on it looks like when your controller is a webcam. Pose estimation runs in a plain browser tab: no console, no download, no dongle. <code>@vulos/wibbly-input</code> implements all four seams behind 86 unit tests that run without a camera, and tennis consumes it like any third-party game would. Free and dual-licensed, everything is <a class="link" href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">MIT OR Apache-2.0 on GitHub</a> — no wagers, no tournament pools, no ads.</p>
+          <p class="blurb">wibbly is a camera-gesture game built on <a class="link" href="/projects/magnetite" target="_top">magnetite</a>, the decentralized, self-hostable Rust games platform — magnetite is the platform, wibbly is what building on it looks like when your controller is a webcam. Pose estimation runs in a plain browser tab: no console, no download, no dongle. <code>@vulos/wibbly-input</code> implements all four seams behind 86 unit tests that run without a camera, and tennis consumes it like any third-party game would. Free and dual-licensed, everything is <a class="link" href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">MIT OR Apache-2.0 on GitHub</a> — no wagers, no tournament pools, no ads.</p>
 
           <div class="cta-row">
-            <a class="btn btn-primary btn-lg" href="/products/magnetite/wibbly/play/" target="_top">▶ Play it in your browser</a>
+            <a class="btn btn-primary btn-lg" href="/projects/wibbly/play/" target="_top">▶ Play it in your browser</a>
             <a class="btn btn-ghost btn-lg" href="#status">What's actually built</a>
           </div>
         </div>
@@ -888,7 +888,7 @@
       <div class="shead">
         <span class="num">01 / Status</span>
         <h2>Audited against the tree, not the pitch</h2>
-        <p class="lead">Three states, not two — because <em>“implemented and unit-tested”</em> and <em>“known to work”</em> are different claims, and collapsing them is how software lies. wibbly is early and this table is where that is said out loud. Full detail in the <a class="link" href="/products/magnetite/wibbly/docs/overview">docs</a>.</p>
+        <p class="lead">Three states, not two — because <em>“implemented and unit-tested”</em> and <em>“known to work”</em> are different claims, and collapsing them is how software lies. wibbly is early and this table is where that is said out loud. Full detail in the <a class="link" href="/projects/wibbly/docs/overview">docs</a>.</p>
       </div>
 
       <div class="stats">
@@ -942,8 +942,8 @@
       <div class="split wide-left">
         <div>
           <div class="frame">
-            <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span class="url">/products/magnetite/wibbly/play/</span></div>
-            <img src="/products/magnetite/wibbly/shots/tennis.png" width="1600" height="1000" alt="The wibbly tennis reference game: a Three.js court rendered in a browser tab, with the player rig near the baseline and an AI opponent across the net." loading="lazy" decoding="async" />
+            <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span class="url">/projects/wibbly/play/</span></div>
+            <img src="/projects/wibbly/shots/tennis.png" width="1600" height="1000" alt="The wibbly tennis reference game: a Three.js court rendered in a browser tab, with the player rig near the baseline and an AI opponent across the net." loading="lazy" decoding="async" />
           </div>
           <p class="note"><b>What this shot does and does not show.</b> A real, unedited capture — the Three.js court, the player rig, the AI opponent, the in-game chrome. It was taken in headless Chromium against a <em>synthetic</em> camera stream (a rolling test pattern, not a person), so TensorFlow.js could not initialise a WebGL backend: there is no skeleton overlay and no camera preview panel, because neither had anything to draw. The status pill still reads <code>STARTING…</code> for exactly that reason. Nothing here is composited or staged — which is also why the pose overlay above is drawn as a schematic rather than faked as a screenshot.</p>
         </div>
@@ -953,7 +953,7 @@
             <p>It will ask for your camera. Nothing is uploaded — there is no upload path in the code. The MoveNet weights (~9.3&nbsp;MiB) ship <em>with</em> the app and load same-origin from <code>models/</code> — no CDN, no third-party request; the demo build refuses the CDN outright under its <code>default-src&nbsp;'self'</code> CSP. Everything the tracker needs is served from the same place the page is.</p>
           </div>
           <div class="cta-row">
-            <a class="btn btn-primary btn-lg" href="/products/magnetite/wibbly/play/" target="_top">▶ Launch the demo</a>
+            <a class="btn btn-primary btn-lg" href="/projects/wibbly/play/" target="_top">▶ Launch the demo</a>
           </div>
           <p class="note">Solo only. The peer-to-peer transport for a second player is built and wired in behind the scenes, but there is no lobby screen to turn it into a button — see <a class="link" href="#gaps">the gaps</a>.</p>
         </div>
@@ -998,7 +998,7 @@
       <div class="shead">
         <span class="num">03 / Architecture</span>
         <h2>Four seams, one game — not a platform</h2>
-        <p class="lead">Game code never names a model, a runtime or a vendor — it sees four interfaces, and every seam ships a working default. Read left to right and the story is a <em>reduction</em>: pixels narrow into landmarks, landmarks narrow into identity, identity narrows into a few dozen bytes of intent. That reduction is the architecture and the privacy guarantee at once — and it is wibbly's own input pipeline, not something it sells to other developers. The platform underneath is <a class="link" href="/products/magnetite" target="_top">magnetite</a>.</p>
+        <p class="lead">Game code never names a model, a runtime or a vendor — it sees four interfaces, and every seam ships a working default. Read left to right and the story is a <em>reduction</em>: pixels narrow into landmarks, landmarks narrow into identity, identity narrows into a few dozen bytes of intent. That reduction is the architecture and the privacy guarantee at once — and it is wibbly's own input pipeline, not something it sells to other developers. The platform underneath is <a class="link" href="/projects/magnetite" target="_top">magnetite</a>.</p>
       </div>
 
       <div class="diagram">
@@ -1138,7 +1138,7 @@
       <div class="shead">
         <span class="num">04 / Model selection</span>
         <h2>Why MoveNet, and why not the better models</h2>
-        <p class="lead">A couch game has an unusual requirement: the cost of tracking must not depend on how many friends turn up. That single property eliminates most of the field before accuracy is even discussed — and licensing eliminates most of what survives. The full reasoning is in the <a class="link" href="/products/magnetite/wibbly/docs/models">model docs</a>; this is the short version.</p>
+        <p class="lead">A couch game has an unusual requirement: the cost of tracking must not depend on how many friends turn up. That single property eliminates most of the field before accuracy is even discussed — and licensing eliminates most of what survives. The full reasoning is in the <a class="link" href="/projects/wibbly/docs/models">model docs</a>; this is the short version.</p>
       </div>
 
       <div class="split wide-left" style="margin-bottom:36px">
@@ -1358,7 +1358,7 @@
       <div class="shead">
         <span class="num">08 / Quick start</span>
         <h2>Clone it, allow the camera, stand back</h2>
-        <p class="lead">Source-only — there is no release build to install. If you just want to try it, the <a class="link" href="/products/magnetite/wibbly/play/">browser demo</a> needs none of this.</p>
+        <p class="lead">Source-only — there is no release build to install. If you just want to try it, the <a class="link" href="/projects/wibbly/play/">browser demo</a> needs none of this.</p>
       </div>
 
       <div class="split wide-left">
@@ -1378,7 +1378,7 @@
         <ol class="steps">
           <li><span class="n">01</span><div><b>Clone and install</b><span>Node 20+, React 19, Vite, Three.js. The MoveNet weights are vendored under <code>public/models/</code> and served same-origin — no CDN to reach on first load.</span></div></li>
           <li><span class="n">02</span><div><b>Run the seam tests</b><span>The recognizers, binder, pacer and calibration are pure logic, so they verify in about two seconds with no camera and no GPU. That is the point of the refactor.</span></div></li>
-          <li><span class="n">03</span><div><b>Stand back and swing</b><span>About two metres, upper body in frame, even lighting. Tennis drives one player today, either handedness. Details in the <a class="link" href="/products/magnetite/wibbly/docs/getting-started">docs</a>.</span></div></li>
+          <li><span class="n">03</span><div><b>Stand back and swing</b><span>About two metres, upper body in frame, even lighting. Tennis drives one player today, either handedness. Details in the <a class="link" href="/projects/wibbly/docs/getting-started">docs</a>.</span></div></li>
         </ol>
       </div>
     </div>
@@ -1390,7 +1390,7 @@
       <div class="shead">
         <span class="num">09 / Roadmap</span>
         <h2>Three phases, in risk order</h2>
-        <p class="lead">The ordering is deliberate: the library blocks everything, and the highest-risk component inside it — the player binder — was built early rather than deferred. Full backlog in the <a class="link" href="/products/magnetite/wibbly/docs/roadmap">roadmap docs</a>.</p>
+        <p class="lead">The ordering is deliberate: the library blocks everything, and the highest-risk component inside it — the player binder — was built early rather than deferred. Full backlog in the <a class="link" href="/projects/wibbly/docs/roadmap">roadmap docs</a>.</p>
       </div>
 
       <div class="phases">
@@ -1442,13 +1442,13 @@
   <section class="section alt">
     <div class="wrap">
       <div class="vulos-band">
-        <img src="/products/magnetite/wibbly/assets/vulos-logo.png" alt="Vulos logo" width="50" height="50" />
+        <img src="/projects/wibbly/assets/vulos-logo.png" alt="Vulos logo" width="50" height="50" />
         <div>
           <h3>Listed alongside the Vulos suite</h3>
-          <p><a href="/products" target="_top" style="color:var(--ink);font-weight:600">Vulos</a> is a family of open, self-hostable software. wibbly is fully independent — it runs on a machine you control, needs no Vulos account and no Vulos infrastructure, and needs no payment of any kind — and shares the suite's posture that computation should happen where the data already is. Magnetite is the platform underneath it, providing identity, discovery, lobbies and hosting to whoever wants them; wibbly is a game built on top, not a second platform.</p>
+          <p><a href="/projects" target="_top" style="color:var(--ink);font-weight:600">Vulos</a> is a family of open, self-hostable software. wibbly is fully independent — it runs on a machine you control, needs no Vulos account and no Vulos infrastructure, and needs no payment of any kind — and shares the suite's posture that computation should happen where the data already is. Magnetite is the platform underneath it, providing identity, discovery, lobbies and hosting to whoever wants them; wibbly is a game built on top, not a second platform.</p>
           <p style="margin-top:14px"><b style="color:var(--ink)">Where magnetite fits.</b> A real magnetite <code>AuthoritativeGame</code> — the reference arena-shooter template, compiled to wasm — runs client-side, in the browser tab, as the authority for solo tennis: <code>@vulos/wibbly-authority</code> loads it and steps it as a <code>Topology::SingleRoom</code> match, the bottom rung of magnetite's own topology ladder, with no server anywhere. That's what makes "built on magnetite" literally true today, not a stated intention. It changes nothing about anti-cheat: magnetite still types camera gestures <code>InputClass::Attested</code> — never replay-verifiable — because determinism is a property of the simulation given its inputs, not of the inputs themselves. Separately, wibbly's own multiplayer is peer-to-peer in the browser (see <a class="link" href="#gaps">the gaps</a>) and has <b style="color:var(--ink)">no magnetite dependency at all</b>. Magnetite is worth running on its own terms regardless: a deterministic authoritative runtime, a WASM sandbox, replay verification, and bring-any-server hosting.</p>
-          <a class="more" href="/products/magnetite" target="_top">See magnetite →</a>
-          <a class="more" href="/products" target="_top">Explore Vulos →</a>
+          <a class="more" href="/projects/magnetite" target="_top">See magnetite →</a>
+          <a class="more" href="/projects" target="_top">Explore Vulos →</a>
         </div>
       </div>
     </div>
@@ -1458,14 +1458,14 @@
 <footer class="site-footer">
   <div class="wrap foot">
     <div class="left">
-      <img src="/products/magnetite/wibbly/assets/vulos-logo.png" alt="" aria-hidden="true" width="18" height="18" />
-      <span>Listed on <a href="/products" target="_top">Vulos</a> — open, self-hostable software. wibbly is standalone, free, MIT OR Apache-2.0, and early.</span>
+      <img src="/projects/wibbly/assets/vulos-logo.png" alt="" aria-hidden="true" width="18" height="18" />
+      <span>Listed on <a href="/projects" target="_top">Vulos</a> — open, self-hostable software. wibbly is standalone, free, MIT OR Apache-2.0, and early.</span>
     </div>
     <div class="links">
-      <a href="/products/magnetite/wibbly/play/" target="_top">Play</a>
-      <a href="/products/magnetite/wibbly/docs">Docs</a>
+      <a href="/projects/wibbly/play/" target="_top">Play</a>
+      <a href="/projects/wibbly/docs">Docs</a>
       <a href="https://github.com/vul-os/wibbly" target="_blank" rel="noopener noreferrer">GitHub</a>
-      <a href="/products" target="_top">vulos.org</a>
+      <a href="/projects" target="_top">vulos.org</a>
     </div>
   </div>
 </footer>

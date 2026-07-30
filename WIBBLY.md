@@ -417,7 +417,7 @@ ads. Nothing in §0 or §2 depends on any of it existing.
 
 - ~~**Wibbly repo is private.**~~ **Resolved — false as written.** The repo is public at
   [github.com/vul-os/wibbly](https://github.com/vul-os/wibbly), MIT OR Apache-2.0. Publishing
-  under `vulos.org/products/magnetite/wibbly` needs no founder call; it already matches how the
+  under `vulos.org/projects/wibbly` needs no founder call; it already matches how the
   repo is licensed.
 - **`navigator.gpu` in WKWebView on macOS 26** — unresolved in research; test empirically.
 - **Other contributors** (`declan*`, `IMRAN`, `CAMERA` branches on origin, last known, not
