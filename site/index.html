@@ -556,15 +556,19 @@
     <a class="brand" href="./index.html" aria-label="wibbly home">
       <span class="plaque">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <g fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 61 V33 A12 12 0 0 1 33 21 H61"/>
             <path d="M139 21 H167 A12 12 0 0 1 179 33 V61"/>
             <path d="M179 139 V167 A12 12 0 0 1 167 179 H139"/>
             <path d="M61 179 H33 A12 12 0 0 1 21 167 V139"/>
           </g>
-          <path d="M55 148 Q92 142 118 114" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" opacity=".4"/>
-          <path d="M66 154 Q108 149 134 117" fill="none" stroke="var(--accent)" stroke-width="17" stroke-linecap="round"/>
-          <circle cx="138" cy="113" r="18" fill="var(--accent)"/>
+          <!-- Motion trail: the ball bounces a W through the frame. Geometry is
+               copied VERBATIM from brand/logo.svg — the W is the whole idea of
+               the mark ("wibbly") and must never be smoothed into a swoosh.
+               Only the paint is themed, so the mark adapts to light/dark. -->
+          <path d="M52 78 L76 138 L100 98 L124 138 L148 78" fill="none" stroke="var(--accent)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="148" cy="78" r="17" fill="var(--accent)"/>
+          <circle cx="148" cy="78" r="6.5" fill="var(--bg, #FFE3F0)"/>
         </svg>
       </span>
       <span class="brand-word">wibbly</span>
