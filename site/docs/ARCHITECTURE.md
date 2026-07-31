@@ -19,7 +19,7 @@ only these interfaces, and every seam ships a working default.
 .wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
 :root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
 .wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
-.wbf svg{display:block;height:auto;width:100%;min-width:900px}
+.wbf svg{display:block;height:auto;width:100%;min-width:1220px}
 .wbf img{display:block;width:100%;height:auto}
 .wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
 .wbf figcaption b{color:var(--tx)}
@@ -27,48 +27,48 @@ only these interfaces, and every seam ships a working default.
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 250" width="900" role="img" aria-label="The four seams in order: FrameSource captures frames, PoseTracker turns them into an array of people, PlayerBinder attaches durable player identities, and GestureRecognizer emits GestureEvents to the game. Calibration feeds the recognizer. All of it runs inside the device.">
+<svg viewBox="0 0 1220 300" width="1220" role="img" aria-label="The four seams in order: FrameSource captures frames, PoseTracker turns them into an array of people, PlayerBinder attaches durable player identities, and GestureRecognizer emits GestureEvents to the game. Calibration feeds the recognizer. All of it runs inside the device.">
   <defs>
-    <marker id="a-arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="var(--ln)"/>
+    <marker id="a-arw" viewBox="0 0 12 12" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="var(--ln)"/>
     </marker>
   </defs>
   <g font-family="ui-monospace, monospace">
-    <rect x="2" y="14" width="896" height="176" rx="10" fill="none" stroke="var(--a)" stroke-width="1.2" stroke-dasharray="6 6" opacity=".6"/>
-    <text x="16" y="33" font-size="10.5" font-weight="700" fill="var(--a)" letter-spacing="1.3">YOUR DEVICE — PIXELS NEVER LEAVE THIS BOX</text>
-    <rect x="14" y="48" width="176" height="86" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="28" y="69" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">SEAM 01</text>
-    <text x="28" y="90" font-size="13.5" font-weight="700" fill="var(--tx)">FrameSource</text>
-    <text x="28" y="109" font-size="10.5" fill="var(--tx2)">WebcamFrameSource</text>
-    <text x="28" y="125" font-size="10.5" fill="var(--tx2)">getUserMedia</text>
-    <rect x="238" y="48" width="176" height="86" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="252" y="69" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">SEAM 02</text>
-    <text x="252" y="90" font-size="13.5" font-weight="700" fill="var(--tx)">PoseTracker</text>
-    <text x="252" y="109" font-size="10.5" fill="var(--tx2)">MoveNet MultiPose</text>
-    <text x="252" y="125" font-size="10.5" fill="var(--tx2)">→ Person[]</text>
-    <rect x="462" y="48" width="176" height="86" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="476" y="69" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">SEAM 04</text>
-    <text x="476" y="90" font-size="13.5" font-weight="700" fill="var(--tx)">PlayerBinder</text>
-    <text x="476" y="109" font-size="10.5" fill="var(--tx2)">SpatialBinder</text>
-    <text x="476" y="125" font-size="10.5" fill="var(--tx2)">→ stable PlayerId</text>
-    <rect x="686" y="48" width="196" height="86" rx="8" fill="none" stroke="var(--a)" stroke-width="1.4"/>
-    <text x="700" y="69" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">SEAM 03</text>
-    <text x="700" y="90" font-size="13.5" font-weight="700" fill="var(--tx)">GestureRecognizer</text>
-    <text x="700" y="109" font-size="10.5" fill="var(--tx2)">detectSwing()</text>
-    <text x="700" y="125" font-size="10.5" font-weight="700" fill="var(--a)">→ GestureEvent</text>
-    <g stroke="var(--ln)" stroke-width="1.6" marker-end="url(#a-arw)" fill="none">
-      <path d="M194 91 H232"/>
-      <path d="M418 91 H456"/>
-      <path d="M642 91 H680"/>
+    <rect x="2.4" y="16.8" width="1075.2" height="211.2" rx="12" fill="none" stroke="var(--a)" stroke-width="1.44" stroke-dasharray="7.2 7.2" opacity=".6"/>
+    <text x="19.2" y="39.6" font-size="12.6" font-weight="700" fill="var(--a)" letter-spacing="1.56">YOUR DEVICE — PIXELS NEVER LEAVE THIS BOX</text>
+    <rect x="16.8" y="57.6" width="211.2" height="103.2" rx="9.6" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="33.6" y="82.8" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">SEAM 01</text>
+    <text x="33.6" y="108" font-size="16.2" font-weight="700" fill="var(--tx)">FrameSource</text>
+    <text x="33.6" y="130.8" font-size="12.6" fill="var(--tx2)">WebcamFrameSource</text>
+    <text x="33.6" y="150" font-size="12.6" fill="var(--tx2)">getUserMedia</text>
+    <rect x="285.6" y="57.6" width="211.2" height="103.2" rx="9.6" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="302.4" y="82.8" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">SEAM 02</text>
+    <text x="302.4" y="108" font-size="16.2" font-weight="700" fill="var(--tx)">PoseTracker</text>
+    <text x="302.4" y="130.8" font-size="12.6" fill="var(--tx2)">MoveNet MultiPose</text>
+    <text x="302.4" y="150" font-size="12.6" fill="var(--tx2)">→ Person[]</text>
+    <rect x="554.4" y="57.6" width="211.2" height="103.2" rx="9.6" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="571.2" y="82.8" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">SEAM 04</text>
+    <text x="571.2" y="108" font-size="16.2" font-weight="700" fill="var(--tx)">PlayerBinder</text>
+    <text x="571.2" y="130.8" font-size="12.6" fill="var(--tx2)">SpatialBinder</text>
+    <text x="571.2" y="150" font-size="12.6" fill="var(--tx2)">→ stable PlayerId</text>
+    <rect x="823.2" y="57.6" width="235.2" height="103.2" rx="9.6" fill="none" stroke="var(--a)" stroke-width="1.68"/>
+    <text x="840" y="82.8" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">SEAM 03</text>
+    <text x="840" y="108" font-size="16.2" font-weight="700" fill="var(--tx)">GestureRecognizer</text>
+    <text x="840" y="130.8" font-size="12.6" fill="var(--tx2)">detectSwing()</text>
+    <text x="840" y="150" font-size="12.6" font-weight="700" fill="var(--a)">→ GestureEvent</text>
+    <g stroke="var(--ln)" stroke-width="1.92" marker-end="url(#a-arw)" fill="none">
+      <path d="M 232.8 109.2 H 278.4"/>
+      <path d="M 501.6 109.2 H 547.2"/>
+      <path d="M 770.4 109.2 H 816"/>
     </g>
-    <text x="196" y="83" font-size="10.5" fill="var(--tx2)">VideoFrame</text>
-    <text x="422" y="83" font-size="10.5" fill="var(--tx2)">Person[]</text>
-    <text x="646" y="83" font-size="10.5" fill="var(--tx2)">+ id</text>
-    <rect x="686" y="156" width="196" height="26" rx="6" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="700" y="173" font-size="10.5" fill="var(--tx2)">Calibration — handedness, reach</text>
-    <path d="M784 154 V140" stroke="var(--ln)" stroke-width="1.6" fill="none" marker-end="url(#a-arw)"/>
-    <path d="M882 91 H896 Q900 91 900 99 V210 Q900 218 892 218 H726" stroke="var(--a)" stroke-width="1.6" fill="none" marker-end="url(#a-arw)"/>
-    <text x="740" y="214" font-size="11" font-weight="700" fill="var(--a)">game code — the only thing it ever sees</text>
+    <text x="235.2" y="99.6" font-size="12.6" fill="var(--tx2)">VideoFrame</text>
+    <text x="506.4" y="99.6" font-size="12.6" fill="var(--tx2)">Person[]</text>
+    <text x="775.2" y="99.6" font-size="12.6" fill="var(--tx2)">+ id</text>
+    <rect x="823.2" y="187.2" width="235.2" height="31.2" rx="7.2" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="840" y="207.6" font-size="12.6" fill="var(--tx2)">Calibration — handedness, reach</text>
+    <path d="M 940.8 184.8 V 168" stroke="var(--ln)" stroke-width="1.92" fill="none" marker-end="url(#a-arw)"/>
+    <path d="M 1058.4 109.2 H 1075.2 Q 1080 109.2 1080 118.8 V 252 Q 1080 261.6 1070.4 261.6 H 871.2" stroke="var(--a)" stroke-width="1.92" fill="none" marker-end="url(#a-arw)"/>
+    <text x="888" y="256.8" font-size="13.2" font-weight="700" fill="var(--a)">game code — the only thing it ever sees</text>
   </g>
 </svg>
 </div>
@@ -81,22 +81,22 @@ worth intercepting.
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 200" width="900" role="img" aria-label="Data volume across the pipeline, on a log scale: a camera frame is about 8 megabytes, a landmark set about 1 kilobyte, a bound skeleton about 1 kilobyte plus an id, and a GestureEvent about 64 bytes.">
+<svg viewBox="0 0 1080 240" width="1080" role="img" aria-label="Data volume across the pipeline, on a log scale: a camera frame is about 8 megabytes, a landmark set about 1 kilobyte, a bound skeleton about 1 kilobyte plus an id, and a GestureEvent about 64 bytes.">
   <g font-family="ui-monospace, monospace">
-    <text x="16" y="26" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">VOLUME PER STAGE — LOG SCALE</text>
-    <text x="16" y="60" font-size="11" fill="var(--tx)">Camera frame</text>
-    <rect x="180" y="49" width="600" height="13" rx="2" fill="var(--a)"/>
-    <text x="800" y="60" font-size="11" font-weight="700" fill="var(--tx)">8 MB</text>
-    <text x="16" y="94" font-size="11" fill="var(--tx)">Landmark set</text>
-    <rect x="180" y="83" width="288" height="13" rx="2" fill="var(--am)"/>
-    <text x="800" y="94" font-size="11" font-weight="700" fill="var(--tx)">~1 KB</text>
-    <text x="16" y="128" font-size="11" fill="var(--tx)">Bound skeleton</text>
-    <rect x="180" y="117" width="276" height="13" rx="2" fill="var(--am)"/>
-    <text x="800" y="128" font-size="11" font-weight="700" fill="var(--tx)">~1 KB + id</text>
-    <text x="16" y="162" font-size="11" fill="var(--tx)">GestureEvent</text>
-    <rect x="180" y="151" width="72" height="13" rx="2" fill="var(--ok)"/>
-    <text x="800" y="162" font-size="11" font-weight="700" fill="var(--tx)">≈64 B</text>
-    <text x="180" y="186" font-size="10.5" fill="var(--tx2)">8 MB → 64 B is five orders of magnitude; drawn linearly the last bar would be invisible.</text>
+    <text x="19.2" y="31.2" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">VOLUME PER STAGE — LOG SCALE</text>
+    <text x="19.2" y="72" font-size="13.2" fill="var(--tx)">Camera frame</text>
+    <rect x="216" y="58.8" width="720" height="15.6" rx="2.4" fill="var(--a)"/>
+    <text x="960" y="72" font-size="13.2" font-weight="700" fill="var(--tx)">8 MB</text>
+    <text x="19.2" y="112.8" font-size="13.2" fill="var(--tx)">Landmark set</text>
+    <rect x="216" y="99.6" width="345.6" height="15.6" rx="2.4" fill="var(--am)"/>
+    <text x="960" y="112.8" font-size="13.2" font-weight="700" fill="var(--tx)">~1 KB</text>
+    <text x="19.2" y="153.6" font-size="13.2" fill="var(--tx)">Bound skeleton</text>
+    <rect x="216" y="140.4" width="331.2" height="15.6" rx="2.4" fill="var(--am)"/>
+    <text x="960" y="153.6" font-size="13.2" font-weight="700" fill="var(--tx)">~1 KB + id</text>
+    <text x="19.2" y="194.4" font-size="13.2" fill="var(--tx)">GestureEvent</text>
+    <rect x="216" y="181.2" width="86.4" height="15.6" rx="2.4" fill="var(--ok)"/>
+    <text x="960" y="194.4" font-size="13.2" font-weight="700" fill="var(--tx)">≈64 B</text>
+    <text x="216" y="223.2" font-size="12.6" fill="var(--tx2)">8 MB → 64 B is five orders of magnitude; drawn linearly the last bar would be invisible.</text>
   </g>
 </svg>
 </div>
@@ -199,19 +199,19 @@ capability-by-capability table for developers; the player-language version of th
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 190" width="900" role="img" aria-label="A key to the three-state honesty convention used throughout these docs: a filled dot means shipped and working, a half-filled dot means implemented but only unit-tested on synthetic fixtures and never validated with a camera, and a hollow ring means planned with no code.">
+<svg viewBox="0 0 1080 228" width="1080" role="img" aria-label="A key to the three-state honesty convention used throughout these docs: a filled dot means shipped and working, a half-filled dot means implemented but only unit-tested on synthetic fixtures and never validated with a camera, and a hollow ring means planned with no code.">
   <g font-family="ui-monospace, monospace">
-    <text x="16" y="22" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">HOW TO READ THE STATE COLUMN — ONE OF THREE GLYPHS, ALWAYS</text>
-    <circle cx="30" cy="52" r="11" fill="var(--ok)"/>
-    <text x="56" y="49" font-size="13" font-weight="700" fill="var(--tx)">Shipped / working</text>
-    <text x="56" y="65" font-size="10.5" fill="var(--tx2)">Runs today, exercised by hand or by CI against real inputs.</text>
-    <path d="M30 93 A11 11 0 0 1 30 115 Z" fill="var(--am)"/>
-    <circle cx="30" cy="104" r="11" fill="none" stroke="var(--am)" stroke-width="1.6"/>
-    <text x="56" y="101" font-size="13" font-weight="700" fill="var(--tx)">Implemented, unvalidated</text>
-    <text x="56" y="117" font-size="10.5" fill="var(--tx2)">Unit-tested on synthetic fixtures only — never run against a real camera.</text>
-    <circle cx="30" cy="156" r="11" fill="none" stroke="var(--ln)" stroke-width="1.6"/>
-    <text x="56" y="153" font-size="13" font-weight="700" fill="var(--tx)">Planned / spec</text>
-    <text x="56" y="169" font-size="10.5" fill="var(--tx2)">Written down, tracked in the backlog. No code exists yet.</text>
+    <text x="19.2" y="26.4" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">HOW TO READ THE STATE COLUMN — ONE OF THREE GLYPHS, ALWAYS</text>
+    <circle cx="36" cy="62.4" r="13.2" fill="var(--ok)"/>
+    <text x="67.2" y="58.8" font-size="15.6" font-weight="700" fill="var(--tx)">Shipped / working</text>
+    <text x="67.2" y="78" font-size="12.6" fill="var(--tx2)">Runs today, exercised by hand or by CI against real inputs.</text>
+    <path d="M36 111.6 A13.2 13.2 0 0 1 36 138 Z" fill="var(--am)"/>
+    <circle cx="36" cy="124.8" r="13.2" fill="none" stroke="var(--am)" stroke-width="1.92"/>
+    <text x="67.2" y="121.2" font-size="15.6" font-weight="700" fill="var(--tx)">Implemented, unvalidated</text>
+    <text x="67.2" y="140.4" font-size="12.6" fill="var(--tx2)">Unit-tested on synthetic fixtures only — never run against a real camera.</text>
+    <circle cx="36" cy="187.2" r="13.2" fill="none" stroke="var(--ln)" stroke-width="1.92"/>
+    <text x="67.2" y="183.6" font-size="15.6" font-weight="700" fill="var(--tx)">Planned / spec</text>
+    <text x="67.2" y="202.8" font-size="12.6" fill="var(--tx2)">Written down, tracked in the backlog. No code exists yet.</text>
   </g>
 </svg>
 </div>

@@ -4,7 +4,7 @@
 .wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
 :root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
 .wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
-.wbf svg{display:block;height:auto;width:100%;min-width:900px}
+.wbf svg{display:block;height:auto;width:100%;min-width:1080px}
 .wbf img{display:block;width:100%;height:auto}
 .wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
 .wbf figcaption b{color:var(--tx)}
@@ -23,55 +23,55 @@ This is what runs today.
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 330" width="900" role="img" aria-label="Comparison table of three runtime targets — browser today, daemon plus browser interim, and Tauri native phase 3 — against WebGPU access, camera access, zero-install distribution, whether RTMO becomes reachable, and project status. Browser today is shipped and running now. The other two are design only, not yet built.">
-  <g font-family="ui-monospace, monospace" font-size="10.5">
-    <rect x="10" y="10" width="880" height="320" rx="8" fill="none" stroke="var(--ln)"/>
-    <line x1="250" y1="10" x2="250" y2="330" stroke="var(--ln)"/>
-    <line x1="470" y1="10" x2="470" y2="330" stroke="var(--ln)"/>
-    <line x1="690" y1="10" x2="690" y2="330" stroke="var(--ln)"/>
-    <line x1="10" y1="58" x2="890" y2="58" stroke="var(--ln)"/>
-    <line x1="10" y1="122" x2="890" y2="122" stroke="var(--ln)"/>
-    <line x1="10" y1="186" x2="890" y2="186" stroke="var(--ln)"/>
-    <line x1="10" y1="250" x2="890" y2="250" stroke="var(--ln)"/>
-    <line x1="10" y1="290" x2="890" y2="290" stroke="var(--ln)"/>
-    <text x="26" y="38" font-size="11" font-weight="700" fill="var(--tx2)">property</text>
-    <text x="266" y="34" font-size="11" font-weight="700" fill="var(--tx)">Browser</text>
-    <text x="266" y="50" font-size="10.5" fill="var(--ok)">v1 — shipped</text>
-    <text x="486" y="34" font-size="11" font-weight="700" fill="var(--tx)">Daemon + browser</text>
-    <text x="486" y="50" font-size="10.5" fill="var(--am)">phase 2 — design only</text>
-    <text x="706" y="34" font-size="11" font-weight="700" fill="var(--tx)">Tauri native</text>
-    <text x="706" y="50" font-size="10.5" fill="var(--am)">phase 3 — design only</text>
-    <text x="26" y="82" fill="var(--tx2)">WebGPU access</text>
-    <text x="266" y="78" font-weight="700" fill="var(--am)">partial</text>
-    <text x="266" y="94" font-size="10.5" fill="var(--tx2)">Chrome/Edge; not Safari</text>
-    <text x="486" y="78" font-weight="700" fill="var(--am)">partial</text>
-    <text x="486" y="94" font-size="10.5" fill="var(--tx2)">same as browser column</text>
-    <text x="706" y="78" font-weight="700" fill="var(--tx2)">n/a</text>
-    <text x="706" y="94" font-size="10.5" fill="var(--tx2)">bypassed — Rust ORT</text>
-    <text x="706" y="106" font-size="10.5" fill="var(--tx2)">CoreML / DirectML EPs</text>
-    <text x="26" y="146" fill="var(--tx2)">camera access</text>
-    <text x="266" y="142" font-weight="700" fill="var(--ok)">yes</text>
-    <text x="266" y="158" font-size="10.5" fill="var(--tx2)">getUserMedia, just works</text>
-    <text x="486" y="142" font-weight="700" fill="var(--ok)">yes</text>
-    <text x="486" y="158" font-size="10.5" fill="var(--tx2)">real browser, same as v1</text>
-    <text x="706" y="142" font-weight="700" fill="var(--am)">yes, different path</text>
-    <text x="706" y="158" font-size="10.5" fill="var(--tx2)">nokhwa/V4L2 in Rust core</text>
-    <text x="26" y="210" fill="var(--tx2)">zero-install distribution</text>
-    <text x="266" y="206" font-weight="700" fill="var(--ok)">yes</text>
-    <text x="266" y="222" font-size="10.5" fill="var(--tx2)">link, wave, game</text>
-    <text x="486" y="206" font-weight="700" fill="var(--am)">partial</text>
-    <text x="486" y="222" font-size="10.5" fill="var(--tx2)">background process runs locally</text>
-    <text x="706" y="206" font-weight="700" fill="var(--a)">no</text>
-    <text x="706" y="222" font-size="10.5" fill="var(--tx2)">installer required</text>
-    <text x="26" y="274" fill="var(--tx2)">unlocks RTMO</text>
-    <text x="266" y="270" font-weight="700" fill="var(--a)">no</text>
-    <text x="486" y="270" font-weight="700" fill="var(--a)">no</text>
-    <text x="706" y="270" font-weight="700" fill="var(--ok)">yes</text>
-    <text x="706" y="286" font-size="10.5" fill="var(--tx2)">ORT Web can't reach it today</text>
-    <text x="26" y="314" font-weight="700" fill="var(--tx)">this project</text>
-    <text x="266" y="314" font-weight="700" fill="var(--ok)">running</text>
-    <text x="486" y="314" font-weight="700" fill="var(--am)">not built</text>
-    <text x="706" y="314" font-weight="700" fill="var(--am)">not built</text>
+<svg viewBox="0 0 1080 396" width="1080" role="img" aria-label="Comparison table of three runtime targets — browser today, daemon plus browser interim, and Tauri native phase 3 — against WebGPU access, camera access, zero-install distribution, whether RTMO becomes reachable, and project status. Browser today is shipped and running now. The other two are design only, not yet built.">
+  <g font-family="ui-monospace, monospace" font-size="12.6">
+    <rect x="12" y="12" width="1056" height="384" rx="9.6" fill="none" stroke="var(--ln)"/>
+    <line x1="300" y1="12" x2="300" y2="396" stroke="var(--ln)"/>
+    <line x1="564" y1="12" x2="564" y2="396" stroke="var(--ln)"/>
+    <line x1="828" y1="12" x2="828" y2="396" stroke="var(--ln)"/>
+    <line x1="12" y1="69.6" x2="1068" y2="69.6" stroke="var(--ln)"/>
+    <line x1="12" y1="146.4" x2="1068" y2="146.4" stroke="var(--ln)"/>
+    <line x1="12" y1="223.2" x2="1068" y2="223.2" stroke="var(--ln)"/>
+    <line x1="12" y1="300" x2="1068" y2="300" stroke="var(--ln)"/>
+    <line x1="12" y1="348" x2="1068" y2="348" stroke="var(--ln)"/>
+    <text x="31.2" y="45.6" font-size="13.2" font-weight="700" fill="var(--tx2)">property</text>
+    <text x="319.2" y="40.8" font-size="13.2" font-weight="700" fill="var(--tx)">Browser</text>
+    <text x="319.2" y="60" font-size="12.6" fill="var(--ok)">v1 — shipped</text>
+    <text x="583.2" y="40.8" font-size="13.2" font-weight="700" fill="var(--tx)">Daemon + browser</text>
+    <text x="583.2" y="60" font-size="12.6" fill="var(--am)">phase 2 — design only</text>
+    <text x="847.2" y="40.8" font-size="13.2" font-weight="700" fill="var(--tx)">Tauri native</text>
+    <text x="847.2" y="60" font-size="12.6" fill="var(--am)">phase 3 — design only</text>
+    <text x="31.2" y="98.4" fill="var(--tx2)">WebGPU access</text>
+    <text x="319.2" y="93.6" font-weight="700" fill="var(--am)">partial</text>
+    <text x="319.2" y="112.8" font-size="12.6" fill="var(--tx2)">Chrome/Edge; not Safari</text>
+    <text x="583.2" y="93.6" font-weight="700" fill="var(--am)">partial</text>
+    <text x="583.2" y="112.8" font-size="12.6" fill="var(--tx2)">same as browser column</text>
+    <text x="847.2" y="93.6" font-weight="700" fill="var(--tx2)">n/a</text>
+    <text x="847.2" y="112.8" font-size="12.6" fill="var(--tx2)">bypassed — Rust ORT</text>
+    <text x="847.2" y="127.2" font-size="12.6" fill="var(--tx2)">CoreML / DirectML EPs</text>
+    <text x="31.2" y="175.2" fill="var(--tx2)">camera access</text>
+    <text x="319.2" y="170.4" font-weight="700" fill="var(--ok)">yes</text>
+    <text x="319.2" y="189.6" font-size="12.6" fill="var(--tx2)">getUserMedia, just works</text>
+    <text x="583.2" y="170.4" font-weight="700" fill="var(--ok)">yes</text>
+    <text x="583.2" y="189.6" font-size="12.6" fill="var(--tx2)">real browser, same as v1</text>
+    <text x="847.2" y="170.4" font-weight="700" fill="var(--am)">yes, different path</text>
+    <text x="847.2" y="189.6" font-size="12.6" fill="var(--tx2)">nokhwa/V4L2 in Rust core</text>
+    <text x="31.2" y="252" fill="var(--tx2)">zero-install distribution</text>
+    <text x="319.2" y="247.2" font-weight="700" fill="var(--ok)">yes</text>
+    <text x="319.2" y="266.4" font-size="12.6" fill="var(--tx2)">link, wave, game</text>
+    <text x="583.2" y="247.2" font-weight="700" fill="var(--am)">partial</text>
+    <text x="583.2" y="266.4" font-size="12.6" fill="var(--tx2)">background process runs locally</text>
+    <text x="847.2" y="247.2" font-weight="700" fill="var(--a)">no</text>
+    <text x="847.2" y="266.4" font-size="12.6" fill="var(--tx2)">installer required</text>
+    <text x="31.2" y="328.8" fill="var(--tx2)">unlocks RTMO</text>
+    <text x="319.2" y="324" font-weight="700" fill="var(--a)">no</text>
+    <text x="583.2" y="324" font-weight="700" fill="var(--a)">no</text>
+    <text x="847.2" y="324" font-weight="700" fill="var(--ok)">yes</text>
+    <text x="847.2" y="343.2" font-size="12.6" fill="var(--tx2)">ORT Web can't reach it today</text>
+    <text x="31.2" y="376.8" font-weight="700" fill="var(--tx)">this project</text>
+    <text x="319.2" y="376.8" font-weight="700" fill="var(--ok)">running</text>
+    <text x="583.2" y="376.8" font-weight="700" fill="var(--am)">not built</text>
+    <text x="847.2" y="376.8" font-weight="700" fill="var(--am)">not built</text>
   </g>
 </svg>
 </div>
@@ -96,20 +96,20 @@ inference. Four independent reasons, any one of which would be sufficient:
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 220" width="900" role="img" aria-label="Bar chart, stylized log scale: raw 1080p RGBA video at 30 frames per second needs about 250 megabytes per second of Tauri IPC throughput. The best measured rate, extrapolated from a 10 megabyte transfer taking roughly 200 milliseconds on Windows, is about 50 megabytes per second — already short of what raw video needs. Landmarks-only, the phase 3 design, projects to about 30 kilobytes per second, four orders of magnitude smaller.">
+<svg viewBox="0 0 1080 264" width="1080" role="img" aria-label="Bar chart, stylized log scale: raw 1080p RGBA video at 30 frames per second needs about 250 megabytes per second of Tauri IPC throughput. The best measured rate, extrapolated from a 10 megabyte transfer taking roughly 200 milliseconds on Windows, is about 50 megabytes per second — already short of what raw video needs. Landmarks-only, the phase 3 design, projects to about 30 kilobytes per second, four orders of magnitude smaller.">
   <g font-family="ui-monospace, monospace">
-    <text x="16" y="22" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">TAURI IPC THROUGHPUT — STYLIZED LOG SCALE</text>
-    <text x="16" y="58" font-size="11" fill="var(--tx)">Raw video @ 30 fps</text>
-    <rect x="230" y="47" width="620" height="14" rx="2" fill="var(--a)"/>
-    <text x="860" y="58" font-size="11" font-weight="700" fill="var(--a)" text-anchor="end">needs ≈250 MB/s</text>
-    <text x="16" y="98" font-size="11" fill="var(--tx)">Measured best case</text>
-    <rect x="230" y="87" width="380" height="14" rx="2" fill="var(--am)"/>
-    <text x="860" y="98" font-size="11" font-weight="700" fill="var(--am)" text-anchor="end">≈50 MB/s (10 MB / ~200 ms)</text>
-    <text x="16" y="138" font-size="11" fill="var(--tx)">Landmarks only</text>
-    <rect x="230" y="127" width="30" height="14" rx="2" fill="var(--ok)"/>
-    <text x="860" y="138" font-size="11" font-weight="700" fill="var(--ok)" text-anchor="end">≈30 KB/s (projected, phase 3)</text>
-    <text x="230" y="168" font-size="10.5" fill="var(--tx2)">Even the best measured rate falls short of what raw video needs — landmarks need four orders</text>
-    <text x="230" y="182" font-size="10.5" fill="var(--tx2)">of magnitude less, which is the entire argument for keeping inference in Rust and off the wire.</text>
+    <text x="19.2" y="26.4" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">TAURI IPC THROUGHPUT — STYLIZED LOG SCALE</text>
+    <text x="19.2" y="69.6" font-size="13.2" fill="var(--tx)">Raw video @ 30 fps</text>
+    <rect x="276" y="56.4" width="744" height="16.8" rx="2.4" fill="var(--a)"/>
+    <text x="1032" y="69.6" font-size="13.2" font-weight="700" fill="var(--a)" text-anchor="end">needs ≈250 MB/s</text>
+    <text x="19.2" y="117.6" font-size="13.2" fill="var(--tx)">Measured best case</text>
+    <rect x="276" y="104.4" width="456" height="16.8" rx="2.4" fill="var(--am)"/>
+    <text x="1032" y="117.6" font-size="13.2" font-weight="700" fill="var(--am)" text-anchor="end">≈50 MB/s (10 MB / ~200 ms)</text>
+    <text x="19.2" y="165.6" font-size="13.2" fill="var(--tx)">Landmarks only</text>
+    <rect x="276" y="152.4" width="36" height="16.8" rx="2.4" fill="var(--ok)"/>
+    <text x="1032" y="165.6" font-size="13.2" font-weight="700" fill="var(--ok)" text-anchor="end">≈30 KB/s (projected, phase 3)</text>
+    <text x="276" y="201.6" font-size="12.6" fill="var(--tx2)">Even the best measured rate falls short of what raw video needs — landmarks need four orders</text>
+    <text x="276" y="218.4" font-size="12.6" fill="var(--tx2)">of magnitude less, which is the entire argument for keeping inference in Rust and off the wire.</text>
   </g>
 </svg>
 </div>

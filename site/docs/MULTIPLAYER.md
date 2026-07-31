@@ -14,7 +14,7 @@ There are two distinct problems here. Conflating them is the usual mistake.
 .wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
 :root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
 .wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
-.wbf svg{display:block;height:auto;width:100%;min-width:900px}
+.wbf svg{display:block;height:auto;width:100%;min-width:1080px}
 .wbf img{display:block;width:100%;height:auto}
 .wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
 .wbf figcaption b{color:var(--tx)}
@@ -77,52 +77,46 @@ and a timestamp — tens of bytes at gesture rate, versus roughly 250 MB/s for r
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 300" width="900" role="img" aria-label="Peer-to-peer multiplayer design: two browser tabs, host and guest, each running a local camera pipeline that produces GestureEvents. A WebRTC DataChannel carries guest events to the host and host state back, opened after a one-time signalling exchange via copy-paste, QR code, or Trystero over public trackers. Free public STUN servers handle most NAT traversal. A separate warning box states that there is no free TURN relay, so peers behind symmetric NAT or carrier-grade NAT cannot connect, with no workaround, while same-network play always works.">
+<svg viewBox="0 0 1080 360" width="1080" role="img" aria-label="Peer-to-peer multiplayer design: two browser tabs, host and guest, each running a local camera pipeline that produces GestureEvents. A WebRTC DataChannel carries guest events to the host and host state back, opened after a one-time signalling exchange via copy-paste, QR code, or Trystero over public trackers. Free public STUN servers handle most NAT traversal. A separate warning box states that there is no free TURN relay, so peers behind symmetric NAT or carrier-grade NAT cannot connect, with no workaround, while same-network play always works.">
   <defs>
-    <marker id="m-p2p-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="var(--ln)"/>
+    <marker id="m-p2p-1" viewBox="0 0 12 12" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="var(--ln)"/>
     </marker>
-    <marker id="m-p2p-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="var(--a)"/>
+    <marker id="m-p2p-2" viewBox="0 0 12 12" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="var(--a)"/>
     </marker>
   </defs>
   <g font-family="ui-monospace, monospace">
-    <text x="14" y="20" font-size="10.5" font-weight="700" fill="var(--am)" letter-spacing="1.3">DESIGN — no networked play exists yet, this is the spec</text>
-
-    <rect x="8" y="34" width="270" height="150" rx="10" fill="var(--sf)" stroke="var(--ln)" stroke-width="1.2"/>
-    <text x="22" y="56" font-size="10.5" font-weight="700" fill="var(--tx)">HOST — authoritative</text>
-    <text x="22" y="76" font-size="10.5" fill="var(--tx2)">Camera → tracker → recognizer</text>
-    <text x="22" y="92" font-size="10.5" fill="var(--tx2)">runs the simulation</text>
-    <text x="22" y="108" font-size="10.5" fill="var(--tx2)">applies its own +</text>
-    <text x="22" y="122" font-size="10.5" fill="var(--tx2)">received GestureEvents</text>
-    <text x="22" y="146" font-size="10.5" fill="var(--tx2)">broadcasts state back</text>
-    <text x="22" y="160" font-size="10.5" fill="var(--tx2)">over the same channel</text>
-
-    <rect x="622" y="34" width="270" height="150" rx="10" fill="var(--sf)" stroke="var(--ln)" stroke-width="1.2"/>
-    <text x="636" y="56" font-size="10.5" font-weight="700" fill="var(--tx)">GUEST — renders only</text>
-    <text x="636" y="76" font-size="10.5" fill="var(--tx2)">Camera → tracker → recognizer</text>
-    <text x="636" y="92" font-size="10.5" fill="var(--tx2)">sends only GestureEvents</text>
-    <text x="636" y="108" font-size="10.5" fill="var(--tx2)">— never video</text>
-    <text x="636" y="132" font-size="10.5" fill="var(--tx2)">receives state from host,</text>
-    <text x="636" y="146" font-size="10.5" fill="var(--tx2)">does not simulate itself</text>
-
-    <rect x="322" y="52" width="256" height="56" rx="8" fill="none" stroke="var(--a)" stroke-width="1.4"/>
-    <text x="336" y="74" font-size="11" font-weight="700" fill="var(--a)">RTCDataChannel</text>
-    <text x="336" y="92" font-size="10.5" fill="var(--tx2)">GestureEvent ↔ state, ≈64 B/event</text>
-    <path d="M278 76 H318" stroke="var(--a)" stroke-width="1.8" fill="none" marker-end="url(#m-p2p-2)"/>
-    <path d="M582 76 H618" stroke="var(--a)" stroke-width="1.8" fill="none" marker-end="url(#m-p2p-2)"/>
-
-    <rect x="322" y="122" width="256" height="62" rx="8" fill="var(--sf)" stroke="var(--ln)" stroke-dasharray="4 4"/>
-    <text x="336" y="142" font-size="10.5" font-weight="700" fill="var(--tx2)">Signalling, once, to open it —</text>
-    <text x="336" y="158" font-size="10.5" fill="var(--tx2)">copy-paste / QR (default) or</text>
-    <text x="336" y="172" font-size="10.5" fill="var(--tx2)">Trystero (public trackers) — no server run</text>
-
-    <rect x="150" y="204" width="600" height="34" rx="7" fill="var(--sf)" stroke="var(--ok)" stroke-width="1.3"/>
-    <text x="450" y="226" font-size="10.5" font-weight="700" fill="var(--ok)" text-anchor="middle">FREE PUBLIC STUN — resolves most NAT traversal</text>
-
-    <rect x="150" y="248" width="600" height="44" rx="7" fill="var(--am)" fill-opacity="0.08" stroke="var(--am)" stroke-width="1.4" stroke-dasharray="5 5"/>
-    <text x="450" y="268" font-size="10.5" font-weight="700" fill="var(--am)" text-anchor="middle">NO FREE TURN — symmetric NAT / CGNAT peers cannot connect, no workaround</text>
-    <text x="450" y="284" font-size="10.5" fill="var(--tx2)" text-anchor="middle">Same-network (same Wi-Fi/LAN) play is unaffected and always works</text>
+    <text x="16.8" y="24" font-size="12.6" font-weight="700" fill="var(--am)" letter-spacing="1.56">DESIGN — no networked play exists yet, this is the spec</text>
+    <rect x="9.6" y="40.8" width="324" height="180" rx="12" fill="var(--sf)" stroke="var(--ln)" stroke-width="1.44"/>
+    <text x="26.4" y="67.2" font-size="12.6" font-weight="700" fill="var(--tx)">HOST — authoritative</text>
+    <text x="26.4" y="91.2" font-size="12.6" fill="var(--tx2)">Camera → tracker → recognizer</text>
+    <text x="26.4" y="110.4" font-size="12.6" fill="var(--tx2)">runs the simulation</text>
+    <text x="26.4" y="129.6" font-size="12.6" fill="var(--tx2)">applies its own +</text>
+    <text x="26.4" y="146.4" font-size="12.6" fill="var(--tx2)">received GestureEvents</text>
+    <text x="26.4" y="175.2" font-size="12.6" fill="var(--tx2)">broadcasts state back</text>
+    <text x="26.4" y="192" font-size="12.6" fill="var(--tx2)">over the same channel</text>
+    <rect x="746.4" y="40.8" width="324" height="180" rx="12" fill="var(--sf)" stroke="var(--ln)" stroke-width="1.44"/>
+    <text x="763.2" y="67.2" font-size="12.6" font-weight="700" fill="var(--tx)">GUEST — renders only</text>
+    <text x="763.2" y="91.2" font-size="12.6" fill="var(--tx2)">Camera → tracker → recognizer</text>
+    <text x="763.2" y="110.4" font-size="12.6" fill="var(--tx2)">sends only GestureEvents</text>
+    <text x="763.2" y="129.6" font-size="12.6" fill="var(--tx2)">— never video</text>
+    <text x="763.2" y="158.4" font-size="12.6" fill="var(--tx2)">receives state from host,</text>
+    <text x="763.2" y="175.2" font-size="12.6" fill="var(--tx2)">does not simulate itself</text>
+    <rect x="386.4" y="62.4" width="307.2" height="67.2" rx="9.6" fill="none" stroke="var(--a)" stroke-width="1.68"/>
+    <text x="403.2" y="88.8" font-size="13.2" font-weight="700" fill="var(--a)">RTCDataChannel</text>
+    <text x="403.2" y="110.4" font-size="12.6" fill="var(--tx2)">GestureEvent ↔ state, ≈64 B/event</text>
+    <path d="M 333.6 91.2 H 381.6" stroke="var(--a)" stroke-width="2.16" fill="none" marker-end="url(#m-p2p-2)"/>
+    <path d="M 698.4 91.2 H 741.6" stroke="var(--a)" stroke-width="2.16" fill="none" marker-end="url(#m-p2p-2)"/>
+    <rect x="386.4" y="146.4" width="307.2" height="74.4" rx="9.6" fill="var(--sf)" stroke="var(--ln)" stroke-dasharray="4.8 4.8"/>
+    <text x="403.2" y="170.4" font-size="12.6" font-weight="700" fill="var(--tx2)">Signalling, once, to open it —</text>
+    <text x="403.2" y="189.6" font-size="12.6" fill="var(--tx2)">copy-paste / QR (default) or</text>
+    <text x="403.2" y="206.4" font-size="12.6" fill="var(--tx2)">Trystero (public trackers) — no server run</text>
+    <rect x="180" y="244.8" width="720" height="40.8" rx="8.4" fill="var(--sf)" stroke="var(--ok)" stroke-width="1.56"/>
+    <text x="540" y="271.2" font-size="12.6" font-weight="700" fill="var(--ok)" text-anchor="middle">FREE PUBLIC STUN — resolves most NAT traversal</text>
+    <rect x="180" y="297.6" width="720" height="52.8" rx="8.4" fill="var(--am)" fill-opacity="0.08" stroke="var(--am)" stroke-width="1.68" stroke-dasharray="6 6"/>
+    <text x="540" y="321.6" font-size="12.6" font-weight="700" fill="var(--am)" text-anchor="middle">NO FREE TURN — symmetric NAT / CGNAT peers cannot connect, no workaround</text>
+    <text x="540" y="340.8" font-size="12.6" fill="var(--tx2)" text-anchor="middle">Same-network (same Wi-Fi/LAN) play is unaffected and always works</text>
   </g>
 </svg>
 </div>
@@ -180,49 +174,49 @@ anti-cheat or verification of any kind — it provides privacy, and only privacy
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 300" width="900" role="img" aria-label="Anti-cheat design, not yet implemented: a camera feeds a client-side tracker and recognizer, producing a GestureEvent that passes through a rate-limit and plausibility-check gate before a host simulates authoritatively. A second, dashed path shows synthesized events entering the same gate directly, labelled as indistinguishable from real input once past the camera — the gate narrows but does not close this gap.">
+<svg viewBox="0 0 1080 360" width="1080" role="img" aria-label="Anti-cheat design, not yet implemented: a camera feeds a client-side tracker and recognizer, producing a GestureEvent that passes through a rate-limit and plausibility-check gate before a host simulates authoritatively. A second, dashed path shows synthesized events entering the same gate directly, labelled as indistinguishable from real input once past the camera — the gate narrows but does not close this gap.">
   <defs>
-    <marker id="m-mp-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="var(--ln)"/>
+    <marker id="m-mp-3" viewBox="0 0 12 12" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="var(--ln)"/>
     </marker>
-    <marker id="m-mp-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="var(--am)"/>
+    <marker id="m-mp-4" viewBox="0 0 12 12" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="var(--am)"/>
     </marker>
   </defs>
   <g font-family="ui-monospace, monospace">
-    <text x="14" y="20" font-size="10.5" font-weight="700" fill="var(--am)" letter-spacing="1.3">DESIGN — no networked play exists yet</text>
-    <rect x="14" y="40" width="140" height="60" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="26" y="62" font-size="11" font-weight="700" fill="var(--tx)">Camera</text>
-    <text x="26" y="80" font-size="10.5" fill="var(--tx2)">nondeterministic</text>
-    <text x="26" y="92" font-size="10.5" fill="var(--tx2)">sensor stream</text>
-    <rect x="188" y="40" width="150" height="60" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="200" y="62" font-size="11" font-weight="700" fill="var(--tx)">Client tracker</text>
-    <text x="200" y="80" font-size="10.5" fill="var(--tx2)">+ recognizer</text>
-    <text x="200" y="92" font-size="10.5" fill="var(--tx2)">on-device only</text>
-    <rect x="372" y="40" width="120" height="60" rx="8" fill="none" stroke="var(--a)" stroke-width="1.4"/>
-    <text x="384" y="66" font-size="11" font-weight="700" fill="var(--a)">GestureEvent</text>
-    <text x="384" y="84" font-size="10.5" fill="var(--tx2)">rate + shape</text>
-    <rect x="526" y="30" width="220" height="90" rx="8" fill="var(--sf)" stroke="var(--ln)" stroke-width="1.4"/>
-    <text x="540" y="52" font-size="10.5" font-weight="700" fill="var(--tx)">Rate-limit +</text>
-    <text x="540" y="68" font-size="10.5" font-weight="700" fill="var(--tx)">plausibility check</text>
-    <text x="540" y="86" font-size="10.5" fill="var(--tx2)">velocity · cooldown ·</text>
-    <text x="540" y="98" font-size="10.5" fill="var(--tx2)">reach envelope</text>
-    <rect x="780" y="40" width="110" height="60" rx="8" fill="var(--sf)" stroke="var(--ok)" stroke-width="1.4"/>
-    <text x="792" y="62" font-size="10.5" font-weight="700" fill="var(--tx)">Host</text>
-    <text x="792" y="78" font-size="10.5" fill="var(--tx2)">simulates</text>
-    <text x="792" y="92" font-size="10.5" fill="var(--tx2)">authoritatively</text>
-    <g stroke="var(--ln)" stroke-width="1.6" fill="none" marker-end="url(#m-mp-3)">
-      <path d="M154 70 H184"/>
-      <path d="M338 70 H368"/>
-      <path d="M492 70 H522"/>
-      <path d="M746 75 H776"/>
+    <text x="16.8" y="24" font-size="12.6" font-weight="700" fill="var(--am)" letter-spacing="1.56">DESIGN — no networked play exists yet</text>
+    <rect x="16.8" y="48" width="168" height="72" rx="9.6" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="31.2" y="74.4" font-size="13.2" font-weight="700" fill="var(--tx)">Camera</text>
+    <text x="31.2" y="96" font-size="12.6" fill="var(--tx2)">nondeterministic</text>
+    <text x="31.2" y="110.4" font-size="12.6" fill="var(--tx2)">sensor stream</text>
+    <rect x="225.6" y="48" width="180" height="72" rx="9.6" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="240" y="74.4" font-size="13.2" font-weight="700" fill="var(--tx)">Client tracker</text>
+    <text x="240" y="96" font-size="12.6" fill="var(--tx2)">+ recognizer</text>
+    <text x="240" y="110.4" font-size="12.6" fill="var(--tx2)">on-device only</text>
+    <rect x="446.4" y="48" width="144" height="72" rx="9.6" fill="none" stroke="var(--a)" stroke-width="1.68"/>
+    <text x="460.8" y="79.2" font-size="13.2" font-weight="700" fill="var(--a)">GestureEvent</text>
+    <text x="460.8" y="100.8" font-size="12.6" fill="var(--tx2)">rate + shape</text>
+    <rect x="631.2" y="36" width="264" height="108" rx="9.6" fill="var(--sf)" stroke="var(--ln)" stroke-width="1.68"/>
+    <text x="648" y="62.4" font-size="12.6" font-weight="700" fill="var(--tx)">Rate-limit +</text>
+    <text x="648" y="81.6" font-size="12.6" font-weight="700" fill="var(--tx)">plausibility check</text>
+    <text x="648" y="103.2" font-size="12.6" fill="var(--tx2)">velocity · cooldown ·</text>
+    <text x="648" y="117.6" font-size="12.6" fill="var(--tx2)">reach envelope</text>
+    <rect x="936" y="48" width="132" height="72" rx="9.6" fill="var(--sf)" stroke="var(--ok)" stroke-width="1.68"/>
+    <text x="950.4" y="74.4" font-size="12.6" font-weight="700" fill="var(--tx)">Host</text>
+    <text x="950.4" y="93.6" font-size="12.6" fill="var(--tx2)">simulates</text>
+    <text x="950.4" y="110.4" font-size="12.6" fill="var(--tx2)">authoritatively</text>
+    <g stroke="var(--ln)" stroke-width="1.92" fill="none" marker-end="url(#m-mp-3)">
+      <path d="M 184.8 84 H 220.8"/>
+      <path d="M 405.6 84 H 441.6"/>
+      <path d="M 590.4 84 H 626.4"/>
+      <path d="M 895.2 90 H 931.2"/>
     </g>
-    <rect x="372" y="200" width="200" height="50" rx="8" fill="none" stroke="var(--am)" stroke-width="1.4" stroke-dasharray="5 5"/>
-    <text x="386" y="222" font-size="10.5" font-weight="700" fill="var(--am)">synthesized events</text>
-    <text x="386" y="240" font-size="10.5" fill="var(--tx2)">(a determined cheater)</text>
-    <path d="M472 198 V122" stroke="var(--am)" stroke-width="1.8" fill="none" stroke-dasharray="5 4" marker-end="url(#m-mp-4)"/>
-    <text x="482" y="170" font-size="10.5" font-weight="700" fill="var(--am)">indistinguishable from</text>
-    <text x="482" y="184" font-size="10.5" font-weight="700" fill="var(--am)">real input at this gate</text>
+    <rect x="446.4" y="240" width="240" height="60" rx="9.6" fill="none" stroke="var(--am)" stroke-width="1.68" stroke-dasharray="6 6"/>
+    <text x="463.2" y="266.4" font-size="12.6" font-weight="700" fill="var(--am)">synthesized events</text>
+    <text x="463.2" y="288" font-size="12.6" fill="var(--tx2)">(a determined cheater)</text>
+    <path d="M 566.4 237.6 V 146.4" stroke="var(--am)" stroke-width="2.16" fill="none" stroke-dasharray="6 4.8" marker-end="url(#m-mp-4)"/>
+    <text x="578.4" y="204" font-size="12.6" font-weight="700" fill="var(--am)">indistinguishable from</text>
+    <text x="578.4" y="220.8" font-size="12.6" font-weight="700" fill="var(--am)">real input at this gate</text>
   </g>
 </svg>
 </div>

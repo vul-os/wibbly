@@ -8,7 +8,7 @@ relitigates the decision from scratch in six months.
 .wbf{--a:#C4006B;--am:#8A4B00;--ok:#0F7A3D;--tx:#140F1B;--tx2:#544A61;--ln:#BEB2CD;--sf:#F5F1F9;--pg:#FFFFFF;margin:1.75rem 0}
 :root[data-theme="dark"] .wbf{--a:#FF4D9D;--am:#FFB020;--ok:#3FE08A;--tx:#F5F1FA;--tx2:#ADA2BE;--ln:#3A2C52;--sf:#171122;--pg:#0E0A16}
 .wbf>.sc{overflow-x:auto;border:1px solid var(--ln);border-radius:10px;background:var(--pg)}
-.wbf svg{display:block;height:auto;width:100%;min-width:900px}
+.wbf svg{display:block;height:auto;width:100%;min-width:1220px}
 .wbf img{display:block;width:100%;height:auto}
 .wbf figcaption{font-size:.82rem;line-height:1.65;color:var(--tx2);margin-top:.65rem}
 .wbf figcaption b{color:var(--tx)}
@@ -26,33 +26,33 @@ published **in-browser** frame rates, rather than server-GPU numbers quoted at a
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 300" width="900" role="img" aria-label="Illustrative chart, not measured data: relative inference cost against number of people in frame. A top-down architecture's cost rises roughly linearly with each additional person, while MoveNet MultiPose, a bottom-up architecture, stays flat because it detects all people in one pass.">
+<svg viewBox="0 0 1080 360" width="1080" role="img" aria-label="Illustrative chart, not measured data: relative inference cost against number of people in frame. A top-down architecture's cost rises roughly linearly with each additional person, while MoveNet MultiPose, a bottom-up architecture, stays flat because it detects all people in one pass.">
   <g font-family="ui-monospace, monospace">
-    <text x="14" y="24" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">INFERENCE COST vs PEOPLE IN FRAME — ILLUSTRATIVE, NOT MEASURED</text>
-    <line x1="70" y1="40" x2="70" y2="250" stroke="var(--ln)" stroke-width="1.2"/>
-    <line x1="70" y1="250" x2="850" y2="250" stroke="var(--ln)" stroke-width="1.2"/>
-    <text x="46" y="45" font-size="10.5" fill="var(--tx2)">high</text>
-    <text x="46" y="253" font-size="10.5" fill="var(--tx2)">low</text>
-    <text x="10" y="150" font-size="10.5" fill="var(--tx2)" transform="rotate(-90 10 150)">relative cost</text>
-    <text x="460" y="280" font-size="10.5" fill="var(--tx2)" text-anchor="middle">people in frame</text>
-    <g fill="var(--tx2)" font-size="10.5" text-anchor="middle">
-      <text x="200" y="266">1</text><text x="330" y="266">2</text><text x="460" y="266">3</text>
-      <text x="590" y="266">4</text><text x="720" y="266">5</text><text x="850" y="266">6</text>
+    <text x="16.8" y="28.8" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">INFERENCE COST vs PEOPLE IN FRAME — ILLUSTRATIVE, NOT MEASURED</text>
+    <line x1="84" y1="48" x2="84" y2="300" stroke="var(--ln)" stroke-width="1.44"/>
+    <line x1="84" y1="300" x2="1020" y2="300" stroke="var(--ln)" stroke-width="1.44"/>
+    <text x="55.2" y="54" font-size="12.6" fill="var(--tx2)">high</text>
+    <text x="55.2" y="303.6" font-size="12.6" fill="var(--tx2)">low</text>
+    <text x="12" y="180" font-size="12.6" fill="var(--tx2)" transform="rotate(-90 12 180)">relative cost</text>
+    <text x="552" y="336" font-size="12.6" fill="var(--tx2)" text-anchor="middle">people in frame</text>
+    <g fill="var(--tx2)" font-size="12.6" text-anchor="middle">
+      <text x="240" y="319.2">1</text><text x="396" y="319.2">2</text><text x="552" y="319.2">3</text>
+      <text x="708" y="319.2">4</text><text x="864" y="319.2">5</text><text x="1020" y="319.2">6</text>
     </g>
-    <polyline points="200,217 330,184 460,151 590,118 720,85 850,52" fill="none" stroke="var(--a)" stroke-width="2.4"/>
+    <polyline points="240,260.4 396,220.8 552,181.2 708,141.6 864,102 1020,62.4" fill="none" stroke="var(--a)" stroke-width="2.88"/>
     <g fill="var(--a)">
-      <circle cx="200" cy="217" r="3.5"/><circle cx="330" cy="184" r="3.5"/><circle cx="460" cy="151" r="3.5"/>
-      <circle cx="590" cy="118" r="3.5"/><circle cx="720" cy="85" r="3.5"/><circle cx="850" cy="52" r="3.5"/>
+      <circle cx="240" cy="260.4" r="4.2"/><circle cx="396" cy="220.8" r="4.2"/><circle cx="552" cy="181.2" r="4.2"/>
+      <circle cx="708" cy="141.6" r="4.2"/><circle cx="864" cy="102" r="4.2"/><circle cx="1020" cy="62.4" r="4.2"/>
     </g>
-    <text x="588" y="102" font-size="11" font-weight="700" fill="var(--a)">top-down — cost scales per person</text>
-    <text x="588" y="116" font-size="10.5" fill="var(--tx2)">e.g. MediaPipe PoseLandmarker</text>
-    <polyline points="200,205 330,205 460,205 590,205 720,205 850,205" fill="none" stroke="var(--ok)" stroke-width="2.4"/>
+    <text x="705.6" y="122.4" font-size="13.2" font-weight="700" fill="var(--a)">top-down — cost scales per person</text>
+    <text x="705.6" y="139.2" font-size="12.6" fill="var(--tx2)">e.g. MediaPipe PoseLandmarker</text>
+    <polyline points="240,246 396,246 552,246 708,246 864,246 1020,246" fill="none" stroke="var(--ok)" stroke-width="2.88"/>
     <g fill="var(--ok)">
-      <circle cx="200" cy="205" r="3.5"/><circle cx="330" cy="205" r="3.5"/><circle cx="460" cy="205" r="3.5"/>
-      <circle cx="590" cy="205" r="3.5"/><circle cx="720" cy="205" r="3.5"/><circle cx="850" cy="205" r="3.5"/>
+      <circle cx="240" cy="246" r="4.2"/><circle cx="396" cy="246" r="4.2"/><circle cx="552" cy="246" r="4.2"/>
+      <circle cx="708" cy="246" r="4.2"/><circle cx="864" cy="246" r="4.2"/><circle cx="1020" cy="246" r="4.2"/>
     </g>
-    <text x="588" y="228" font-size="11" font-weight="700" fill="var(--ok)">bottom-up — MoveNet MultiPose (flat)</text>
-    <text x="588" y="242" font-size="10.5" fill="var(--tx2)">this is what ships</text>
+    <text x="705.6" y="273.6" font-size="13.2" font-weight="700" fill="var(--ok)">bottom-up — MoveNet MultiPose (flat)</text>
+    <text x="705.6" y="290.4" font-size="12.6" fill="var(--tx2)">this is what ships</text>
   </g>
 </svg>
 </div>
@@ -70,38 +70,38 @@ Vendor-published, but browser-real — which is more than any alternative offers
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 300" width="900" role="img" aria-label="Vendor-published in-browser WebGL frames per second for three MoveNet variants on three devices: MacBook Pro 15 inch, Desktop i9-10900K, and iPhone 12. MultiPose is the slowest of the three variants on every device but remains real-time.">
+<svg viewBox="0 0 1080 360" width="1080" role="img" aria-label="Vendor-published in-browser WebGL frames per second for three MoveNet variants on three devices: MacBook Pro 15 inch, Desktop i9-10900K, and iPhone 12. MultiPose is the slowest of the three variants on every device but remains real-time.">
   <g font-family="ui-monospace, monospace">
-    <text x="14" y="22" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">IN-BROWSER WEBGL FPS — VENDOR-PUBLISHED (tfjs-models README)</text>
-    <line x1="60" y1="260" x2="860" y2="260" stroke="var(--ln)" stroke-width="1.2"/>
-    <rect x="121" y="52" width="34" height="208" fill="var(--ln)"/>
-    <rect x="163" y="106" width="34" height="154" fill="var(--am)"/>
-    <rect x="205" y="152" width="34" height="108" fill="var(--a)"/>
-    <text x="163" y="286" font-size="10.5" fill="var(--tx)" text-anchor="middle">MacBook Pro 15"</text>
-    <text x="138" y="46" font-size="10.5" fill="var(--tx2)" text-anchor="middle">104</text>
-    <text x="180" y="100" font-size="10.5" fill="var(--tx2)" text-anchor="middle">77</text>
-    <text x="222" y="146" font-size="10.5" font-weight="700" fill="var(--a)" text-anchor="middle">54</text>
-    <rect x="391" y="86" width="34" height="174" fill="var(--ln)"/>
-    <rect x="433" y="96" width="34" height="164" fill="var(--am)"/>
-    <rect x="475" y="136" width="34" height="124" fill="var(--a)"/>
-    <text x="433" y="286" font-size="10.5" fill="var(--tx)" text-anchor="middle">Desktop i9-10900K</text>
-    <text x="408" y="80" font-size="10.5" fill="var(--tx2)" text-anchor="middle">87</text>
-    <text x="450" y="90" font-size="10.5" fill="var(--tx2)" text-anchor="middle">82</text>
-    <text x="492" y="130" font-size="10.5" font-weight="700" fill="var(--a)" text-anchor="middle">62</text>
-    <rect x="661" y="158" width="34" height="102" fill="var(--ln)"/>
-    <rect x="703" y="174" width="34" height="86" fill="var(--am)"/>
-    <rect x="745" y="212" width="34" height="48" fill="var(--a)"/>
-    <text x="703" y="286" font-size="10.5" fill="var(--tx)" text-anchor="middle">iPhone 12</text>
-    <text x="678" y="152" font-size="10.5" fill="var(--tx2)" text-anchor="middle">51</text>
-    <text x="720" y="168" font-size="10.5" fill="var(--tx2)" text-anchor="middle">43</text>
-    <text x="762" y="206" font-size="10.5" font-weight="700" fill="var(--a)" text-anchor="middle">24</text>
-    <g font-size="10.5">
-      <rect x="590" y="16" width="10" height="10" fill="var(--ln)"/>
-      <text x="604" y="25" fill="var(--tx2)">SinglePose Lightning</text>
-      <rect x="590" y="30" width="10" height="10" fill="var(--am)"/>
-      <text x="604" y="39" fill="var(--tx2)">SinglePose Thunder</text>
-      <rect x="760" y="16" width="10" height="10" fill="var(--a)"/>
-      <text x="774" y="25" fill="var(--a)" font-weight="700">MultiPose — ships</text>
+    <text x="16.8" y="26.4" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">IN-BROWSER WEBGL FPS — VENDOR-PUBLISHED (tfjs-models README)</text>
+    <line x1="72" y1="312" x2="1032" y2="312" stroke="var(--ln)" stroke-width="1.44"/>
+    <rect x="145.2" y="62.4" width="40.8" height="249.6" fill="var(--ln)"/>
+    <rect x="195.6" y="127.2" width="40.8" height="184.8" fill="var(--am)"/>
+    <rect x="246" y="182.4" width="40.8" height="129.6" fill="var(--a)"/>
+    <text x="195.6" y="343.2" font-size="12.6" fill="var(--tx)" text-anchor="middle">MacBook Pro 15"</text>
+    <text x="165.6" y="55.2" font-size="12.6" fill="var(--tx2)" text-anchor="middle">104</text>
+    <text x="216" y="120" font-size="12.6" fill="var(--tx2)" text-anchor="middle">77</text>
+    <text x="266.4" y="175.2" font-size="12.6" font-weight="700" fill="var(--a)" text-anchor="middle">54</text>
+    <rect x="469.2" y="103.2" width="40.8" height="208.8" fill="var(--ln)"/>
+    <rect x="519.6" y="115.2" width="40.8" height="196.8" fill="var(--am)"/>
+    <rect x="570" y="163.2" width="40.8" height="148.8" fill="var(--a)"/>
+    <text x="519.6" y="343.2" font-size="12.6" fill="var(--tx)" text-anchor="middle">Desktop i9-10900K</text>
+    <text x="489.6" y="96" font-size="12.6" fill="var(--tx2)" text-anchor="middle">87</text>
+    <text x="540" y="108" font-size="12.6" fill="var(--tx2)" text-anchor="middle">82</text>
+    <text x="590.4" y="156" font-size="12.6" font-weight="700" fill="var(--a)" text-anchor="middle">62</text>
+    <rect x="793.2" y="189.6" width="40.8" height="122.4" fill="var(--ln)"/>
+    <rect x="843.6" y="208.8" width="40.8" height="103.2" fill="var(--am)"/>
+    <rect x="894" y="254.4" width="40.8" height="57.6" fill="var(--a)"/>
+    <text x="843.6" y="343.2" font-size="12.6" fill="var(--tx)" text-anchor="middle">iPhone 12</text>
+    <text x="813.6" y="182.4" font-size="12.6" fill="var(--tx2)" text-anchor="middle">51</text>
+    <text x="864" y="201.6" font-size="12.6" fill="var(--tx2)" text-anchor="middle">43</text>
+    <text x="914.4" y="247.2" font-size="12.6" font-weight="700" fill="var(--a)" text-anchor="middle">24</text>
+    <g font-size="12.6">
+      <rect x="708" y="19.2" width="12" height="12" fill="var(--ln)"/>
+      <text x="724.8" y="30" fill="var(--tx2)">SinglePose Lightning</text>
+      <rect x="708" y="36" width="12" height="12" fill="var(--am)"/>
+      <text x="724.8" y="46.8" fill="var(--tx2)">SinglePose Thunder</text>
+      <rect x="912" y="19.2" width="12" height="12" fill="var(--a)"/>
+      <text x="928.8" y="30" fill="var(--a)" font-weight="700">MultiPose — ships</text>
     </g>
   </g>
 </svg>
@@ -144,39 +144,39 @@ before benchmarks are even read.
 
 <figure class="wbf">
 <div class="sc">
-<svg viewBox="0 0 900 380" width="900" role="img" aria-label="Funnel diagram: nine pose and hand models were researched. Three were eliminated by licence terms — YOLO-pose AGPL-3.0, WiLoR CC BY-NC-ND 4.0, HaMeR research-only. Three more were eliminated by architecture or performance — MediaPipe PoseLandmarker's per-person cost, ViTPose's roughly 1 FPS, MediaPipe Holistic's single-person limit and stale status. Three survive: MoveNet MultiPose, shipped; MediaPipe HandLandmarker, chosen but not integrated; and RTMO, kept as an unproven future upgrade with no browser port yet.">
+<svg viewBox="0 0 1220 456" width="1220" role="img" aria-label="Funnel diagram: nine pose and hand models were researched. Three were eliminated by licence terms — YOLO-pose AGPL-3.0, WiLoR CC BY-NC-ND 4.0, HaMeR research-only. Three more were eliminated by architecture or performance — MediaPipe PoseLandmarker's per-person cost, ViTPose's roughly 1 FPS, MediaPipe Holistic's single-person limit and stale status. Three survive: MoveNet MultiPose, shipped; MediaPipe HandLandmarker, chosen but not integrated; and RTMO, kept as an unproven future upgrade with no browser port yet.">
   <defs>
-    <marker id="m-mod-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="var(--ln)"/>
+    <marker id="m-mod-a" viewBox="0 0 12 12" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="var(--ln)"/>
     </marker>
   </defs>
   <g font-family="ui-monospace, monospace">
-    <rect x="90" y="10" width="720" height="46" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="450" y="38" font-size="13" font-weight="700" fill="var(--tx)" text-anchor="middle">9 MODELS RESEARCHED</text>
-    <path d="M450 56 V88" stroke="var(--ln)" stroke-width="1.6" marker-end="url(#m-mod-a)"/>
-    <text x="470" y="72" font-size="10.5" fill="var(--a)" font-weight="700">eliminated on LICENCE —</text>
-    <text x="470" y="86" font-size="10.5" fill="var(--tx2)">YOLO-pose (AGPL-3.0) · WiLoR (CC BY-NC-ND 4.0) · HaMeR (research-only)</text>
-    <rect x="150" y="92" width="600" height="46" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="450" y="120" font-size="13" font-weight="700" fill="var(--tx)" text-anchor="middle">6 REMAIN</text>
-    <path d="M450 138 V170" stroke="var(--ln)" stroke-width="1.6" marker-end="url(#m-mod-a)"/>
-    <text x="470" y="154" font-size="10.5" fill="var(--am)" font-weight="700">eliminated on ARCHITECTURE / PERFORMANCE —</text>
-    <text x="470" y="168" font-size="10.5" fill="var(--tx2)">PoseLandmarker (top-down cost) · ViTPose (~1 FPS) · Holistic (single-person, stale)</text>
-    <rect x="230" y="174" width="440" height="46" rx="8" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="450" y="202" font-size="13" font-weight="700" fill="var(--tx)" text-anchor="middle">3 SURVIVE</text>
-    <path d="M450 220 V250" stroke="var(--ln)" stroke-width="1.6" marker-end="url(#m-mod-a)"/>
-    <rect x="40" y="256" width="260" height="100" rx="8" fill="none" stroke="var(--ok)" stroke-width="1.4"/>
-    <text x="60" y="280" font-size="12" font-weight="700" fill="var(--tx)">MoveNet MultiPose</text>
-    <text x="60" y="298" font-size="10.5" fill="var(--ok)" font-weight="700">shipped — this runs today</text>
-    <text x="60" y="316" font-size="10.5" fill="var(--tx2)">Apache 2.0, flat cost curve</text>
-    <rect x="320" y="256" width="260" height="100" rx="8" fill="none" stroke="var(--am)" stroke-width="1.4"/>
-    <text x="340" y="280" font-size="12" font-weight="700" fill="var(--tx)">HandLandmarker</text>
-    <text x="340" y="298" font-size="10.5" fill="var(--am)" font-weight="700">chosen, not integrated</text>
-    <text x="340" y="316" font-size="10.5" fill="var(--tx2)">Apache 2.0, no tracker built yet</text>
-    <rect x="600" y="256" width="260" height="100" rx="8" fill="none" stroke="var(--am)" stroke-width="1.4"/>
-    <text x="620" y="280" font-size="12" font-weight="700" fill="var(--tx)">RTMO</text>
-    <text x="620" y="298" font-size="10.5" fill="var(--am)" font-weight="700">kept as future upgrade</text>
-    <text x="620" y="316" font-size="10.5" fill="var(--tx2)">no browser port, no WebGPU</text>
-    <text x="620" y="332" font-size="10.5" fill="var(--tx2)">benchmark — phase 3, unproven</text>
+    <rect x="108" y="12" width="864" height="55.2" rx="9.6" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="540" y="45.6" font-size="15.6" font-weight="700" fill="var(--tx)" text-anchor="middle">9 MODELS RESEARCHED</text>
+    <path d="M 540 67.2 V 105.6" stroke="var(--ln)" stroke-width="1.92" marker-end="url(#m-mod-a)"/>
+    <text x="564" y="86.4" font-size="12.6" fill="var(--a)" font-weight="700">eliminated on LICENCE —</text>
+    <text x="564" y="103.2" font-size="12.6" fill="var(--tx2)">YOLO-pose (AGPL-3.0) · WiLoR (CC BY-NC-ND 4.0) · HaMeR (research-only)</text>
+    <rect x="180" y="110.4" width="720" height="55.2" rx="9.6" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="540" y="144" font-size="15.6" font-weight="700" fill="var(--tx)" text-anchor="middle">6 REMAIN</text>
+    <path d="M 540 165.6 V 204" stroke="var(--ln)" stroke-width="1.92" marker-end="url(#m-mod-a)"/>
+    <text x="564" y="184.8" font-size="12.6" fill="var(--am)" font-weight="700">eliminated on ARCHITECTURE / PERFORMANCE —</text>
+    <text x="564" y="201.6" font-size="12.6" fill="var(--tx2)">PoseLandmarker (top-down cost) · ViTPose (~1 FPS) · Holistic (single-person, stale)</text>
+    <rect x="276" y="208.8" width="528" height="55.2" rx="9.6" fill="var(--sf)" stroke="var(--ln)"/>
+    <text x="540" y="242.4" font-size="15.6" font-weight="700" fill="var(--tx)" text-anchor="middle">3 SURVIVE</text>
+    <path d="M 540 264 V 300" stroke="var(--ln)" stroke-width="1.92" marker-end="url(#m-mod-a)"/>
+    <rect x="48" y="307.2" width="312" height="120" rx="9.6" fill="none" stroke="var(--ok)" stroke-width="1.68"/>
+    <text x="72" y="336" font-size="14.4" font-weight="700" fill="var(--tx)">MoveNet MultiPose</text>
+    <text x="72" y="357.6" font-size="12.6" fill="var(--ok)" font-weight="700">shipped — this runs today</text>
+    <text x="72" y="379.2" font-size="12.6" fill="var(--tx2)">Apache 2.0, flat cost curve</text>
+    <rect x="384" y="307.2" width="312" height="120" rx="9.6" fill="none" stroke="var(--am)" stroke-width="1.68"/>
+    <text x="408" y="336" font-size="14.4" font-weight="700" fill="var(--tx)">HandLandmarker</text>
+    <text x="408" y="357.6" font-size="12.6" fill="var(--am)" font-weight="700">chosen, not integrated</text>
+    <text x="408" y="379.2" font-size="12.6" fill="var(--tx2)">Apache 2.0, no tracker built yet</text>
+    <rect x="720" y="307.2" width="312" height="120" rx="9.6" fill="none" stroke="var(--am)" stroke-width="1.68"/>
+    <text x="744" y="336" font-size="14.4" font-weight="700" fill="var(--tx)">RTMO</text>
+    <text x="744" y="357.6" font-size="12.6" fill="var(--am)" font-weight="700">kept as future upgrade</text>
+    <text x="744" y="379.2" font-size="12.6" fill="var(--tx2)">no browser port, no WebGPU</text>
+    <text x="744" y="398.4" font-size="12.6" fill="var(--tx2)">benchmark — phase 3, unproven</text>
   </g>
 </svg>
 </div>
