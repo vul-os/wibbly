@@ -8,6 +8,8 @@
 **Camera-gesture games for [magnetite](https://github.com/vul-os/magnetite) — a gesture is an input event like any other.**<br>
 **Frames never leave the device. No install, no download, no depth sensor, no controller.**
 
+<sub><img src="docs/assets/vulos-logo.png" height="14" alt="VulOS"> Part of <strong><a href="https://vulos.org">VulOS</a></strong> — the open, self-hostable web OS &amp; app suite. Runs standalone, or as an app hosted by the Vulos OS.</sub>
+
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![Three.js](https://img.shields.io/badge/Three.js-r174-000000?logo=three.js&logoColor=white)](https://threejs.org)
@@ -35,35 +37,60 @@
 
 ---
 
-## Overview
+## What is wibbly?
 
-wibbly is **a game for [magnetite](https://github.com/vul-os/magnetite)** — the
-decentralized, self-hostable Rust games platform. Magnetite is the platform; wibbly is
-what it looks like to build on it when your controller is a webcam.
+wibbly turns your webcam into a game controller. Stand about two metres back, swing your
+arm, and you're playing tennis against an AI — no gamepad, no download, no account.
+Nothing your camera sees ever leaves your computer: pose tracking runs entirely in the
+browser tab that has the camera open, and the only thing that goes anywhere is the
+*result* of a gesture — a `GestureEvent` — never the video itself.
 
-The thesis is narrow and testable: a webcam is a controller, a `GestureEvent` is an
-input event like a keypress, and a game should never name a model, a runtime, or a
-vendor to receive one. Games run in a browser tab with zero install. Pose inference runs
-locally on the machine holding the camera, so the wire carries gesture events — not
-video.
-
-**What comes from magnetite:** a real magnetite `AuthoritativeGame` — the reference
-arena-shooter, compiled to wasm — runs client-side in the browser tab via
-`@vulos/wibbly-authority`, stepped from the tennis render loop as a `Topology::SingleRoom`
-match: the bottom rung of magnetite's own topology ladder, hosted by the tab with no
-server. That is the concrete, current sense in which wibbly is built on magnetite. It
-changes nothing about camera gestures, which magnetite types `InputClass::Attested` and
-are, by construction, **never replay-verifiable** — determinism is a property of the
-simulation given its inputs, not of the inputs themselves. That boundary is enforced by
-magnetite, in code, on purpose. Nothing here claims otherwise.
-
-**What stays here:** the camera. `packages/wibbly-input` is a standalone,
-vendor-neutral library with no magnetite dependency, so anything can consume it —
-magnetite ships the contract, not a pose pipeline.
+wibbly is a **camera-gesture game** built on [magnetite](https://github.com/vul-os/magnetite),
+the decentralized, self-hostable Rust games platform. Magnetite is the platform; wibbly is
+what it looks like to build a game for it when the controller is a webcam instead of a
+gamepad. One game plays today — tennis, one gesture, one player. Soccer, boxing, and a
+hands-first factory game ([Palmworks](games/palmworks)) are tracked backlog, not built —
+see the [status table](#status--what-is-actually-built) below for exactly what that means
+before you take any claim here on faith.
 
 **The games** live in [`games/`](games/README.md) — see that README to submit one.
 
-[Spec](WIBBLY.md) · [Quick start](#quick-start) · [Demo mode](#demo-mode) · [Architecture](#architecture--the-seams) · [Model selection](#model-selection) · [Docs](site/docs/)
+[Spec](WIBBLY.md) · [Quick start](#quick-start-standalone) · [Demo mode](#demo-mode) · [How it works](#how-it-works) · [Model selection](#model-selection) · [Docs](site/docs/)
+
+---
+
+## Part of VulOS
+
+wibbly runs entirely on its own: clone it, `npm install`, `npm run dev`, and nothing else
+in the suite has to exist for it to work. It is also collected onto the public VulOS site
+as one of the suite's projects, and it consumes exactly one other VulOS product on
+purpose — the tennis match's magnetite integration (see [How it works](#how-it-works)
+below) is a real, running client of [magnetite](https://github.com/vul-os/magnetite), the
+decentralized Rust games platform. That is the only cross-product dependency here: wibbly
+needs no account, no control plane, and no service Vulos operates.
+
+Read more about the suite at [vulos.org](https://vulos.org).
+
+---
+
+## Features
+
+What is actually true today, not the pitch:
+
+- **Your webcam is the controller.** No gamepad, no depth sensor, no extra hardware.
+- **Nothing leaves your device.** Pose tracking runs locally in the browser tab; the wire
+  only ever carries a `GestureEvent`, never a video frame.
+- **Zero install.** Open a tab and play — no download, no account, no server to stand up.
+- **Play without a camera.** The spacebar is a full fallback, offered up front and again
+  if permission is refused.
+- **Real handedness.** Left- and right-handed play are both first-class, not a hardcoded
+  assumption.
+- **A real magnetite match runs under the hood.** Tennis steps an actual compiled
+  magnetite `AuthoritativeGame` client-side — see [How it works](#how-it-works).
+
+What is *not* a feature yet — multi-person play, more gestures, networked play, a second
+playable game — is tracked honestly in the [status table](#status--what-is-actually-built)
+below, not hidden from this list.
 
 ---
 
@@ -93,10 +120,11 @@ Audited against the tree, not against the pitch.
 | **Tauri native shell** | *Planned (phase 2)* | Researched and specified; no Rust in this repo |
 | **RTMO / ONNX / WebGPU tracker** | *Planned (phase 3)* | No browser port exists to benchmark against |
 | **Vendored pose model** | **Built** | MoveNet MultiPose Lightning checked in at `public/models/` (~9.3 MiB) and served same-origin. Byte-verified against its own weight manifest by `npm run verify:model`. The TF Hub CDN is now an explicit opt-in, not the default. |
-| **Demo mode** (`VITE_WIBBLY_MODE=demo`) | **Built** | A separate single-surface build for embedding at `vulos.org/projects/wibbly/play/`: instant start, no router, no persistent storage, magnetite hard-disabled, local model only. Verified end-to-end under the real production CSP by `npm run verify:demo` — **26/26 checks, zero external network requests**. |
+| **Demo mode** (`VITE_WIBBLY_MODE=demo`) | **Built** | A separate single-surface build for embedding at `vulos.org/products/wibbly/play/`: instant start, no router, no persistent storage, magnetite hard-disabled, local model only. Verified end-to-end under the real production CSP by `npm run verify:demo` — **26/26 checks, zero external network requests**. |
 | Title screen, setup flow, in-game menu | **Built** | `src/pages/` is now four surfaces: title, first-run setup, play, 404. The marketing shell (`home`, `about`, `game-menu`, `game-container`) is deleted, along with the fabricated JSON-LD rating and play count that were still in `index.html`. The canonical public writing is `site/landing.html`. |
 | **Soccer** | **In progress — reasoned, not coded** | Tracked backlog, not vague "someday": it's next because a kick is the first gesture below the waist, and `SwingRecognizer` ignores leg keypoints entirely — it forces `GestureRecognizer` to be genuinely plural. No code exists. Shows on the title screen as **Planned**, non-selectable. |
 | **Boxing** | **In progress — reasoned, not coded** | Tracked backlog: it's the first game needing two independent gesture streams from one player (left and right hand, per-arm cooldowns) rather than one dominant hand, which is what `Calibration.handedness` assumes today. No code exists. Shows on the title screen as **Planned**, non-selectable. See [`src/components/catalogue.js`](src/components/catalogue.js) for both entries verbatim. |
+| **Palmworks** | **App builds, not a wibbly game yet** | [`games/palmworks`](games/palmworks) is a real, independent React app — its own routes, its own build, playable standalone by mouse and keyboard, no auth, no backend. It is folded into this repo with its full history. It is **not reachable from wibbly's own title screen**: `src/components/catalogue.js` lists it with `status: 'planned'`, so it renders as a non-clickable **Planned** card on [`src/pages/title.jsx`](src/pages/title.jsx), exactly like Soccer and Boxing. It has **zero gesture wiring** — `HandLandmarkTracker`/`PinchRecognizer`/`PointRecognizer` exist as a library (see Hand tracking, above) but nothing in Palmworks calls them. |
 
 ---
 
@@ -109,7 +137,7 @@ here is composited or staged.
 
 <table>
 <tr>
-<td><img src="docs/screenshots/title.png" alt="wibbly title screen" width="400"><br><em>Title — game selection; soccer and boxing show as planned, not playable</em></td>
+<td><img src="docs/screenshots/title.png" alt="wibbly title screen" width="400"><br><em>Title — game selection; soccer, boxing and Palmworks show as planned, not playable</em></td>
 <td><img src="docs/screenshots/setup-intro.png" alt="wibbly first-run setup" width="400"><br><em>Setup — the camera is explained before the browser prompt fires</em></td>
 </tr>
 <tr>
@@ -140,7 +168,7 @@ tracking succeed.
 
 ---
 
-## Quick start
+## Quick start (standalone)
 
 ```bash
 git clone https://github.com/vul-os/wibbly
@@ -157,9 +185,6 @@ model fails to load, which is the correct degradation.
 ```bash
 npm run build          # production bundle → dist/
 npm run preview        # serve dist/
-npm test               # 363 unit tests (221 input seams + 73 wibbly-p2p + 5 wibbly-authority + 64 app), no camera required
-npm run typecheck
-npm run screenshots    # requires: npm i -D playwright && npx playwright install chromium
 ```
 
 ### The embeddable demo
@@ -327,6 +352,9 @@ camera. 26 checks, all passing:
   /products/wibbly/play/
   /products/wibbly/play/assets/index-*.js
   /products/wibbly/play/assets/index-*.css
+  /products/wibbly/play/assets/instrument-sans-*.woff2
+  /products/wibbly/play/assets/jetbrains-mono-*.woff2
+  /products/wibbly/play/assets/archivo-*.woff2
   /products/wibbly/play/assets/pose-detection.esm-*.js
   /products/wibbly/play/assets/shared-*.js
   /products/wibbly/play/models/court.glb
@@ -352,7 +380,7 @@ Both are fixed; the texture is now an external same-origin file
 
 ---
 
-## Architecture — the seams
+## How it works
 
 All input lives in [`packages/wibbly-input`](packages/wibbly-input). Game code names
 **only** these interfaces — never a model, a runtime, or a vendor. Swapping MoveNet for
@@ -509,14 +537,33 @@ retired in favor of it.
 
 ---
 
+## Configuration
+
+The full detail behind each of these lives in [Demo mode](#demo-mode),
+[Deploying it](#deploying-it) above, and [`site/docs/CONFIGURATION.md`](site/docs/CONFIGURATION.md)
+(every tunable constant, where it lives in source). This is the summary.
+
+| Setting | What it does | Default |
+|---|---|---|
+| `VITE_WIBBLY_MODE=demo` | Builds the embeddable single-surface demo instead of the full app | full app |
+| `VITE_WIBBLY_MODEL=cdn` | Loads MoveNet from TF Hub instead of the vendored copy — **refused** in demo builds | vendored, same-origin |
+| `WIBBLY_BASE` | Base path the build is served from, e.g. `/products/wibbly/play/` | `/` |
+| `WIBBLY_OUTDIR` | Output directory for the build | `dist` |
+| `window.__WIBBLY_MODE__` | Runtime mode override, for a host page embedding the build | unset |
+| `window.__WIBBLY_MODEL_URL__` | Runtime override of the model URL | unset |
+| `window.__WIBBLY_PEER_TRANSPORT__` | Hands in an already-negotiated `PeerTransport` for multiplayer — **never honoured in demo mode** | unset |
+
+---
+
 ## Repository layout
 
 ```
 packages/wibbly-input/     the seams — TypeScript library, no DOM injection, 221 tests
 packages/wibbly-p2p/       peer-to-peer multiplayer transport (WebRTC, no magnetite dependency), 73 tests
-packages/wibbly-authority/ the real magnetite link — AuthoritativeGame compiled to wasm, run client-side
+packages/wibbly-authority/ the real magnetite link — AuthoritativeGame compiled to wasm, run client-side, 10 tests
 src/game/                tennis: court, ball physics, player rig, AI opponent, camera rig
 src/pages/               title, setup, play, 404 — the whole app shell
+games/palmworks/         an independent React app, folded in with its history — not a wibbly game yet
 site/                    house-style static mini-site + docs (the honest surface)
 scripts/screenshots.mjs  Playwright screenshotter
 WIBBLY.md                the spec and the program backlog
@@ -526,9 +573,44 @@ WIBBLY.md                the spec and the program backlog
 
 ## Documentation
 
-- [`WIBBLY.md`](WIBBLY.md) — the spec: vision, seams, model research, runtime targets, phased backlog, open questions
-- [`site/docs/`](site/docs/) — overview, architecture, models, runtime targets, multiplayer, incentives, roadmap, getting started
-- [`docs/screenshots/README.md`](docs/screenshots/README.md) — what each screenshot shows and how it was captured
+| Doc | What's in it |
+|---|---|
+| [`WIBBLY.md`](WIBBLY.md) | The spec: vision, seams, model research, runtime targets, phased backlog, open questions |
+| [`site/docs/`](site/docs/) | Player + developer docs — how to play, what's in it today, troubleshooting, privacy, architecture, model selection, multiplayer, getting started, configuration, runtime targets, roadmap |
+| [`games/README.md`](games/README.md) | The `GestureEvent` contract and how to submit a game |
+| [`docs/screenshots/README.md`](docs/screenshots/README.md) | What each screenshot shows and how it was captured |
+| [`SECURITY.md`](SECURITY.md) | Vulnerability reporting and what's in scope |
+| [`CHANGELOG.md`](CHANGELOG.md) | What actually shipped, release by release |
+
+---
+
+## Development
+
+```bash
+npm test               # 368 unit tests (221 wibbly-input + 73 wibbly-p2p + 10 wibbly-authority + 64 app), no camera required
+npm run typecheck
+npm run screenshots    # requires: npm i -D playwright && npx playwright install chromium
+npm run verify:model   # re-check the vendored pose weights against their manifest
+npm run verify:demo    # build + serve the demo under the real production CSP, drive it with Chromium
+```
+
+No linter is configured yet — `npm run typecheck` is the closest thing to one. All of the
+above run in CI (`.github/workflows/ci.yml`) on every push and PR.
+
+---
+
+## Contributing
+
+Most contributions are a new game, not a change to the shell. Read
+[`games/README.md`](games/README.md) first — it defines the `GestureEvent` contract, what a
+game may and may not do (no camera, network, or storage access — enforced by the runtime,
+not by review), and how to submit one as a PR.
+
+Changes to the seams themselves (`packages/wibbly-input`, `packages/wibbly-p2p`,
+`packages/wibbly-authority`) get reviewed harder, since every game depends on them. Run
+`npm test` and `npm run typecheck` before opening a PR — both are required in CI.
+
+---
 
 ## Brand
 

@@ -350,7 +350,8 @@ ads. Nothing in §0 or §2 depends on any of it existing.
       hand, since no hand-tracking session has yet run against a live camera; and `WibblyInput`
       (`packages/wibbly-input/src/pipeline.ts`) does not yet compose the hand tracker into the
       running pipeline — it still wires body pose and `SwingRecognizer` only. The MediaPipe hand
-      model and Wasm runtime (~25 MB) are also not vendored in this repo; both asset paths are
+      model and Wasm runtime (~40 MiB — 7.46 MiB model + ~32.2 MiB Wasm runtime, both variants
+      `FilesetResolver` picks between) are also not vendored in this repo; both asset paths are
       injectable with no CDN default, so nothing reaches the network behind anyone's back, but
       hands do not run until someone supplies them.
 
@@ -395,10 +396,13 @@ ads. Nothing in §0 or §2 depends on any of it existing.
       into `Calibration.handedness` today. Also the natural first test of 2-player
       local, since boxing is head-to-head by nature.
 
-> The title screen (`src/pages/title.jsx`) shows Soccer and Boxing as **Planned** cards
-> that cannot be selected. They are listed here so that presentation points at tracked
-> work rather than at nothing. Neither exists as code. Palmworks exists as code but not
-> as a gesture game yet — see above.
+> The title screen (`src/pages/title.jsx`, catalogue in `src/components/catalogue.js`) shows
+> **four** cards: Tennis is `playable`; Soccer, Boxing, and **Palmworks** all carry
+> `status: 'planned'` and render as non-clickable **Planned** cards. They are listed here so
+> that presentation points at tracked work rather than at nothing. Soccer and Boxing exist as
+> no code at all. Palmworks is different from the other two: it exists as a real, independent
+> app (`games/palmworks`) playable standalone by mouse and keyboard — it is only *wibbly's own*
+> title screen it can't be reached from, because nothing wires a gesture to it yet. See above.
 
 ### Phase 3 — depth
 - [ ] `RtmoOnnxTracker` (ONNX Runtime Web + WebGPU), benchmarked against MoveNet.

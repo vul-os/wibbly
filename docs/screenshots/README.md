@@ -16,7 +16,7 @@ tracking actually succeed.
 
 | File | Surface | Status |
 |------|---------|--------|
-| title.png | Title screen — game selection (tennis playable, soccer/boxing planned) | captured |
+| title.png | Title screen — game selection (tennis playable; soccer, boxing, Palmworks planned) | captured |
 | setup-intro.png | First-run setup, step 1 — camera explained before the browser prompt fires | captured |
 | setup-handedness.png | First-run setup, step 2 — handedness, written to Calibration | captured |
 | setup-framing.png | First-run setup, step 3 — live checkFraming() verdict over the camera preview | captured |
@@ -34,7 +34,7 @@ These come from a DIFFERENT script — `npm run verify:demo`
 (`scripts/verify-demo.mjs`) — not from this one, so `npm run screenshots` neither
 produces nor refreshes them. They are captured at 1000×640, an iframe-shaped
 viewport rather than a desktop one, against `dist-demo/` served under the real
-`/products/magnetite/wibbly/play/` sub-path with the production CSP applied, and with
+`/products/wibbly/play/` sub-path with the production CSP applied, and with
 ANGLE/SwiftShader enabled so TFJS gets a real (software) WebGL backend.
 
 | File | Surface |

@@ -11,6 +11,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **A full PNG icon set, rendered from `brand/logo.svg`.** `brand/icons/` now has 16/32/48/64/
+  96/128/180/192/256/512/1024px renders, 192px and 512px maskable variants (mark inset to the
+  80% safe zone), an opaque apple-touch-icon, and a multi-resolution `favicon.ico` — all
+  rendered from the one approved drawing, not redrawn by hand, then copied outward into `site/`
+  and `public/` and wired into the web manifests. wibbly previously shipped no PNG icons at
+  all; its manifest declared `"icons": []` — an installable PWA with no installable icon.
 - **`@vulos/wibbly-authority` — a real magnetite authority, running client-side.** Loads
   magnetite's reference `AuthoritativeGame` (`game-templates/authoritative`), compiled to
   `wasm32-unknown-unknown` (`public/magnetite/arena-authority.wasm`, ~275 KB), and drives it
@@ -22,7 +28,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   gesture input or add anti-cheat — camera gestures stay `InputClass::Attested`, never
   replay-verifiable, regardless of where the authority runs — and it is refused in demo mode,
   since the demo's `default-src 'self'` CSP has no `wasm-unsafe-eval` and blocks wasm
-  compilation (`verify:demo` stays 26/26). 5 unit tests.
+  compilation (`verify:demo` stays 26/26). 10 unit tests.
 
 ### Changed
 
@@ -70,8 +76,56 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   [Palmworks](games/palmworks) — folded in with its full history, not yet wired to any gesture.
   A later entry below covers `HandLandmarkTracker`/`PinchRecognizer`/`PointRecognizer` landing
   after this reframe was drafted — the docs were updated again to match rather than left stale.
+- **`site/index.html` rewritten player-first: Play and Privacy lead, build docs last.** The old
+  landing led with seams/API contracts, model-selection rationale and a phase roadmap — content
+  a player never asked for. None of it was deleted: every section that used to live on the
+  landing already exists, in equal or greater detail, in `site/docs/`. The new landing teases
+  each topic in a sentence and links out.
+- **`site/docs/` regrouped and split for players first, developers last.** The old two-page
+  `OVERVIEW.md` / `PLAY.md` pair is gone. In its place: **Play** (`how-to-play`,
+  `whats-in-it-today`, `troubleshooting`), **Your camera** (`privacy`), **How it works**
+  (`architecture`, `models`, `multiplayer`), **Build it yourself** (`getting-started`,
+  `configuration`, `runtime-targets`, `roadmap`) — group order now matches what a player needs
+  before what a contributor needs.
+- **`README.md` restructured to lead with the player, not the seams.** The old `## Overview`
+  opened with `InputClass::Attested` and `Topology::SingleRoom` before a reader had been told
+  what the thing does. It is now `## What is wibbly?` (a plain paragraph: swing your arm, play
+  tennis, nothing leaves your device) followed by a new `## Part of VulOS` section (the required
+  suite banner + standalone promise) and a new `## Features` section. The architecture detail
+  that used to open the README moved to `## How it works` (renamed from `## Architecture — the
+  seams`), where a reader who wants it can still find all of it. `## Quick start` is now
+  `## Quick start (standalone)`; new `## Configuration`, `## Development` and `## Contributing`
+  sections were added, none of which previously existed. The status table, the honest-limits
+  blockquote at the top, and every fact in both survive unchanged.
 
 ### Fixed
+
+- **`README.md`'s test count was stale: it said 363/5, the suite runs 368/10.** Verified by
+  actually running `npm test`: 221 `@vulos/wibbly-input` + 73 `@vulos/wibbly-p2p` + **10**
+  `@vulos/wibbly-authority` (not 5) + 64 app tests = **368**, not 363.
+- **`README.md`'s demo-mode status row said `vulos.org/projects/wibbly/play/`; every other
+  mention in the same file, `package.json`'s `build:demo` script, and `scripts/verify-demo.mjs`'s
+  `PREFIX` all say `/products/wibbly/play/`.** One line disagreed with the other nine. Fixed to
+  `/products/wibbly/play/`, and `docs/screenshots/README.md`'s note on the demo screenshots
+  (which said `/products/magnetite/wibbly/play/`, matching neither) was fixed the same way.
+- **README's "zero external network requests" file list from `verify:demo` was missing three
+  files.** Running the check fresh shows the vendored fonts (`instrument-sans-*.woff2`,
+  `jetbrains-mono-*.woff2`, `archivo-*.woff2`) as same-origin requests the demo now makes; the
+  README's list, written before fonts were vendored, only had the JS/CSS/model/GLB entries.
+  Still zero external requests — the check output is unchanged — only the README's transcription
+  of it was stale.
+- **`WIBBLY.md` and `games/README.md` disagreed on the hand-tracker asset size** (`~25 MB` in
+  both, `~40 MiB` in `README.md`). Measured directly: the `.task` model is 7.46 MiB and
+  `scripts/vendor-hand-assets.mjs` copies all six `@mediapipe/tasks-vision` wasm variants, ~32.2
+  MiB — 39.65 MiB total, matching `README.md`'s figure. `WIBBLY.md` corrected to `~40 MiB`;
+  `games/README.md` is out of this pass's scope (owned by the games/ agent) and still says
+  `~25 MB` — flagged, not changed here.
+- **`WIBBLY.md`'s title-screen note only accounted for two of the four cards.** It said the title
+  screen "shows Soccer and Boxing as Planned cards" — true, but `src/components/catalogue.js` has
+  had a fourth entry, Palmworks (`status: 'planned'`), since the catalogue was written. Palmworks
+  is a real, independently-buildable app, unlike Soccer/Boxing which are no code at all — the note
+  now says so, and `README.md`'s status table gained a dedicated Palmworks row making the same
+  distinction.
 
 - **`npm run verify:demo` was red on `main`, and had been since the demo slug moved.**
   `build:demo` bases the bundle at `/products/wibbly/play/`, but `scripts/verify-demo.mjs`
