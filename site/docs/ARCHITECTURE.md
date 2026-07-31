@@ -191,6 +191,65 @@ be kinder than a real room.
 Per-player setup: handedness — which kills the right-handed hardcode — reach envelope, camera framing
 check, and a lighting warning. Persisted locally, keyed to `PlayerId`.
 
+## Every capability, one of three states
+
+Every claim in these docs is one of three states, never a blend — this is the full,
+capability-by-capability table for developers; the player-language version of the same honesty is
+[What's in it today](/projects/wibbly/docs/whats-in-it-today).
+
+<figure class="wbf">
+<div class="sc">
+<svg viewBox="0 0 900 190" width="900" role="img" aria-label="A key to the three-state honesty convention used throughout these docs: a filled dot means shipped and working, a half-filled dot means implemented but only unit-tested on synthetic fixtures and never validated with a camera, and a hollow ring means planned with no code.">
+  <g font-family="ui-monospace, monospace">
+    <text x="16" y="22" font-size="10.5" fill="var(--tx2)" letter-spacing="1.3">HOW TO READ THE STATE COLUMN — ONE OF THREE GLYPHS, ALWAYS</text>
+    <circle cx="30" cy="52" r="11" fill="var(--ok)"/>
+    <text x="56" y="49" font-size="13" font-weight="700" fill="var(--tx)">Shipped / working</text>
+    <text x="56" y="65" font-size="10.5" fill="var(--tx2)">Runs today, exercised by hand or by CI against real inputs.</text>
+    <path d="M30 93 A11 11 0 0 1 30 115 Z" fill="var(--am)"/>
+    <circle cx="30" cy="104" r="11" fill="none" stroke="var(--am)" stroke-width="1.6"/>
+    <text x="56" y="101" font-size="13" font-weight="700" fill="var(--tx)">Implemented, unvalidated</text>
+    <text x="56" y="117" font-size="10.5" fill="var(--tx2)">Unit-tested on synthetic fixtures only — never run against a real camera.</text>
+    <circle cx="30" cy="156" r="11" fill="none" stroke="var(--ln)" stroke-width="1.6"/>
+    <text x="56" y="153" font-size="13" font-weight="700" fill="var(--tx)">Planned / spec</text>
+    <text x="56" y="169" font-size="10.5" fill="var(--tx2)">Written down, tracked in the backlog. No code exists yet.</text>
+  </g>
+</svg>
+</div>
+<figcaption>Three states, not two. <b>The middle one is the trap</b> — a green test suite over synthetic fixtures proves the logic does what was intended, and says nothing about whether it survives a real room.</figcaption>
+</figure>
+
+| Capability | State |
+|---|---|
+| `@vulos/wibbly-input` — four seams + Calibration, importable | **Implemented**, 221 tests green |
+| Browser pose tracking (TF.js MoveNet, WebGL) | **Working** |
+| Multi-person tracking (`MultiPose.Lightning`, up to 6) | **Implemented**, synthetic fixtures only |
+| `SpatialBinder` — durable `PlayerId`s, claim zones, occlusion | **Implemented**, synthetic fixtures only |
+| `swing` gesture as a pure `detectSwing` function | **Implemented**, unit-tested |
+| Left- and right-handed play | **Implemented**, unit-tested |
+| Adaptive frame pacing | **Implemented**, unit-tested |
+| Tennis reference game, running on the seams | **Working** |
+| Firebase Analytics | **Removed** — no SDK, no dependency |
+| Multi-person play validated with real people | **Not validated** — fixtures are not a living room |
+| 2-player tennis | **Next** — the binder is multi-player, the game is not |
+| Soccer, Boxing reference games | **Planned** — tracked backlog, no code |
+| Palmworks (`games/palmworks`) | **Playable standalone**, mouse/keyboard — but listed "Planned" on wibbly's own title screen and driven by no gesture |
+| Hand landmarks, pinch, point | **Implemented**, unit-tested — not wired into the pipeline or any game, thresholds unvalidated against a real camera |
+| magnetite integration (`@vulos/wibbly-authority`) | **Built, running** — a real magnetite `AuthoritativeGame` compiled to wasm, run client-side; refused in demo mode |
+| Networked play (peer-to-peer, browser-hosted) | **Transport implemented**, unit-tested, wired into tennis (off by default) — no lobby UI, so nothing turns it into a click-to-play flow |
+| Tauri desktop shell | **Phase 3** |
+| Release build | **Source only** |
+| Hosting | **Self-hosted, no service** — `dist/` is static files; any static server works. No Firebase, no CDN account, nothing hosted in the deploy path |
+
+The distinction this table draws twice is worth stating directly: **implemented and unit-tested is
+not the same as working.** The multi-person path has 18 binder tests and 29 tracker tests behind
+it, and has never been pointed at four people in a room. Unit tests prove that the logic is what
+we meant; they say nothing about whether MoveNet holds identity when somebody walks behind the
+sofa.
+
+wibbly is also **not monetized, in any form** — no wagers, no tournament pools, no revenue share,
+no host-earns split, no ads. It's free and dual-licensed **MIT OR Apache-2.0**. That was previously
+a backlog item; it has since been deleted outright rather than deprioritized.
+
 ## Relationship to magnetite
 
 wibbly is a **client** of [magnetite](https://github.com/vul-os/magnetite), not a fork of it, and
