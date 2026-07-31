@@ -79,7 +79,9 @@ fires on a noisy sensor reading, and your game has to survive a bad one.
 > Two further gaps, stated plainly because they will bite you: `WibblyInput`
 > (`packages/wibbly-input/src/pipeline.ts`) does not yet compose the hand
 > tracker — it still wires body pose and `SwingRecognizer` only — and the
-> MediaPipe hand model and Wasm runtime (~25 MB) are **not vendored in this
+> MediaPipe hand model and Wasm runtime (~40 MiB: a 7.46 MiB `.task` model
+> plus ~32.2 MiB across the SIMD/non-SIMD/module `@mediapipe/tasks-vision`
+> wasm variants `vendor-hand-assets.mjs` copies) are **not vendored in this
 > repo**. Both asset paths are injectable with no CDN default, so nothing
 > reaches the network behind your back; it also means hands do not run until
 > someone supplies them.
