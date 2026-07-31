@@ -4,7 +4,7 @@ wibbly's architecture is four seams. Game code never names a model, a runtime or
 only these interfaces, and every seam ships a working default.
 
 > **Status.** The seams below are implemented. They live in `packages/wibbly-input` as
-> `@vulos/wibbly-input`, MIT licensed like the rest of the repo, with 86 unit tests that run without
+> `@vulos/wibbly-input`, MIT licensed like the rest of the repo, with 221 unit tests that run without
 > a camera. The tennis game consumes them. The old monolithic `src/poseDetection.js` — which did all
 > four jobs at once and injected its own DOM — has been deleted.
 >
@@ -242,7 +242,7 @@ each line of it:
 | `isRightHanded = true`, left branch an empty `TODO` | Handedness as a sign flip, both cases tested |
 | Swing logic entangled with the camera and the DOM | Pure `detectSwing` over landmark history |
 | `document.body.appendChild()` of a preview `<div>` and a "Hide Camera" `<button>` | An overlay component the host places |
-| Not importable, not testable | `@vulos/wibbly-input`, 86 passing tests |
+| Not importable, not testable | `@vulos/wibbly-input`, 221 passing tests |
 
 Every seam existed to dismantle one line of the left column.
 

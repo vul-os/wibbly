@@ -2,26 +2,29 @@
 <html lang="en" data-theme="dark" data-theme-pref="system">
 <head>
 <meta charset="utf-8" />
-<title>wibbly — docs</title>
-<meta name="description" content="wibbly documentation — the camera-gesture game on magnetite. Architecture, the four seams, model selection, multiplayer, configuration and roadmap. Frames never leave the device.">
+<title>wibbly docs — how to play, privacy, and how it works</title>
+<meta name="description" content="How to play wibbly, how your camera stays private, and — further down — how the camera-gesture pipeline actually works. Player docs first, developer docs last.">
   <link rel="canonical" href="https://vulos.org/projects/wibbly/docs.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="wibbly">
-  <meta property="og:title" content="wibbly — docs">
-  <meta property="og:description" content="wibbly documentation — the camera-gesture game on magnetite. Architecture, the four seams, model selection, multiplayer, configuration and roadmap. Frames never leave the device.">
+  <meta property="og:title" content="wibbly docs — play, privacy, how it works">
+  <meta property="og:description" content="Start with how to play and why your camera never leaves your device. Architecture and build docs are here too, just further down.">
   <meta property="og:url" content="https://vulos.org/projects/wibbly/docs.html">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="wibbly — docs">
-  <meta name="twitter:description" content="wibbly documentation — the camera-gesture game on magnetite. Architecture, the four seams, model selection, multiplayer, configuration and roadmap. Frames never leave the device.">
+  <meta name="twitter:title" content="wibbly docs — play, privacy, how it works">
+  <meta name="twitter:description" content="Start with how to play and why your camera never leaves your device. Architecture and build docs are here too, just further down.">
   <meta property="og:image" content="https://vulos.org/projects/wibbly/assets/og-card.png">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="wibbly — wibbly documentation — the camera-gesture game on magnetite. Architecture, the four seams, model selection, multiplayer, configuration and roadmap. Frames never">
+  <meta property="og:image:alt" content="wibbly — your camera is the controller. A player swinging in front of a webcam, tracked live on a tennis court.">
   <meta name="twitter:image" content="https://vulos.org/projects/wibbly/assets/og-card.png">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
-<link rel="icon" href="./product-logos/wibbly.svg" />
+<link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+<link rel="alternate icon" href="./assets/favicon.ico" />
+<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+<link rel="manifest" href="./assets/site.webmanifest" />
 
 <!-- Resolve theme before paint to avoid a flash. Preference (light|dark|system)
      lives in localStorage 'vulos-theme'; <html data-theme> holds the RESOLVED
@@ -303,6 +306,27 @@
     width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none;
     box-shadow: 0 0 0 3px var(--accent-dim);
   }
+  /* ── Sidebar search ─────────────────────────────────────────────────────── */
+  .docs-search {
+    position: relative; margin: 0 2px 10px; display: flex; align-items: center;
+  }
+  .docs-search svg {
+    position: absolute; left: 10px; width: 14px; height: 14px; color: var(--ink-3); pointer-events: none;
+  }
+  .docs-search input {
+    width: 100%; font-family: var(--sans); font-size: 13px; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md);
+    padding: 8px 10px 8px 30px; transition: border-color .15s, background .15s;
+  }
+  .docs-search input::placeholder { color: var(--ink-3); }
+  .docs-search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .docs-search input:hover { border-color: var(--line-2); }
+  .docs-search-empty {
+    font-size: 12.5px; color: var(--ink-3); padding: 4px 11px 8px; margin: 0;
+  }
+  .docs-nav a[hidden] { display: none; }
+  .docs-nav .grp[data-empty='true'] { display: none; }
+
   .docs-nav .grp {
     font-family: var(--mono); font-size: 10.5px; font-weight: 700;
     letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3);
@@ -338,6 +362,36 @@
   .crumb a:hover { color: var(--accent); }
   .crumb .sep { color: var(--ink-3); }
   .crumb .cur { color: var(--accent); }
+
+  /* ── On-page table of contents ─────────────────────────────────────────── */
+  .docs-toc {
+    border: 1px solid var(--line); border-radius: var(--r-lg);
+    background: var(--surface); margin: 0 0 26px; max-width: 76ch;
+  }
+  .docs-toc[hidden] { display: none; }
+  .docs-toc summary {
+    cursor: pointer; list-style: none; user-select: none;
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 15px; font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .docs-toc summary::-webkit-details-marker { display: none; }
+  .docs-toc summary::before {
+    content: ''; width: 0; height: 0; flex: none;
+    border-left: 5px solid var(--ink-3); border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+    transition: transform .15s;
+  }
+  .docs-toc[open] summary::before { transform: rotate(90deg); }
+  .docs-toc nav {
+    padding: 2px 10px 12px; display: grid; gap: 1px;
+    border-top: 1px solid var(--line);
+  }
+  .docs-toc nav a {
+    display: block; padding: 7px 9px; border-radius: var(--r-sm);
+    font-size: 13px; color: var(--ink-2); transition: color .15s, background .15s;
+  }
+  .docs-toc nav a:hover { color: var(--ink); background: var(--surface-2); }
+  .docs-toc nav a.lvl-3 { padding-left: 22px; font-size: 12.5px; color: var(--ink-3); }
 
   /* ── Markdown — court telemetry, typeset ───────────────────────────────── */
   .markdown { font-size: 15.5px; max-width: 76ch; }
@@ -540,11 +594,20 @@
 
   <aside class="docs-nav" id="docsNav" aria-label="Documentation">
     <div class="kicker"><span class="dot" aria-hidden="true"></span>wibbly docs</div>
+    <div class="docs-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="search" id="docsSearch" placeholder="Search docs…" aria-label="Search documentation pages" autocomplete="off" />
+    </div>
     <nav id="navList"></nav>
+    <p class="docs-search-empty" id="docsSearchEmpty" hidden>No pages match.</p>
   </aside>
 
   <main class="docs-main">
     <div class="crumb" id="crumb"></div>
+    <details class="docs-toc" id="docsToc" open>
+      <summary>On this page</summary>
+      <nav id="tocList" aria-label="On this page"></nav>
+    </details>
     <article class="markdown" id="content"><p class="loading">Loading…</p></article>
     <nav class="doc-footnav" id="footnav" aria-label="Previous and next"></nav>
   </main>
@@ -601,21 +664,23 @@
    tracks the route. No network request leaves the origin.
    ═══════════════════════════════════════════════════════════════════════════ */
 const GROUPS = [
-  { title: 'Start here', items: [
-    { slug: 'overview',         title: 'Overview',               path: './docs/OVERVIEW.md' },
-    { slug: 'getting-started',  title: 'Getting started',        path: './docs/GETTING-STARTED.md' },
+  { title: 'Play', items: [
+    { slug: 'play',              title: 'Play',                   path: './docs/PLAY.md' },
+  ]},
+  { title: 'Privacy', items: [
+    { slug: 'privacy',           title: 'Privacy',                path: './docs/PRIVACY.md' },
   ]},
   { title: 'How it works', items: [
-    { slug: 'architecture',     title: 'Architecture',           path: './docs/ARCHITECTURE.md' },
-    { slug: 'models',           title: 'Model selection',        path: './docs/MODELS.md' },
-    { slug: 'multiplayer',      title: 'Multiplayer & anti-cheat', path: './docs/MULTIPLAYER.md' },
+    { slug: 'overview',          title: 'Status & overview',      path: './docs/OVERVIEW.md' },
+    { slug: 'architecture',      title: 'Architecture',           path: './docs/ARCHITECTURE.md' },
+    { slug: 'models',            title: 'Model selection',        path: './docs/MODELS.md' },
+    { slug: 'multiplayer',       title: 'Multiplayer & anti-cheat', path: './docs/MULTIPLAYER.md' },
   ]},
-  { title: 'Run it', items: [
-    { slug: 'configuration',    title: 'Configuration',          path: './docs/CONFIGURATION.md' },
-    { slug: 'runtime-targets',  title: 'Runtime targets',        path: './docs/RUNTIME-TARGETS.md' },
-  ]},
-  { title: 'The project', items: [
-    { slug: 'roadmap',          title: 'Roadmap',                path: './docs/ROADMAP.md' },
+  { title: 'Advanced: build it yourself', items: [
+    { slug: 'getting-started',   title: 'Getting started',        path: './docs/GETTING-STARTED.md' },
+    { slug: 'configuration',     title: 'Configuration',          path: './docs/CONFIGURATION.md' },
+    { slug: 'runtime-targets',   title: 'Runtime targets',        path: './docs/RUNTIME-TARGETS.md' },
+    { slug: 'roadmap',           title: 'Roadmap',                path: './docs/ROADMAP.md' },
   ]},
 ];
 
@@ -668,6 +733,29 @@ function renderCrumb(doc){
   const s2 = document.createElement('span'); s2.className = 'sep'; s2.textContent = '/';
   const cur = document.createElement('span'); cur.className = 'cur'; cur.textContent = doc.title;
   crumb.append(home, s1, docs, s2, cur);
+}
+
+/* On-page table of contents, built from the h2s the current doc actually
+   has. Empty on a one-heading page (Play, Privacy) — hidden rather than
+   shown with nothing in it. */
+const docsToc = document.getElementById('docsToc');
+const tocList = document.getElementById('tocList');
+function buildToc(){
+  const heads = Array.from(content.querySelectorAll('h2'));
+  if (heads.length < 2){ docsToc.hidden = true; tocList.innerHTML = ''; return; }
+  docsToc.hidden = false;
+  tocList.innerHTML = '';
+  heads.forEach(h => {
+    const a = document.createElement('a');
+    a.href = '#' + (lastSlug || DOCS[0].slug) + '#' + h.id;
+    a.textContent = h.textContent;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', '#' + (lastSlug || DOCS[0].slug) + '#' + h.id);
+    });
+    tocList.appendChild(a);
+  });
 }
 
 function renderFootnav(doc){
@@ -723,6 +811,7 @@ async function load(slug, headingId){
     });
     content.querySelectorAll('a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
 
+    buildToc();
     renderFootnav(doc);
 
     if (headingId){
@@ -767,6 +856,26 @@ function closeNav(){ body.classList.remove('nav-open'); menuToggle.setAttribute(
 menuToggle.addEventListener('click', () => body.classList.contains('nav-open') ? closeNav() : openNav());
 scrim.addEventListener('click', closeNav);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+
+/* ── Sidebar search — filters the nav list by title, client-side, no network ── */
+const docsSearch = document.getElementById('docsSearch');
+const docsSearchEmpty = document.getElementById('docsSearchEmpty');
+docsSearch.addEventListener('input', () => {
+  const q = docsSearch.value.trim().toLowerCase();
+  let anyVisible = false;
+  document.querySelectorAll('.docs-nav .grp').forEach(g => { g.dataset.empty = 'false'; g.__count = 0; });
+  let curGroup = null;
+  navList.childNodes.forEach(node => {
+    if (node.classList && node.classList.contains('grp')) { curGroup = node; return; }
+    if (node.tagName !== 'A') return;
+    const title = node.textContent.toLowerCase();
+    const match = !q || title.includes(q);
+    node.hidden = !match;
+    if (match) { anyVisible = true; if (curGroup) curGroup.__count = (curGroup.__count || 0) + 1; }
+  });
+  document.querySelectorAll('.docs-nav .grp').forEach(g => { g.dataset.empty = String(!g.__count); });
+  docsSearchEmpty.hidden = anyVisible || !q;
+});
 
 go();
 </script>

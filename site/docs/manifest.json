@@ -54,25 +54,36 @@
   "docsBase": "/projects/wibbly/docs",
   "groups": [
     {
-      "title": "Start here",
+      "title": "Play",
       "pages": [
         {
-          "slug": "overview",
-          "file": "OVERVIEW.md",
-          "title": "Overview",
-          "blurb": "What wibbly is, and an honest table of what runs versus what is only written down."
-        },
+          "slug": "play",
+          "file": "PLAY.md",
+          "title": "Play",
+          "blurb": "What you need, the controls, first run, and what to do when it can't see you."
+        }
+      ]
+    },
+    {
+      "title": "Privacy",
+      "pages": [
         {
-          "slug": "getting-started",
-          "file": "GETTING-STARTED.md",
-          "title": "Getting started",
-          "blurb": "Clone, run the dev server, allow the camera, swing — plus the three limits you will hit."
+          "slug": "privacy",
+          "file": "PRIVACY.md",
+          "title": "Privacy",
+          "blurb": "Nobody sees your camera. Where a frame actually goes, in plain language."
         }
       ]
     },
     {
       "title": "How it works",
       "pages": [
+        {
+          "slug": "overview",
+          "file": "OVERVIEW.md",
+          "title": "Status & overview",
+          "blurb": "What wibbly is, and an honest table of what runs versus what is only written down."
+        },
         {
           "slug": "architecture",
           "file": "ARCHITECTURE.md",
@@ -94,8 +105,14 @@
       ]
     },
     {
-      "title": "Run it",
+      "title": "Advanced: build it yourself",
       "pages": [
+        {
+          "slug": "getting-started",
+          "file": "GETTING-STARTED.md",
+          "title": "Getting started",
+          "blurb": "Clone it, run the dev server, run the tests."
+        },
         {
           "slug": "configuration",
           "file": "CONFIGURATION.md",
@@ -107,12 +124,7 @@
           "file": "RUNTIME-TARGETS.md",
           "title": "Runtime targets",
           "blurb": "Browser-first, why Tauri-with-webview-ML was rejected, and what the desktop shell will look like."
-        }
-      ]
-    },
-    {
-      "title": "The project",
-      "pages": [
+        },
         {
           "slug": "roadmap",
           "file": "ROADMAP.md",
@@ -124,18 +136,25 @@
   ],
   "pages": [
     {
-      "slug": "overview",
-      "file": "OVERVIEW.md",
-      "title": "Overview",
-      "group": "Start here",
-      "blurb": "What wibbly is, and an honest table of what runs versus what is only written down."
+      "slug": "play",
+      "file": "PLAY.md",
+      "title": "Play",
+      "group": "Play",
+      "blurb": "What you need, the controls, first run, and what to do when it can't see you."
     },
     {
-      "slug": "getting-started",
-      "file": "GETTING-STARTED.md",
-      "title": "Getting started",
-      "group": "Start here",
-      "blurb": "Clone, run the dev server, allow the camera, swing — plus the three limits you will hit."
+      "slug": "privacy",
+      "file": "PRIVACY.md",
+      "title": "Privacy",
+      "group": "Privacy",
+      "blurb": "Nobody sees your camera. Where a frame actually goes, in plain language."
+    },
+    {
+      "slug": "overview",
+      "file": "OVERVIEW.md",
+      "title": "Status & overview",
+      "group": "How it works",
+      "blurb": "What wibbly is, and an honest table of what runs versus what is only written down."
     },
     {
       "slug": "architecture",
@@ -159,24 +178,31 @@
       "blurb": "Local versus networked play, and the guarantee gesture input cannot give you."
     },
     {
+      "slug": "getting-started",
+      "file": "GETTING-STARTED.md",
+      "title": "Getting started",
+      "group": "Advanced: build it yourself",
+      "blurb": "Clone it, run the dev server, run the tests."
+    },
+    {
       "slug": "configuration",
       "file": "CONFIGURATION.md",
       "title": "Configuration",
-      "group": "Run it",
+      "group": "Advanced: build it yourself",
       "blurb": "Every tunable constant, where it lives in source, and what it costs you."
     },
     {
       "slug": "runtime-targets",
       "file": "RUNTIME-TARGETS.md",
       "title": "Runtime targets",
-      "group": "Run it",
+      "group": "Advanced: build it yourself",
       "blurb": "Browser-first, why Tauri-with-webview-ML was rejected, and what the desktop shell will look like."
     },
     {
       "slug": "roadmap",
       "file": "ROADMAP.md",
       "title": "Roadmap",
-      "group": "The project",
+      "group": "Advanced: build it yourself",
       "blurb": "Three phases, the risk order, and the questions still open."
     }
   ]

@@ -1,0 +1,20 @@
+{
+  "name": "wibbly — your camera is the controller",
+  "short_name": "wibbly",
+  "description": "Camera gesture games in a browser tab. Tracking runs on your device; camera frames are never uploaded.",
+  "start_url": "../index.html",
+  "display": "browser",
+  "background_color": "#09070E",
+  "theme_color": "#09070E",
+  "lang": "en",
+  "categories": ["games", "sports"],
+  "icons": [
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "./icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
