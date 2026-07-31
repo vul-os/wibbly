@@ -42,19 +42,19 @@ those pictures, start to finish:
   </defs>
   <g font-family="ui-monospace, monospace">
     <rect x="4" y="26" width="558" height="248" rx="10" fill="var(--sf)" stroke="var(--ln)"/>
-    <text x="22" y="50" font-size="10.5" fill="var(--tx2)" letter-spacing="1.6">YOUR DEVICE · YOUR BROWSER TAB</text>
+    <text x="22" y="50" font-size="12.5" fill="var(--tx2)" letter-spacing="1.6">YOUR DEVICE · YOUR BROWSER TAB</text>
 
     <rect x="26" y="72" width="112" height="62" rx="7" fill="var(--pg)" stroke="var(--ln)"/>
     <text x="42" y="99" font-size="12" fill="var(--tx)" font-weight="700">Camera</text>
-    <text x="42" y="119" font-size="10.5" fill="var(--tx2)">a picture of you</text>
+    <text x="42" y="119" font-size="12.5" fill="var(--tx2)">a picture of you</text>
 
     <rect x="176" y="72" width="120" height="62" rx="7" fill="var(--pg)" stroke="var(--ln)"/>
     <text x="192" y="99" font-size="12" fill="var(--tx)" font-weight="700">Tracker</text>
-    <text x="192" y="119" font-size="10.5" fill="var(--tx2)">finds your skeleton</text>
+    <text x="192" y="119" font-size="12.5" fill="var(--tx2)">finds your skeleton</text>
 
     <rect x="334" y="72" width="128" height="62" rx="7" fill="var(--pg)" stroke="var(--ln)"/>
     <text x="350" y="99" font-size="12" fill="var(--tx)" font-weight="700">Recognizer</text>
-    <text x="350" y="119" font-size="10.5" fill="var(--tx2)">was that a swing?</text>
+    <text x="350" y="119" font-size="12.5" fill="var(--tx2)">was that a swing?</text>
 
     <g stroke="var(--ln)" stroke-width="1.75" marker-end="url(#pv-ah)" fill="none">
       <path d="M142 103 H170"/>
@@ -63,30 +63,30 @@ those pictures, start to finish:
 
     <path d="M232 138 V176" stroke="var(--a)" stroke-width="1.75" fill="none" marker-end="url(#pv-ah)" stroke-dasharray="5 4"/>
     <rect x="140" y="180" width="186" height="52" rx="7" fill="var(--sf)" stroke="var(--a)"/>
-    <text x="156" y="203" font-size="11.5" fill="var(--a)" font-weight="700">PICTURE THROWN AWAY</text>
-    <text x="156" y="221" font-size="10.5" fill="var(--tx2)">never saved, ever</text>
+    <text x="156" y="203" font-size="13" fill="var(--a)" font-weight="700">PICTURE THROWN AWAY</text>
+    <text x="156" y="221" font-size="12.5" fill="var(--tx2)">never saved, ever</text>
 
     <rect x="352" y="164" width="196" height="90" rx="7" fill="var(--pg)" stroke="var(--a)"/>
-    <text x="366" y="188" font-size="11.5" fill="var(--tx)" font-weight="700">"swing" message</text>
-    <text x="366" y="208" font-size="10.5" fill="var(--tx2)">who, what, how sure,</text>
-    <text x="366" y="224" font-size="10.5" fill="var(--tx2)">when — nothing else</text>
+    <text x="366" y="188" font-size="13" fill="var(--tx)" font-weight="700">"swing" message</text>
+    <text x="366" y="208" font-size="12.5" fill="var(--tx2)">who, what, how sure,</text>
+    <text x="366" y="224" font-size="12.5" fill="var(--tx2)">when — nothing else</text>
     <path d="M398 138 V158" stroke="var(--ln)" stroke-width="1.75" fill="none" marker-end="url(#pv-ah)"/>
 
     <path d="M580 16 V288" stroke="var(--a)" stroke-width="1.75" stroke-dasharray="7 6"/>
-    <text x="590" y="38" font-size="10.5" fill="var(--a)" font-weight="700" letter-spacing="1.6">THIS LINE IS YOUR DEVICE'S EDGE</text>
+    <text x="590" y="38" font-size="12.5" fill="var(--a)" font-weight="700" letter-spacing="1.6">THIS LINE IS YOUR DEVICE'S EDGE</text>
 
     <rect x="590" y="56" width="302" height="92" rx="8" fill="none" stroke="var(--ln)" stroke-dasharray="5 5"/>
     <text x="608" y="82" font-size="12" fill="var(--tx2)" font-weight="700">A friend, someday (not built)</text>
-    <text x="608" y="103" font-size="10.5" fill="var(--tx2)">would only ever get: the message</text>
-    <text x="608" y="120" font-size="10.5" fill="var(--tx2)">≈ 64 bytes, smaller than this line</text>
-    <text x="608" y="139" font-size="10.5" fill="var(--am)" font-weight="700">NO NETWORKED PLAY YET</text>
+    <text x="608" y="103" font-size="12.5" fill="var(--tx2)">would only ever get: the message</text>
+    <text x="608" y="120" font-size="12.5" fill="var(--tx2)">≈ 64 bytes, smaller than this line</text>
+    <text x="608" y="139" font-size="12.5" fill="var(--am)" font-weight="700">NO NETWORKED PLAY YET</text>
 
     <path d="M552 208 H576 Q596 208 596 190 V160" stroke="var(--a)" stroke-width="1.75" fill="none" marker-end="url(#pv-ah)"/>
 
-    <text x="610" y="192" font-size="10.5" fill="var(--tx2)">Never crosses this line, ever:</text>
-    <text x="610" y="212" font-size="10.5" fill="var(--a)" font-weight="700">— your camera picture</text>
-    <text x="610" y="230" font-size="10.5" fill="var(--a)" font-weight="700">— your skeleton</text>
-    <text x="610" y="248" font-size="10.5" fill="var(--a)" font-weight="700">— video of any kind</text>
+    <text x="610" y="192" font-size="12.5" fill="var(--tx2)">Never crosses this line, ever:</text>
+    <text x="610" y="212" font-size="12.5" fill="var(--a)" font-weight="700">— your camera picture</text>
+    <text x="610" y="230" font-size="12.5" fill="var(--a)" font-weight="700">— your skeleton</text>
+    <text x="610" y="248" font-size="12.5" fill="var(--a)" font-weight="700">— video of any kind</text>
   </g>
 </svg>
 </div>
@@ -123,6 +123,7 @@ explanation of that boundary — and why it's a real limitation, not a corner we
 
 ## Next
 
-- [Play](/projects/wibbly/docs/play) — how to actually play the game.
+- [How to play](/projects/wibbly/docs/how-to-play) — how to actually play the game.
+- [What's in it today](/projects/wibbly/docs/whats-in-it-today) — the honest inventory of what's built.
 - [How it works](/projects/wibbly/docs/architecture) — the technical version of this page, with
   interfaces and data types.
