@@ -1,6 +1,6 @@
 # Getting started (developers)
 
-> Looking to just play the game? You don't need any of this — see [Play](/projects/wibbly/docs/play)
+> Looking to just play the game? You don't need any of this — see [How to play](/projects/wibbly/docs/how-to-play)
 > instead. This page is for running wibbly from source: cloning it, building it, and testing it.
 
 wibbly runs as a Vite dev server. There is no release binary, no Docker image and no installer —
@@ -35,7 +35,7 @@ npm run build     # production bundle into dist/
 npm run preview   # serve the built bundle locally
 ```
 
-See [Play](/projects/wibbly/docs/play) for how to actually play once it's running, and
+See [How to play](/projects/wibbly/docs/how-to-play) for how to actually play once it's running, and
 [Configuration](/projects/wibbly/docs/configuration) for every tunable constant on every seam.
 
 ## Run the tests
