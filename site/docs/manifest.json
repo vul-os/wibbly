@@ -57,21 +57,33 @@
       "title": "Play",
       "pages": [
         {
-          "slug": "play",
-          "file": "PLAY.md",
-          "title": "Play",
-          "blurb": "What you need, the controls, first run, and what to do when it can't see you."
+          "slug": "how-to-play",
+          "file": "HOW-TO-PLAY.md",
+          "title": "How to play",
+          "blurb": "What you need, the controls, and first run — start here."
+        },
+        {
+          "slug": "whats-in-it-today",
+          "file": "WHATS-IN-IT-TODAY.md",
+          "title": "What's in it today",
+          "blurb": "The honest inventory: one game, one player, one gesture, and what's only a title-screen card."
+        },
+        {
+          "slug": "troubleshooting",
+          "file": "TROUBLESHOOTING.md",
+          "title": "Troubleshooting",
+          "blurb": "It can't see me, it's laggy, it swings by itself — grounded, real fixes."
         }
       ]
     },
     {
-      "title": "Privacy",
+      "title": "Your camera",
       "pages": [
         {
           "slug": "privacy",
           "file": "PRIVACY.md",
           "title": "Privacy",
-          "blurb": "Nobody sees your camera. Where a frame actually goes, in plain language."
+          "blurb": "Nobody sees your camera. Where a frame actually goes, in plain language — and why that's structural."
         }
       ]
     },
@@ -79,16 +91,10 @@
       "title": "How it works",
       "pages": [
         {
-          "slug": "overview",
-          "file": "OVERVIEW.md",
-          "title": "Status & overview",
-          "blurb": "What wibbly is, and an honest table of what runs versus what is only written down."
-        },
-        {
           "slug": "architecture",
           "file": "ARCHITECTURE.md",
           "title": "Architecture",
-          "blurb": "The four seams — FrameSource, PoseTracker, GestureRecognizer, PlayerBinder — and today's monolith."
+          "blurb": "The four seams — FrameSource, PoseTracker, GestureRecognizer, PlayerBinder — and the full capability status table."
         },
         {
           "slug": "models",
@@ -105,12 +111,12 @@
       ]
     },
     {
-      "title": "Advanced: build it yourself",
+      "title": "Build it yourself",
       "pages": [
         {
           "slug": "getting-started",
           "file": "GETTING-STARTED.md",
-          "title": "Getting started",
+          "title": "Getting started (developers)",
           "blurb": "Clone it, run the dev server, run the tests."
         },
         {
@@ -136,32 +142,39 @@
   ],
   "pages": [
     {
-      "slug": "play",
-      "file": "PLAY.md",
-      "title": "Play",
+      "slug": "how-to-play",
+      "file": "HOW-TO-PLAY.md",
+      "title": "How to play",
       "group": "Play",
-      "blurb": "What you need, the controls, first run, and what to do when it can't see you."
+      "blurb": "What you need, the controls, and first run — start here."
+    },
+    {
+      "slug": "whats-in-it-today",
+      "file": "WHATS-IN-IT-TODAY.md",
+      "title": "What's in it today",
+      "group": "Play",
+      "blurb": "The honest inventory: one game, one player, one gesture, and what's only a title-screen card."
+    },
+    {
+      "slug": "troubleshooting",
+      "file": "TROUBLESHOOTING.md",
+      "title": "Troubleshooting",
+      "group": "Play",
+      "blurb": "It can't see me, it's laggy, it swings by itself — grounded, real fixes."
     },
     {
       "slug": "privacy",
       "file": "PRIVACY.md",
       "title": "Privacy",
-      "group": "Privacy",
-      "blurb": "Nobody sees your camera. Where a frame actually goes, in plain language."
-    },
-    {
-      "slug": "overview",
-      "file": "OVERVIEW.md",
-      "title": "Status & overview",
-      "group": "How it works",
-      "blurb": "What wibbly is, and an honest table of what runs versus what is only written down."
+      "group": "Your camera",
+      "blurb": "Nobody sees your camera. Where a frame actually goes, in plain language — and why that's structural."
     },
     {
       "slug": "architecture",
       "file": "ARCHITECTURE.md",
       "title": "Architecture",
       "group": "How it works",
-      "blurb": "The four seams — FrameSource, PoseTracker, GestureRecognizer, PlayerBinder — and today's monolith."
+      "blurb": "The four seams — FrameSource, PoseTracker, GestureRecognizer, PlayerBinder — and the full capability status table."
     },
     {
       "slug": "models",
@@ -180,29 +193,29 @@
     {
       "slug": "getting-started",
       "file": "GETTING-STARTED.md",
-      "title": "Getting started",
-      "group": "Advanced: build it yourself",
+      "title": "Getting started (developers)",
+      "group": "Build it yourself",
       "blurb": "Clone it, run the dev server, run the tests."
     },
     {
       "slug": "configuration",
       "file": "CONFIGURATION.md",
       "title": "Configuration",
-      "group": "Advanced: build it yourself",
+      "group": "Build it yourself",
       "blurb": "Every tunable constant, where it lives in source, and what it costs you."
     },
     {
       "slug": "runtime-targets",
       "file": "RUNTIME-TARGETS.md",
       "title": "Runtime targets",
-      "group": "Advanced: build it yourself",
+      "group": "Build it yourself",
       "blurb": "Browser-first, why Tauri-with-webview-ML was rejected, and what the desktop shell will look like."
     },
     {
       "slug": "roadmap",
       "file": "ROADMAP.md",
       "title": "Roadmap",
-      "group": "Advanced: build it yourself",
+      "group": "Build it yourself",
       "blurb": "Three phases, the risk order, and the questions still open."
     }
   ]
