@@ -342,9 +342,20 @@ CSP blocks wasm) and has no bearing on whether a second player can join.
 
 It builds the demo, serves `dist-demo/` **under `/products/wibbly/play/`** (not at the
 root, and not through `vite preview`, which knows the base and would hide a base
-mistake), applies the **real production CSP** copied verbatim from
-`vulos-management/pkg/cproutes/spa.go`, and drives it with Chromium using a synthetic
-camera. 26 checks, all passing:
+mistake), applies a CSP pinned in `scripts/verify-demo.mjs` as `PRODUCTION_CSP`, and
+drives it with Chromium using a synthetic camera. 26 checks, all passing:
+
+That string was originally copied verbatim from `SelfContainedPageCSP()` in
+`vulos-management/pkg/cproutes/spa.go`. **That path no longer resolves.**
+`vulos-management` was folded into the `vulos` repo at `management/pkg/cproutes/spa.go`
+and its GitHub repo retired — but the fold was itself later reverted: commit
+`ebb9800d` ("Delete folded management/ reference tree") in `vulos` removed the entire
+`management/` directory, `SelfContainedPageCSP()` included, and nothing in the current
+`vulos` tree serves `/products/<slug>/` pages or defines that policy under any name (checked
+by grepping the whole repo for the function name and for the policy's distinctive
+directives — no hits outside git history). The string pinned here is now the last
+surviving copy of that policy, not something a reader can go verify against a live
+route — treat it as historical provenance, not a citation of current code.
 
 - **Zero external network requests.** Every request in the run, in full:
 

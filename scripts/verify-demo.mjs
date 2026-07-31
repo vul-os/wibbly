@@ -100,9 +100,18 @@ const SHOTS = UPDATE_SCREENSHOTS ? DOCS_SHOTS : SCRATCH_SHOTS;
 const EXPECTED_CHECKS = 26;
 
 /**
- * The REAL production policy, copied verbatim from
- * vulos-management/pkg/cproutes/spa.go → SelfContainedPageCSP(), which is what
- * serves /products/<slug>/ pages. Not an approximation of it.
+ * Originally copied verbatim from vulos-management/pkg/cproutes/spa.go →
+ * SelfContainedPageCSP(), which served /products/<slug>/ pages. That source no
+ * longer exists to verify against: `vulos-management` was folded into the
+ * `vulos` repo (briefly, at management/pkg/cproutes/spa.go), then the whole
+ * `management/` reference tree — SelfContainedPageCSP() included — was
+ * deleted there in commit ebb9800d ("Delete folded management/ reference
+ * tree"). As of 2026-07-31, nothing in the `vulos` repo defines this policy or
+ * serves /products/<slug>/ under any name (checked by grepping the full repo
+ * for the function name and for its distinctive directives — no hits outside
+ * git history). This string is now the last surviving copy of that policy,
+ * kept here because it is still the contract the demo build is meant to
+ * satisfy — treat it as historical provenance, not a live cross-check.
  *
  * The two clauses that decide whether this demo works at all:
  *
@@ -115,8 +124,7 @@ const EXPECTED_CHECKS = 26;
  *                                       backend cannot instantiate. WebGL and
  *                                       the pure-JS CPU backend can.
  *
- * If this string drifts from spa.go, this verification is worthless — so it is
- * pinned here in one place rather than paraphrased in three.
+ * Pinned here in one place rather than paraphrased in three.
  */
 const PRODUCTION_CSP =
   "default-src 'self'; " +
