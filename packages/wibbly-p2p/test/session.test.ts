@@ -172,7 +172,7 @@ describe('PeerSession — sending and receiving, wired peer to peer', () => {
       if (r.sent) seqs.push(r.seq);
     }
     expect(seqs.length).toBe(25);
-    for (let i = 1; i < seqs.length; i++) expect(seqs[i]).toBeGreaterThan(seqs[i - 1]!);
+    for (let i = 1; i < seqs.length; i++) expect(seqs[i]).toBeGreaterThan(seqs[i - 1]);
   });
 
   it('counts sent, received and dropped', async () => {

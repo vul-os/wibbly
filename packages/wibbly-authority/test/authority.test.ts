@@ -157,7 +157,7 @@ describe('MagnetiteAuthority — a real magnetite game in the browser engine', (
 
     it('FAILS LOUDLY when the module has no mag_abi_version export at all (the pre-fix, undeclared-ABI shape)', async () => {
       const withoutVersion = fakeExports();
-      delete (withoutVersion as Record<string, unknown>).mag_abi_version;
+      delete withoutVersion.mag_abi_version;
       vi.spyOn(WebAssembly, 'instantiate').mockResolvedValue(
         { exports: withoutVersion } as unknown as WebAssembly.Instance,
       );

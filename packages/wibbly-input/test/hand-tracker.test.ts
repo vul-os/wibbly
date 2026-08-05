@@ -120,7 +120,7 @@ describe('selectHandDelegate', () => {
   });
 
   it('never tries CPU when CPU itself was the preferred delegate', async () => {
-    const create = vi.fn().mockResolvedValue({} as RawHandLandmarker);
+    const create = vi.fn().mockResolvedValue({});
     await selectHandDelegate(create, 'CPU');
     expect(create).toHaveBeenCalledTimes(1);
     expect(create).toHaveBeenCalledWith('CPU');

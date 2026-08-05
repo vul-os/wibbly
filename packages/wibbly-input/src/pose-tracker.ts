@@ -348,7 +348,7 @@ export class MoveNetMultiPoseTracker implements PoseTracker {
     // Pick the backend BEFORE creating the detector: createDetector compiles
     // kernels against whatever is current, so switching afterwards means
     // paying for the model load twice.
-    this.backendInfo = await selectBackend(tf as unknown as TfLike, this.preferredBackends);
+    this.backendInfo = await selectBackend(tf, this.preferredBackends);
     if (this.backendInfo.warning) {
       // Loud, not swallowed. A tracker on a dead backend produces no skeletons
       // and no errors, which reads as "the game ignores me".
@@ -356,10 +356,10 @@ export class MoveNetMultiPoseTracker implements PoseTracker {
     }
     this.onBackend?.(this.backendInfo);
 
-    this.detector = (await poseDetection.createDetector(
+    this.detector = await poseDetection.createDetector(
       poseDetection.SupportedModels.MoveNet,
-      this.modelConfig() as never,
-    )) as unknown as RawDetector;
+      this.modelConfig(),
+    );
   }
 
   private modelConfig(): Record<string, unknown> {

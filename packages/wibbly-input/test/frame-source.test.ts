@@ -415,7 +415,7 @@ describe('WebcamFrameSource', () => {
         playCallsWhenWaitingBegan = video.playCalls;
       }
       return (realAdd as (...a: unknown[]) => void)(type, ...rest);
-    }) as typeof video.addEventListener;
+    });
 
     const src = new WebcamFrameSource();
     const started = src.start({ ...OPTS, onWarning: () => {} });

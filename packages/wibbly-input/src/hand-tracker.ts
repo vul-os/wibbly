@@ -368,7 +368,7 @@ export class HandLandmarkTracker implements HandTracker {
           minHandDetectionConfidence: this.cfg.minHandDetectionConfidence,
           minHandPresenceConfidence: this.cfg.minHandPresenceConfidence,
           minTrackingConfidence: this.cfg.minTrackingConfidence,
-        }) as unknown as Promise<RawHandLandmarker>;
+        });
     }
 
     const { landmarker, info } = await selectHandDelegate(create, this.preferredDelegate);
@@ -386,7 +386,7 @@ export class HandLandmarkTracker implements HandTracker {
     const timestampMs = Math.max(now, this.lastTimestampMs + 1);
     this.lastTimestampMs = timestampMs;
 
-    const raw = this.landmarker.detectForVideo(frame as unknown, timestampMs);
+    const raw = this.landmarker.detectForVideo(frame, timestampMs);
     return normalizeHands(raw ?? { landmarks: [], handedness: [] }, this.mirrored).slice(
       0,
       this.maxHands,

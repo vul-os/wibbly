@@ -229,7 +229,7 @@ const InGameMenu = ({
       // original duck-typed `typeof el.focus === 'function'` check needs a cast
       // to even ask the question; the runtime check itself is unchanged.
       const focusable = el as { focus?: () => void } | null;
-      if (el && typeof focusable?.focus === 'function' && document.contains(el)) focusable!.focus();
+      if (el && typeof focusable?.focus === 'function' && document.contains(el)) focusable.focus();
       previousFocusRef.current = null;
     };
   }, [isOpen]);
