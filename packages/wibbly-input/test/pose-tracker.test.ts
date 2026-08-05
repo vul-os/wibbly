@@ -54,7 +54,14 @@ describe('MoveNetMultiPoseTracker', () => {
     const tracker = new MoveNetMultiPoseTracker({ createDetector });
     await tracker.init();
 
-    const config = createDetector.mock.calls[0][1];
+    // Cast at this one read, same as the configFor() helper below —
+    // createDetector's real config parameter is typed `unknown` by
+    // MoveNetTrackerConfig itself (it's an opaque pass-through to the
+    // injected detector factory), so there is no narrower vi.fn() generic
+    // to give this a real type; a bare `.mock.calls[0][1]` stayed `any`
+    // through every property read below, which is what no-unsafe-assignment
+    // /no-unsafe-member-access flagged.
+    const config = createDetector.mock.calls[0][1] as Record<string, unknown>;
     // Key names verified against the installed package's movenet/types.d.ts
     // and constants.d.ts (MULTIPOSE_LIGHTNING = 'MultiPose.Lightning').
     expect(config.modelType).toBe('MultiPose.Lightning');
