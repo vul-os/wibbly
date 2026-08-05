@@ -49,11 +49,21 @@ export default function CameraPreview({ input, calibration, players = [] }: Came
     );
 
     // Attach the library's detached <video> into our own container.
+    //
+    // react-hooks/immutability treats `input` (and anything reachable off
+    // it, including `input.videoElement`) as a frozen hook argument and
+    // flags the style writes below. `video` is a real, foreign DOM node the
+    // library hands us specifically so this component can imperatively mount
+    // and style it — see the file doc comment. That is standard effect
+    // territory ("synchronize with an external system"), not a render-purity
+    // violation, so the rule's model doesn't apply to this element.
+    // eslint-disable-next-line react-hooks/immutability -- see comment above
     useEffect(() => {
         const video = input?.videoElement;
         const mount = mountRef.current;
         if (!video || !mount) return;
 
+        // eslint-disable-next-line react-hooks/immutability -- see comment above the effect
         video.style.width = '100%';
         video.style.height = '100%';
         video.style.objectFit = 'cover';

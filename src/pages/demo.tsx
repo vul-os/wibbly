@@ -65,8 +65,12 @@ const MS_BEFORE_CTA = 90_000;
 export default function Demo() {
   // MemoryStorage, explicitly. Not "localStorage that we try to remember to
   // clean up" — a store that cannot persist in the first place.
-  const calibrationRef = useRef<Calibration | null>(null);
-  if (!calibrationRef.current) calibrationRef.current = new Calibration(new MemoryStorage());
+  //
+  // Lazy state init, not a ref: the instance is created once for the
+  // component's life, but it's also read during render (passed straight
+  // down to TennisGame below), which react-hooks/refs disallows for a ref's
+  // `.current`.
+  const [calibration] = useState(() => new Calibration(new MemoryStorage()));
 
   const [stage, setStage] = useState<DemoStage>('intro'); // intro | playing
   const [handedness, setHandedness] = useState<Handedness>('right');
@@ -103,14 +107,14 @@ export default function Demo() {
 
   const chooseHand = useCallback((hand: Handedness) => {
     setHandedness(hand);
-    calibrationRef.current!.setHandedness(PLAYER_ID, hand);
-  }, []);
+    calibration.setHandedness(PLAYER_ID, hand);
+  }, [calibration]);
 
   // Write the default through too, so the recogniser reads a profile that was
   // deliberately set rather than inferred from an absent one.
   useEffect(() => {
-    calibrationRef.current!.setHandedness(PLAYER_ID, handedness);
-  }, [handedness]);
+    calibration.setHandedness(PLAYER_ID, handedness);
+  }, [calibration, handedness]);
 
   const play = useCallback((withCamera: boolean) => {
     setStarting(true);
@@ -146,9 +150,11 @@ export default function Demo() {
     );
   }, []);
 
-  useEffect(() => {
-    if (swings >= SWINGS_BEFORE_CTA && cta === 'hidden') setCta('open');
-  }, [swings, cta]);
+  // Derived during render rather than in an effect: the cta === 'hidden'
+  // guard makes this idempotent (once cta flips to 'open' the condition is
+  // false on every later render), so there is no effect here to run — just
+  // a value to adjust in response to `swings` crossing the threshold.
+  if (swings >= SWINGS_BEFORE_CTA && cta === 'hidden') setCta('open');
 
   useEffect(() => {
     if (stage !== 'playing' || cta !== 'hidden') return undefined;
@@ -243,7 +249,7 @@ export default function Demo() {
 
       <TennisGame
         settings={{ usePoseDetection, debug: false }}
-        calibration={calibrationRef.current}
+        calibration={calibration}
         onInputState={setCameraStatus}
         onSwing={onSwing}
         onTrackerBackend={onTrackerBackend}

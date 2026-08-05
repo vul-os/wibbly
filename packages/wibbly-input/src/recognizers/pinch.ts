@@ -130,7 +130,7 @@ interface PinchState {
   origin: Vector2 | null;
 }
 
-export interface PinchRecognizerOptions extends Partial<PinchConfig> {}
+export type PinchRecognizerOptions = Partial<PinchConfig>;
 
 /**
  * Stateful wrapper: one HysteresisGate per (player, hand), so a player's left

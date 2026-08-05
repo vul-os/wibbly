@@ -172,7 +172,7 @@ interface RacketHeadTransform {
 }
 
 // Helper function to get racket head's world transformation
-function getRacketHeadTransform(player: PlayerObject, playerIndex: number): RacketHeadTransform {
+function getRacketHeadTransform(player: PlayerObject): RacketHeadTransform {
     const racketGroup = player.userData.racketGroup;
     const racketHead = racketGroup.children[0]; // First child is the racket head
     
@@ -219,7 +219,7 @@ export function handleBallHit(
     const racketGroup = player.userData.racketGroup;
     
     // Get accurate racket head transformation
-    const racketTransform = getRacketHeadTransform(player, playerIndex);
+    const racketTransform = getRacketHeadTransform(player);
     
     // Ball properties
     const ballRadius = 0.105; // Our ball radius (25% smaller)

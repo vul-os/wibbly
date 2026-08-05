@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Calibration } from '@vulos/wibbly-input';
 import TennisGame from '../game';
@@ -23,8 +23,11 @@ export default function Play() {
   const navigate = useNavigate();
   const [setup] = useState(() => setupState());
 
-  const calibrationRef = useRef<Calibration | null>(null);
-  if (!calibrationRef.current) calibrationRef.current = new Calibration();
+  // Lazy state init, not a ref: the instance is created once for the
+  // component's life, but it's also read during render (passed straight
+  // down to TennisGame/InGameMenu below), which react-hooks/refs disallows
+  // for a ref's `.current`.
+  const [calibration] = useState(() => new Calibration());
 
   const [settings, setSettings] = useState<GameSettings>(() => loadSettings());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -73,7 +76,7 @@ export default function Play() {
         key={gameKey}
         paused={menuOpen}
         settings={settings}
-        calibration={calibrationRef.current}
+        calibration={calibration}
         onInputState={setCameraStatus}
         onAuthority={setAuthority}
       />
@@ -127,7 +130,7 @@ export default function Play() {
            looking selectable. */
         gameSettings={settings}
         onSettingsChange={changeSetting}
-        calibration={calibrationRef.current}
+        calibration={calibration}
         cameraStatus={cameraStatus}
         onRestart={restart}
         onQuit={() => navigate('/')}

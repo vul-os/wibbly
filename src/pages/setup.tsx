@@ -60,8 +60,12 @@ const STEP_LABELS: Record<SetupStep, string> = { intro: 'Permission', handedness
 export default function Setup() {
   const navigate = useNavigate();
 
-  const calibrationRef = useRef<Calibration | null>(null);
-  if (!calibrationRef.current) calibrationRef.current = new Calibration();
+  // Created once for the component's life via a lazy state initializer —
+  // not a ref, so that reading it during render (it's passed straight down
+  // as a prop and read for the initial `handedness` state below) doesn't
+  // trip react-hooks/refs. The instance itself is still the single mutable
+  // Calibration; only the "how do we get it" wiring changed.
+  const [calibration] = useState(() => new Calibration());
 
   const inputRef = useRef<WibblyInput | null>(null);
   const videoMountRef = useRef<HTMLDivElement>(null);
@@ -79,7 +83,7 @@ export default function Setup() {
   // are surfaced rather than swallowed — a camera that came up at the wrong
   // resolution should say so.
   const [pipelineWarning, setPipelineWarning] = useState<string | null>(null);
-  const [handedness, setHandedness] = useState<Handedness>(() => calibrationRef.current!.handednessFor(PLAYER_ID));
+  const [handedness, setHandedness] = useState<Handedness>(() => calibration.handednessFor(PLAYER_ID));
   const [warnings, setWarnings] = useState<CalibrationWarning[] | null>(null); // null until the first frame is scored
   const [seenPerson, setSeenPerson] = useState(false);
   // Live pacing readout for the stage label bar. Purely observational — these
@@ -90,9 +94,6 @@ export default function Setup() {
 
   const startCamera = useCallback(async () => {
     if (inputRef.current) return;
-    // Never null in practice: calibrationRef.current is set synchronously
-    // above, before this callback can ever run.
-    const calibration = calibrationRef.current!;
     setCamera('starting');
     setCameraError(null);
     setDenied(false);
@@ -193,15 +194,22 @@ export default function Setup() {
       // already did this and already stopped this same instance.
       if (inputRef.current === wibbly) inputRef.current = null;
     }
-  }, []);
+  }, [calibration]);
 
   // Attach the library's detached <video> wherever the current step renders a
   // stage for it. The library never injects DOM of its own — that is the whole
   // point of the rebuild — so mounting it is this component's job.
+  //
+  // react-hooks/immutability treats anything reachable off a ref's `.current`
+  // as frozen and flags the style writes below. `video` is a real, foreign
+  // DOM node the library hands us specifically so this component can
+  // imperatively mount and style it — standard effect territory
+  // ("synchronize with an external system"), not a render-purity violation.
   useEffect(() => {
     const video = inputRef.current?.videoElement;
     const mount = videoMountRef.current;
     if (!video || !mount) return;
+    // eslint-disable-next-line react-hooks/immutability -- see comment above the effect
     video.style.width = '100%';
     video.style.height = '100%';
     video.style.objectFit = 'cover';
@@ -232,7 +240,7 @@ export default function Setup() {
   /* ── Actions ──────────────────────────────────────────────────────────── */
 
   const chooseHand = (hand: Handedness) => {
-    calibrationRef.current!.setHandedness(PLAYER_ID, hand);
+    calibration.setHandedness(PLAYER_ID, hand);
     setHandedness(hand);
   };
 

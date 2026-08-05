@@ -172,7 +172,7 @@ interface PointState {
   gate: HysteresisGate<FingerRatios>;
 }
 
-export interface PointRecognizerOptions extends Partial<PointConfig> {}
+export type PointRecognizerOptions = Partial<PointConfig>;
 
 /**
  * Stateful wrapper: one HysteresisGate per (player, hand) — see the identical

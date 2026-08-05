@@ -18,16 +18,23 @@
     "verify:model": "node scripts/verify-model.mjs",
     "verify:demo": "node scripts/verify-demo.mjs",
     "verify:demo:update-screenshots": "node scripts/verify-demo.mjs --update-screenshots",
+    "lint": "eslint . && npm run lint --prefix games/palmworks",
     "test": "npm run test --workspace @vulos/wibbly-input && npm run test --workspace @vulos/wibbly-p2p && npm run test --workspace @vulos/wibbly-authority && npm run test:app",
     "test:app": "vitest run --config vitest.config.js",
     "typecheck": "npm run typecheck --workspace @vulos/wibbly-input && npm run typecheck --workspace @vulos/wibbly-p2p && npm run typecheck --workspace @vulos/wibbly-authority && npm run typecheck:app",
     "typecheck:app": "tsc --noEmit"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/three": "^0.174.0",
+    "eslint": "^10.8.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.9.0",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.66.0",
     "vite": "^6.2.0",
     "vitest": "^3.0.5"
   },

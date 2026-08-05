@@ -26,7 +26,7 @@ class FakeDataChannel implements DataChannelLike {
   addEventListener(type: 'close', cb: () => void): void;
   addEventListener(type: 'error', cb: (ev: unknown) => void): void;
   addEventListener(type: 'message', cb: (ev: { data: unknown }) => void): void;
-  addEventListener(type: string, cb: (...args: any[]) => void): void {
+  addEventListener(type: string, cb: (...args: unknown[]) => void): void {
     (this.listeners[type] ??= []).push(cb);
   }
   private emit(type: string, arg?: unknown): void {
@@ -84,7 +84,7 @@ class FakePeerConnection implements RTCPeerConnectionLike {
   }
   addEventListener(type: 'icegatheringstatechange', cb: () => void): void;
   addEventListener(type: 'datachannel', cb: (ev: { channel: DataChannelLike }) => void): void;
-  addEventListener(type: 'icegatheringstatechange' | 'datachannel', cb: (...args: any[]) => void): void {
+  addEventListener(type: 'icegatheringstatechange' | 'datachannel', cb: (...args: unknown[]) => void): void {
     if (type === 'datachannel') {
       const dcCb = cb as (ev: { channel: DataChannelLike }) => void;
       this.dcListeners.push(dcCb);
