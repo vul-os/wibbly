@@ -26,8 +26,18 @@ class FakeDataChannel implements DataChannelLike {
   addEventListener(type: 'close', cb: () => void): void;
   addEventListener(type: 'error', cb: (ev: unknown) => void): void;
   addEventListener(type: 'message', cb: (ev: { data: unknown }) => void): void;
-  addEventListener(type: string, cb: (...args: unknown[]) => void): void {
-    (this.listeners[type] ??= []).push(cb);
+  // A rest-parameter `(...args: unknown[]) => void` implementation looks
+  // like the obvious catch-all here, but it isn't actually a valid overload
+  // target: contravariance means `unknown` (that signature's param type)
+  // would have to be assignable to `{ data: unknown }` (the 'message'
+  // overload's param type), and it isn't — only the reverse holds. Spelling
+  // out the exact union of the four overloads' callback shapes is what
+  // makes each overload a genuine subtype of the implementation signature.
+  addEventListener(
+    type: string,
+    cb: (() => void) | ((ev: unknown) => void) | ((ev: { data: unknown }) => void),
+  ): void {
+    (this.listeners[type] ??= []).push(cb as (arg?: unknown) => void);
   }
   private emit(type: string, arg?: unknown): void {
     for (const cb of this.listeners[type] ?? []) cb(arg);
@@ -84,7 +94,13 @@ class FakePeerConnection implements RTCPeerConnectionLike {
   }
   addEventListener(type: 'icegatheringstatechange', cb: () => void): void;
   addEventListener(type: 'datachannel', cb: (ev: { channel: DataChannelLike }) => void): void;
-  addEventListener(type: 'icegatheringstatechange' | 'datachannel', cb: (...args: unknown[]) => void): void {
+  // Same reasoning as FakeDataChannel's addEventListener above: the union of
+  // the two overloads' exact callback shapes, not a lossy rest-parameter
+  // catch-all, is what makes this a valid implementation signature.
+  addEventListener(
+    type: 'icegatheringstatechange' | 'datachannel',
+    cb: (() => void) | ((ev: { channel: DataChannelLike }) => void),
+  ): void {
     if (type === 'datachannel') {
       const dcCb = cb as (ev: { channel: DataChannelLike }) => void;
       this.dcListeners.push(dcCb);
