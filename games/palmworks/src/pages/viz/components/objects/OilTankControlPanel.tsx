@@ -1,19 +1,33 @@
 import { useRef, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
+import type { PlantObjectComponent, PlantObjectProps } from './types';
 
-const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
-  const meshRef = useRef();
-  const groupRef = useRef();
-  const pumpRef = useRef();
+interface OilTankControlPanelProps extends PlantObjectProps {
+  position: [number, number, number];
+}
+
+interface OilTankControlPanelPort {
+  id: string;
+  type: 'electric' | 'liquid' | 'gas';
+  label: string;
+  offset: [number, number, number];
+  direction: [number, number, number];
+  required: boolean;
+}
+
+const OilTankControlPanel: PlantObjectComponent<OilTankControlPanelProps, OilTankControlPanelPort> = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const pumpRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [hoveredPort, setHoveredPort] = useState(null);
+  const [hoveredPort, setHoveredPort] = useState<string | null>(null);
   const [isRunning] = useState(false);
   const { camera, gl } = useThree();
 
   // Define connection ports for the oil tank control panel
-  const connectionPorts = [
+  const connectionPorts: OilTankControlPanelPort[] = [
     {
       id: 'electric_power_main',
       type: 'electric',
@@ -80,19 +94,22 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
     }
   ];
 
-  const snapToGrid = (value) => {
+  const GRID_SIZE = gridSize || 1.0;
+
+  const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
   useFrame(() => {
     if (meshRef.current) {
+      const material = meshRef.current.material as THREE.MeshLambertMaterial;
       if (isSelected) {
-        meshRef.current.material.emissive.setHex(0x444444);
+        material.emissive.setHex(0x444444);
       } else if (hovered && isDraggable) {
-        meshRef.current.material.emissive.setHex(0x222222);
+        material.emissive.setHex(0x222222);
       } else {
-        meshRef.current.material.emissive.setHex(0x000000);
+        material.emissive.setHex(0x000000);
       }
     }
     
@@ -108,39 +125,39 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
     }
   });
 
-  const handlePointerDown = (event) => {
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!isDraggable) {
       onClick?.(event);
       return;
     }
-    
+
     event.stopPropagation();
     let hasMovedMouse = false;
     gl.domElement.style.cursor = 'grabbing';
-    
-    const handlePointerMove = (moveEvent) => {
+
+    const handlePointerMove = (moveEvent: MouseEvent) => {
       if (!onDrag) return;
-      
+
       if (!hasMovedMouse) {
         hasMovedMouse = true;
         setIsDragging(true);
       }
-      
+
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
-      
+
       mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
       mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
-      
+
       raycaster.setFromCamera(mouse, camera);
-      
+
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
       const intersection = new THREE.Vector3();
-      
+
       if (raycaster.ray.intersectPlane(plane, intersection)) {
         const snappedX = snapToGrid(intersection.x);
         const snappedZ = snapToGrid(intersection.z);
-        const newPosition = [snappedX, position[1], snappedZ];
+        const newPosition: [number, number, number] = [snappedX, position[1], snappedZ];
         onDrag(newPosition);
       }
     };
@@ -149,34 +166,34 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
       if (!hasMovedMouse) {
         setIsDragging(false);
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-        
+
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove);
-        document.removeEventListener('touchend', handlePointerUp);
-        
+        document.removeEventListener('touchmove', handlePointerMove as EventListener);
+        document.removeEventListener('touchend', handlePointerUp as EventListener);
+
         onClick?.(event);
         return;
       }
-      
+
       setIsDragging(false);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-      
+
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove);
-      document.removeEventListener('touchend', handlePointerUp);
+      document.removeEventListener('touchmove', handlePointerMove as EventListener);
+      document.removeEventListener('touchend', handlePointerUp as EventListener);
     };
 
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove);
-    document.addEventListener('touchend', handlePointerUp);
-    
-    event.preventDefault?.();
+    document.addEventListener('touchmove', handlePointerMove as EventListener);
+    document.addEventListener('touchend', handlePointerUp as EventListener);
+
+    (event as unknown as { preventDefault?: () => void }).preventDefault?.();
   };
 
-  const handlePortClick = (port, event) => {
+  const handlePortClick = (port: OilTankControlPanelPort, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     if (onPortClick) {
       onPortClick(port, position, event);
@@ -198,7 +215,7 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
     }
   };
 
-  const handlePortHover = (portId) => {
+  const handlePortHover = (portId: string) => {
     setHoveredPort(portId);
     gl.domElement.style.cursor = 'pointer';
   };
@@ -208,7 +225,7 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
     gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
   };
 
-  const getPortColor = (port) => {
+  const getPortColor = (port: OilTankControlPanelPort): string => {
     switch (port.type) {
       case 'electric': return '#FF5722';
       case 'liquid': return '#2196F3';
@@ -316,8 +333,8 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
       </mesh>
       
       {/* Door Lock */}
-      <mesh position={[5.2, 0.5, 0.3]} castShadow>
-        <cylinderGeometry args={[0.03, 0.03, 0.06, 8]} rotation={[0, 0, Math.PI/2]} />
+      <mesh position={[5.2, 0.5, 0.3]} rotation={[0, 0, Math.PI/2]} castShadow>
+        <cylinderGeometry args={[0.03, 0.03, 0.06, 8]} />
         <meshLambertMaterial color="#34495E" />
       </mesh>
       
@@ -340,87 +357,95 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
       </mesh>
       
       {/* Emergency Stop - Mushroom Style */}
-      <mesh position={[5.18, 0.7, -0.3]} castShadow>
-        <cylinderGeometry args={[0.08, 0.08, 0.06, 12]} rotation={[0, 0, Math.PI/2]} />
+      <mesh position={[5.18, 0.7, -0.3]} rotation={[0, 0, Math.PI/2]} castShadow>
+        <cylinderGeometry args={[0.08, 0.08, 0.06, 12]} />
         <meshLambertMaterial color="#E74C3C" />
       </mesh>
-      
+
       {/* E-Stop Base */}
-      <mesh position={[5.16, 0.7, -0.3]} castShadow>
-        <cylinderGeometry args={[0.1, 0.1, 0.04, 12]} rotation={[0, 0, Math.PI/2]} />
+      <mesh position={[5.16, 0.7, -0.3]} rotation={[0, 0, Math.PI/2]} castShadow>
+        <cylinderGeometry args={[0.1, 0.1, 0.04, 12]} />
         <meshLambertMaterial color="#2C3E50" />
       </mesh>
-      
+
       {/* Selector Switches */}
-      {[
-        { pos: [5.18, 0.3, -0.15], color: '#3498DB' }, // AUTO/MAN
-        { pos: [5.18, 0.3, 0.15], color: '#2ECC71' },  // START/STOP
-        { pos: [5.18, 0.1, -0.15], color: '#F39C12' }, // LOCAL/REMOTE
-      ].map((sw, i) => (
+      {(
+        [
+          { pos: [5.18, 0.3, -0.15], color: '#3498DB' }, // AUTO/MAN
+          { pos: [5.18, 0.3, 0.15], color: '#2ECC71' },  // START/STOP
+          { pos: [5.18, 0.1, -0.15], color: '#F39C12' }, // LOCAL/REMOTE
+        ] as const
+      ).map((sw, i) => (
         <group key={`selector-${i}`}>
-          <mesh position={sw.pos} castShadow>
-            <cylinderGeometry args={[0.04, 0.04, 0.03, 8]} rotation={[0, 0, Math.PI/2]} />
+          <mesh position={sw.pos} rotation={[0, 0, Math.PI/2]} castShadow>
+            <cylinderGeometry args={[0.04, 0.04, 0.03, 8]} />
             <meshLambertMaterial color={sw.color} />
           </mesh>
-          <mesh position={[sw.pos[0] - 0.02, sw.pos[1], sw.pos[2]]} castShadow>
-            <cylinderGeometry args={[0.05, 0.05, 0.02, 8]} rotation={[0, 0, Math.PI/2]} />
+          <mesh position={[sw.pos[0] - 0.02, sw.pos[1], sw.pos[2]]} rotation={[0, 0, Math.PI/2]} castShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.02, 8]} />
             <meshLambertMaterial color="#2C3E50" />
           </mesh>
         </group>
       ))}
-      
+
       {/* Push Buttons - Industrial Grade */}
-      {[
-        { pos: [5.18, -0.2, -0.25], color: '#E74C3C' }, // ALARM ACK
-        { pos: [5.18, -0.2, -0.1], color: '#F39C12' },  // RESET
-        { pos: [5.18, -0.2, 0.1], color: '#2ECC71' },   // START
-        { pos: [5.18, -0.2, 0.25], color: '#95A5A6' },  // STOP
-      ].map((btn, i) => (
+      {(
+        [
+          { pos: [5.18, -0.2, -0.25], color: '#E74C3C' }, // ALARM ACK
+          { pos: [5.18, -0.2, -0.1], color: '#F39C12' },  // RESET
+          { pos: [5.18, -0.2, 0.1], color: '#2ECC71' },   // START
+          { pos: [5.18, -0.2, 0.25], color: '#95A5A6' },  // STOP
+        ] as const
+      ).map((btn, i) => (
         <group key={`button-${i}`}>
-          <mesh position={btn.pos} castShadow>
-            <cylinderGeometry args={[0.03, 0.03, 0.02, 8]} rotation={[0, 0, Math.PI/2]} />
+          <mesh position={btn.pos} rotation={[0, 0, Math.PI/2]} castShadow>
+            <cylinderGeometry args={[0.03, 0.03, 0.02, 8]} />
             <meshLambertMaterial color={btn.color} />
           </mesh>
-          <mesh position={[btn.pos[0] - 0.015, btn.pos[1], btn.pos[2]]} castShadow>
-            <cylinderGeometry args={[0.035, 0.035, 0.015, 8]} rotation={[0, 0, Math.PI/2]} />
+          <mesh position={[btn.pos[0] - 0.015, btn.pos[1], btn.pos[2]]} rotation={[0, 0, Math.PI/2]} castShadow>
+            <cylinderGeometry args={[0.035, 0.035, 0.015, 8]} />
             <meshLambertMaterial color="#2C3E50" />
           </mesh>
         </group>
       ))}
-      
+
       {/* Status Indicator Lights */}
-      {[
-        { pos: [5.18, -0.5, -0.25], color: '#E74C3C', active: !isRunning }, // FAULT
-        { pos: [5.18, -0.5, -0.1], color: '#F39C12', active: false },       // WARNING
-        { pos: [5.18, -0.5, 0.1], color: '#2ECC71', active: isRunning },   // RUNNING
-        { pos: [5.18, -0.5, 0.25], color: '#3498DB', active: true },       // POWER
-      ].map((led, i) => (
-        <mesh key={`led-${i}`} position={led.pos} castShadow>
-          <cylinderGeometry args={[0.02, 0.02, 0.01, 8]} rotation={[0, 0, Math.PI/2]} />
-          <meshLambertMaterial 
-            color={led.color} 
+      {(
+        [
+          { pos: [5.18, -0.5, -0.25], color: '#E74C3C', active: !isRunning }, // FAULT
+          { pos: [5.18, -0.5, -0.1], color: '#F39C12', active: false },       // WARNING
+          { pos: [5.18, -0.5, 0.1], color: '#2ECC71', active: isRunning },   // RUNNING
+          { pos: [5.18, -0.5, 0.25], color: '#3498DB', active: true },       // POWER
+        ] as const
+      ).map((led, i) => (
+        <mesh key={`led-${i}`} position={led.pos} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.02, 0.02, 0.01, 8]} />
+          <meshLambertMaterial
+            color={led.color}
             emissive={led.active ? led.color : '#000000'}
             emissiveIntensity={led.active ? 0.8 : 0}
           />
         </mesh>
       ))}
-      
+
       {/* Analog Gauges - Professional Style */}
-      {[
-        { pos: [5.17, -1.0, -0.2], label: 'PRESSURE' },
-        { pos: [5.17, -1.0, 0.2], label: 'TEMPERATURE' },
-        { pos: [5.17, -1.4, -0.2], label: 'FLOW' },
-        { pos: [5.17, -1.4, 0.2], label: 'LEVEL' },
-      ].map((gauge, i) => (
+      {(
+        [
+          { pos: [5.17, -1.0, -0.2], label: 'PRESSURE' },
+          { pos: [5.17, -1.0, 0.2], label: 'TEMPERATURE' },
+          { pos: [5.17, -1.4, -0.2], label: 'FLOW' },
+          { pos: [5.17, -1.4, 0.2], label: 'LEVEL' },
+        ] as const
+      ).map((gauge, i) => (
         <group key={`gauge-${i}`}>
           {/* Gauge Face */}
-          <mesh position={gauge.pos} castShadow>
-            <cylinderGeometry args={[0.08, 0.08, 0.02, 16]} rotation={[0, 0, Math.PI/2]} />
+          <mesh position={gauge.pos} rotation={[0, 0, Math.PI/2]} castShadow>
+            <cylinderGeometry args={[0.08, 0.08, 0.02, 16]} />
             <meshLambertMaterial color="#F8F9FA" />
           </mesh>
           {/* Gauge Rim */}
-          <mesh position={[gauge.pos[0] - 0.01, gauge.pos[1], gauge.pos[2]]} castShadow>
-            <cylinderGeometry args={[0.09, 0.09, 0.015, 16]} rotation={[0, 0, Math.PI/2]} />
+          <mesh position={[gauge.pos[0] - 0.01, gauge.pos[1], gauge.pos[2]]} rotation={[0, 0, Math.PI/2]} castShadow>
+            <cylinderGeometry args={[0.09, 0.09, 0.015, 16]} />
             <meshLambertMaterial color="#2C3E50" />
           </mesh>
           {/* Needle */}
@@ -521,21 +546,25 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
       </mesh>
       
       {/* Vertical Risers */}
-      {[
-        { pos: [-3, 1, 3.2], height: 2 },
-        { pos: [3, 0, 3.2], height: 2 },
-        { pos: [-3, -1, -3.2], height: 2 },
-      ].map((pipe, i) => (
+      {(
+        [
+          { pos: [-3, 1, 3.2], height: 2 },
+          { pos: [3, 0, 3.2], height: 2 },
+          { pos: [-3, -1, -3.2], height: 2 },
+        ] as const
+      ).map((pipe, i) => (
         <mesh key={`riser-${i}`} position={pipe.pos} castShadow>
           <cylinderGeometry args={[0.1, 0.1, pipe.height, 12]} />
           <meshLambertMaterial color="#7F8C8D" />
         </mesh>
       ))}
-      
+
       {/* Pipe Supports */}
-      {[
-        [-1.5, -0.3, 3.2], [1.5, -1.3, 3.2], [-1.5, -2.3, -3.2]
-      ].map((pos, i) => (
+      {(
+        [
+          [-1.5, -0.3, 3.2], [1.5, -1.3, 3.2], [-1.5, -2.3, -3.2]
+        ] as const
+      ).map((pos, i) => (
         <mesh key={`support-${i}`} position={pos} castShadow>
           <boxGeometry args={[0.3, 0.1, 0.3]} />
           <meshLambertMaterial color="#34495E" />
@@ -556,19 +585,23 @@ const OilTankControlPanel = ({ position, onClick, onDrag, isSelected, isDraggabl
       </mesh>
       
       {/* Temperature Probes */}
-      {[
-        [0, 2, 3.1], [0, -2, 3.1], [2.5, 0, 0]
-      ].map((pos, i) => (
+      {(
+        [
+          [0, 2, 3.1], [0, -2, 3.1], [2.5, 0, 0]
+        ] as const
+      ).map((pos, i) => (
         <mesh key={`temp-probe-${i}`} position={pos} castShadow>
           <cylinderGeometry args={[0.02, 0.02, 0.4, 8]} />
           <meshLambertMaterial color="#F39C12" />
         </mesh>
       ))}
-      
+
       {/* Structural Support Framework */}
-      {[
-        [3, -4.5, 3], [-3, -4.5, 3], [3, -4.5, -3], [-3, -4.5, -3]
-      ].map((pos, i) => (
+      {(
+        [
+          [3, -4.5, 3], [-3, -4.5, 3], [3, -4.5, -3], [-3, -4.5, -3]
+        ] as const
+      ).map((pos, i) => (
         <mesh key={`leg-${i}`} position={pos} castShadow>
           <cylinderGeometry args={[0.15, 0.15, 1.5, 8]} />
           <meshLambertMaterial color="#2C3E50" />
