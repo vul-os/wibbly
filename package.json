@@ -19,6 +19,7 @@
     "verify:demo": "node scripts/verify-demo.mjs",
     "verify:demo:update-screenshots": "node scripts/verify-demo.mjs --update-screenshots",
     "lint": "eslint . && npm run lint --prefix games/palmworks",
+    "check:lint-config": "node scripts/check-lint-config.mjs && npm run check:lint-config --prefix games/palmworks",
     "test": "npm run test --workspace @vulos/wibbly-input && npm run test --workspace @vulos/wibbly-p2p && npm run test --workspace @vulos/wibbly-authority && npm run test:app",
     "test:app": "vitest run --config vitest.config.js",
     "typecheck": "npm run typecheck --workspace @vulos/wibbly-input && npm run typecheck --workspace @vulos/wibbly-p2p && npm run typecheck --workspace @vulos/wibbly-authority && npm run typecheck:app && npm run typecheck --prefix games/palmworks",
