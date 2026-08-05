@@ -219,7 +219,13 @@ export async function selectHandDelegate(
     }
   }
 
-  throw lastError ?? new Error('HandLandmarkTracker: failed to initialize');
+  // See the parallel comment in frame-source.ts's acquireCameraStream — same
+  // shape: `lastError` is `unknown`, so only-throw-error correctly flags a
+  // bare rethrow. Re-throw it as-is when it is genuinely an Error (preserving
+  // its identity/stack rather than masking it), else synthesize one.
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('HandLandmarkTracker: failed to initialize');
 }
 
 /**

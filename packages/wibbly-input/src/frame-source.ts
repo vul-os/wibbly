@@ -208,7 +208,15 @@ export async function acquireCameraStream(
   }
 
   /* c8 ignore next — unreachable: the loop always returns or throws. */
-  throw lastError ?? new Error('WebcamFrameSource: could not acquire a camera stream');
+  // `lastError` is caught as `unknown` (TypeScript cannot prove getUserMedia
+  // only ever throws Error instances), so only-throw-error correctly flags a
+  // bare `throw lastError`. Re-throw it as-is when it genuinely is an Error
+  // (preserving its identity/stack — the whole point of this rethrow, not
+  // wrapping every camera failure in a fresh Error that hides the real one),
+  // and fall back to a synthesized Error only for the non-Error/no-error case.
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('WebcamFrameSource: could not acquire a camera stream');
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
