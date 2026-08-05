@@ -131,15 +131,19 @@ describe('acquireCameraStream', () => {
   });
 
   it('retries with a looser set after OverconstrainedError', async () => {
+    // Typed so `.mock.calls` carries real MediaStreamConstraints instead of
+    // `any` — the untyped `vi.fn()` this replaced made `.video` below an
+    // unsafe member access and both `Object.keys(...)` calls unsafe
+    // arguments, none of which was actually testing anything about types.
     const gum = vi
-      .fn()
+      .fn<(c: MediaStreamConstraints) => Promise<MediaStream>>()
       .mockRejectedValueOnce(domError('OverconstrainedError'))
       .mockResolvedValue(fakeStream);
     await expect(acquireCameraStream(gum, OPTS)).resolves.toBe(fakeStream);
     expect(gum).toHaveBeenCalledTimes(2);
     // The retry must actually ask for less, not just ask again.
-    const first = gum.mock.calls[0][0].video;
-    const second = gum.mock.calls[1][0].video;
+    const first = gum.mock.calls[0][0].video ?? {};
+    const second = gum.mock.calls[1][0].video ?? {};
     expect(Object.keys(second).length).toBeLessThan(Object.keys(first).length);
   });
 
@@ -163,7 +167,7 @@ describe('acquireCameraStream', () => {
   });
 
   it('falls all the way to a bare video request before giving up', async () => {
-    const gum = vi.fn().mockRejectedValue(domError('OverconstrainedError'));
+    const gum = vi.fn<(c: MediaStreamConstraints) => Promise<MediaStream>>().mockRejectedValue(domError('OverconstrainedError'));
     await expect(acquireCameraStream(gum, OPTS)).rejects.toThrow();
     const last = gum.mock.calls[gum.mock.calls.length - 1][0];
     // Bare `true`, not `{}` — an empty constraint object is not the same request.
