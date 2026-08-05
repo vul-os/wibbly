@@ -14,12 +14,18 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
-} as const
+// A type only, not a runtime value: every dispatch/reducer call site below
+// uses the string literals directly ("ADD_TOAST" etc.), so a `const
+// actionTypes = {...} as const` object here would exist solely to be
+// `typeof`'d, which @typescript-eslint/no-unused-vars correctly flags as
+// unused. Declaring the same shape as a type directly says what's actually
+// used.
+type ActionTypes = {
+  ADD_TOAST: "ADD_TOAST"
+  UPDATE_TOAST: "UPDATE_TOAST"
+  DISMISS_TOAST: "DISMISS_TOAST"
+  REMOVE_TOAST: "REMOVE_TOAST"
+}
 
 let count = 0
 
@@ -28,7 +34,7 @@ function genId(): string {
   return count.toString();
 }
 
-type ActionType = typeof actionTypes
+type ActionType = ActionTypes
 
 type Action =
   | { type: ActionType["ADD_TOAST"]; toast: ToasterToast }

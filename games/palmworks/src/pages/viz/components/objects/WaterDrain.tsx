@@ -140,7 +140,7 @@ const WaterDrain = ({
       const newIntersection = new THREE.Vector3();
       raycaster.ray.intersectPlane(ground, newIntersection);
       
-      let newPosition = [newIntersection.x, position[1], newIntersection.z];
+      const newPosition = [newIntersection.x, position[1], newIntersection.z];
       
       if (gridSnap && gridSize > 0) {
         newPosition[0] = Math.round(newPosition[0] / gridSize) * gridSize;

@@ -3,28 +3,26 @@ import globals from 'globals'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
 
-export default [
+// palmworks is a SEPARATE npm project from the workspace root one level up
+// (its own package.json, package-lock.json and node_modules) — see the doc
+// comment in ../../eslint.config.js for why the two are not merged into one
+// config. This file lints palmworks' own 45 sources, all but 3 of which are
+// .tsx (see src/).
+export default tseslint.config(
   { ignores: ['dist'] },
+  // Shared across both JS and TS: the app's own plugin rules don't care
+  // which language a file is written in.
   {
-    files: ['**/*.{js,jsx}'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-      parserOptions: {
-        ecmaVersion: 'latest',
-        ecmaFeatures: { jsx: true },
-        sourceType: 'module',
-      },
-    },
-    settings: { react: { version: '18.3' } },
+    files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
       react,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
     },
+    settings: { react: { version: '18.3' } },
     rules: {
-      ...js.configs.recommended.rules,
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
@@ -44,6 +42,31 @@ export default [
       'react/prop-types': 'off',
     },
   },
+  // Anything still plain JS/JSX (vite.config.js, postcss.config.js,
+  // tailwind.config.js) keeps the original eslint-recommended setup.
+  {
+    files: ['**/*.{js,jsx}'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+  },
+  // src/ is TS/TSX end to end — parse with the typescript-eslint parser and
+  // lint with the recommended TS rule set.
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [tseslint.configs.recommended],
+    languageOptions: {
+      globals: globals.browser,
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+  },
   {
     // Config files run under Node, not the browser.
     files: ['*.config.js'],
@@ -59,4 +82,4 @@ export default [
       sourceType: 'commonjs',
     },
   },
-]
+)

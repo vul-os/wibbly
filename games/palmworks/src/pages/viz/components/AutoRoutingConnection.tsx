@@ -8,7 +8,7 @@ import * as THREE from 'three';
  * (see pages/viz/components/objects/Boiler.tsx and friends) — this file only
  * ever reads `.offset`/`.direction` off whichever port PlantScene hands it,
  * regardless of which object type it came from. A handful of object files
- * (the Water*/HeatPump family) use a different port shape (`position` +
+ * (the Water*, HeatPump family) use a different port shape (`position` +
  * string `direction`) for their OWN rendering; if one of those ports is ever
  * passed in here as a `startPort`/`endPort`, `.offset`/`.direction` would be
  * `undefined` at runtime — a pre-existing cross-shape inconsistency in the
@@ -27,23 +27,6 @@ type Vec3Tuple = [number, number, number];
 interface RoutableObject {
   position: Vec3Tuple;
   type: string;
-}
-
-interface ObjectFootprint {
-  position: THREE.Vector3;
-  type: string;
-  footprint: FootprintSpec;
-  blocksGroundPath: (pathStart: THREE.Vector3, pathEnd: THREE.Vector3, buffer?: number) => boolean;
-  getClearanceRadius: () => number;
-  getHeight: () => number;
-}
-
-interface FootprintSpec {
-  radius?: number;
-  width?: number;
-  depth?: number;
-  height: number;
-  clearance: number;
 }
 
 interface RouteSegment {
@@ -241,7 +224,7 @@ const AutoRoutingConnection = ({
     
     // PHASE 1: Start from port
     routePoints.push(startPortPos.clone());
-    let currentPos = startPortPos.clone();
+    const currentPos = startPortPos.clone();
     
     // PHASE 2: Move out from start port, then descend to ground
     if (startIsUp) {
@@ -434,7 +417,7 @@ const AutoRoutingConnection = ({
   // disposes the previous batch whenever this memo produces a new one.
   const segments = useMemo(() => {
     const points = editWaypoints || calculateOptimalRoute;
-    const segments = [];
+    const segments: RouteSegment[] = [];
 
     for (let i = 0; i < points.length - 1; i++) {
       const start = points[i];
