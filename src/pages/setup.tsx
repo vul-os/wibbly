@@ -99,63 +99,76 @@ export default function Setup() {
     setDenied(false);
     setPipelineWarning(null);
 
-    const wibbly = new WibblyInput({
-      calibration,
-      // Same-origin vendored weights — see src/mode.js.
-      trackerConfig: { modelUrl: modelUrl() },
-      frame: {
-        // `ideal`, not `exact`, is applied inside the library: Safari rejects
-        // an over-specified request outright rather than approximating it, so
-        // these are a preference and the library walks a loosening ladder if
-        // the device cannot oblige.
-        width: 640,
-        height: 480,
-        fps: 30,
-        onWarning: (message) => {
-          console.warn('[setup]', message);
-          setPipelineWarning(message);
-        },
-      },
-      onError: (err) => console.error('[setup] pipeline error:', err),
-    });
-
-    // Bind the instance BEFORE awaiting start(), not after. `wibbly.start()`
-    // requests the camera partway through its own await chain — by the time
-    // it resolves, the permission light may already be lit — and the unmount
-    // effect below can only stop whatever `inputRef.current` points to.
-    // Binding late left a real gap: a player who presses "Turn on my camera"
-    // and immediately backs out (or whose device is slow to load the model)
-    // unmounts this component while `wibbly.start()` is still in flight,
-    // `inputRef.current` was still null, and nothing was ever told to release
-    // the stream — the camera stayed on until the tab itself closed.
-    inputRef.current = wibbly;
-
-    wibbly.onPeople((people) => {
-      const person = people[0] ?? null;
-      if (person) setSeenPerson(true);
-      setWarnings(checkFraming(person));
-
-      // Widen the reach envelope while the player is standing there anyway —
-      // this is exactly the "calibration wave" moment §3.5 describes.
-      if (person) calibration.observeReach(PLAYER_ID, person);
-
-      const canvas = canvasRef.current;
-      const video = wibbly.videoElement;
-      if (!canvas || !video) return;
-      const w = video.videoWidth || 640;
-      const h = video.videoHeight || 480;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-      }
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      drawSkeletons(ctx, people, {
-        highlightArm: () => calibration.handednessFor(PLAYER_ID),
-      });
-    });
-
+    // `wibbly` is declared here, outside the try block, but only ever
+    // *assigned* inside it — see below. This function is called
+    // fire-and-forget from onClick (no-misused-promises flags that
+    // attribute-shape separately; see eslint.config.js's documented
+    // narrowing). Before this the try/catch started only after `new
+    // WibblyInput(...)` and its `onPeople` handler were already
+    // constructed: a synchronous throw from either (a malformed
+    // trackerConfig, for instance) escaped both the catch below AND the
+    // caller, since nothing here was awaited — a genuine unhandled promise
+    // rejection instead of the "camera unavailable" failure state this
+    // function exists to produce. Everything that can throw now runs
+    // inside the try.
+    let wibbly: WibblyInput | undefined;
     try {
+      wibbly = new WibblyInput({
+        calibration,
+        // Same-origin vendored weights — see src/mode.js.
+        trackerConfig: { modelUrl: modelUrl() },
+        frame: {
+          // `ideal`, not `exact`, is applied inside the library: Safari rejects
+          // an over-specified request outright rather than approximating it, so
+          // these are a preference and the library walks a loosening ladder if
+          // the device cannot oblige.
+          width: 640,
+          height: 480,
+          fps: 30,
+          onWarning: (message) => {
+            console.warn('[setup]', message);
+            setPipelineWarning(message);
+          },
+        },
+        onError: (err) => console.error('[setup] pipeline error:', err),
+      });
+
+      // Bind the instance BEFORE awaiting start(), not after. `wibbly.start()`
+      // requests the camera partway through its own await chain — by the time
+      // it resolves, the permission light may already be lit — and the unmount
+      // effect below can only stop whatever `inputRef.current` points to.
+      // Binding late left a real gap: a player who presses "Turn on my camera"
+      // and immediately backs out (or whose device is slow to load the model)
+      // unmounts this component while `wibbly.start()` is still in flight,
+      // `inputRef.current` was still null, and nothing was ever told to release
+      // the stream — the camera stayed on until the tab itself closed.
+      inputRef.current = wibbly;
+
+      wibbly.onPeople((people) => {
+        const person = people[0] ?? null;
+        if (person) setSeenPerson(true);
+        setWarnings(checkFraming(person));
+
+        // Widen the reach envelope while the player is standing there anyway —
+        // this is exactly the "calibration wave" moment §3.5 describes.
+        if (person) calibration.observeReach(PLAYER_ID, person);
+
+        const canvas = canvasRef.current;
+        const video = wibbly?.videoElement;
+        if (!canvas || !video) return;
+        const w = video.videoWidth || 640;
+        const h = video.videoHeight || 480;
+        if (canvas.width !== w || canvas.height !== h) {
+          canvas.width = w;
+          canvas.height = h;
+        }
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        drawSkeletons(ctx, people, {
+          highlightArm: () => calibration.handednessFor(PLAYER_ID),
+        });
+      });
+
       await wibbly.start();
       // The unmount effect may have already stopped and cleared this exact
       // instance while start() was in flight — WibblyInput.start() does not
@@ -185,14 +198,16 @@ export default function Setup() {
       setDenied(isPermissionDenial(err));
       setCameraError(err instanceof Error ? err.message : String(err));
       setCamera('failed');
-      try {
-        wibbly.stop();
-      } catch {
-        /* already torn down */
+      if (wibbly) {
+        try {
+          wibbly.stop();
+        } catch {
+          /* already torn down */
+        }
+        // Only clear the ref if it is still ours — an unmount in the meantime
+        // already did this and already stopped this same instance.
+        if (inputRef.current === wibbly) inputRef.current = null;
       }
-      // Only clear the ref if it is still ours — an unmount in the meantime
-      // already did this and already stopped this same instance.
-      if (inputRef.current === wibbly) inputRef.current = null;
     }
   }, [calibration]);
 
@@ -248,7 +263,12 @@ export default function Setup() {
     recordSetup(outcome);
     inputRef.current?.stop();
     inputRef.current = null;
-    navigate('/play');
+    // react-router's NavigateFunction is typed `void | Promise<void>` (the
+    // Promise branch matters only to callers doing view-transition/flushSync
+    // timing) but is documented and used fire-and-forget in react-router's
+    // own examples. There is no rejection path a client-side navigation call
+    // like this produces that would be meaningful to catch.
+    void navigate('/play');
   };
 
   const stepIndex = STEPS.indexOf(step);

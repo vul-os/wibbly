@@ -69,5 +69,25 @@ export default defineConfig([
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    rules: {
+      // Of the 8 no-misused-promises findings surfaced when type-aware
+      // linting was turned on, 7 were "Promise-returning function provided
+      // to attribute" — every one of them either `onClick={() =>
+      // navigate(...)}` (react-router's NavigateFunction is typed `void |
+      // Promise<void>`; react-router's own docs use this exact
+      // fire-and-forget shape, and there is no meaningful rejection a
+      // client-side navigation call produces here to catch) or
+      // `onClick={startCamera}` in setup.tsx, an async function whose own
+      // try/catch (see startCamera's comment) now covers its entire body
+      // and already turns every failure into visible `camera` state — none
+      // was a genuine unhandled-rejection risk. `checksVoidReturn.attributes:
+      // false` is typescript-eslint's own documented option for exactly
+      // this JSX-handler false-positive; the rule's other checks (bare
+      // conditionals, arguments, IIFE callbacks) stay fully active. The 8th
+      // finding, frame-source.ts:419 ("Expected non-Promise value in a
+      // boolean conditional"), is a different shape and is fixed at the
+      // source instead — see that file.
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
+    },
   },
 ])

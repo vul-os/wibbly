@@ -414,9 +414,13 @@ export class WebcamFrameSource implements FrameSource {
   /** play(), with its rejection turned into a warning instead of a throw. */
   private async attemptPlay(el: HTMLVideoElement): Promise<void> {
     try {
-      const p = el.play();
-      // play() returns void on very old implementations; only await a thenable.
-      if (p && typeof (p as Promise<void>).then === 'function') await p;
+      // HTMLMediaElement.play() is typed to always return Promise<void> under
+      // this project's lib target (DOM) — no environment this codebase
+      // actually runs in returns anything else, and no-misused-promises
+      // correctly flagged the previous `if (p && typeof p.then ===
+      // 'function')` guard as testing an object that TypeScript already
+      // knows is unconditionally truthy. Trust the type.
+      await el.play();
     } catch (err) {
       const name = (err as { name?: string } | null)?.name ?? 'Error';
       this.warn(

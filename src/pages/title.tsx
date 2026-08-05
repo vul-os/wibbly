@@ -107,7 +107,9 @@ export default function Title() {
       // First run goes through the explainer: a cold getUserMedia prompt with
       // no context is the worst moment in this app's UX.
       // A 'playable' game always carries a `path` — see catalogue.ts.
-      navigate(setup.seen ? (game.path as string) : '/setup');
+      // void: see the `finish` doc comment in setup.tsx — NavigateFunction's
+      // Promise branch has no meaningful rejection to catch here.
+      void navigate(setup.seen ? (game.path as string) : '/setup');
     },
     [navigate, setup.seen],
   );
@@ -121,7 +123,8 @@ export default function Title() {
       } else if (e.key === 'Enter') {
         start(GAMES[index]);
       } else if (e.key.toLowerCase() === 's') {
-        navigate('/setup');
+        // void: see the `finish` doc comment in setup.tsx.
+        void navigate('/setup');
       } else {
         return;
       }
