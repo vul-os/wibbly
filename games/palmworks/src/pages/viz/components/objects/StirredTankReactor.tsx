@@ -110,9 +110,11 @@ const StirredTankReactor: PlantObjectComponent<StirredTankReactorProps, StirredT
     }
   });
 
+  const GRID_SIZE = gridSize || 1.0;
+
   const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
   const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
@@ -1192,7 +1194,7 @@ const StirredTankReactor: PlantObjectComponent<StirredTankReactorProps, StirredT
       
       {/* Pressure Gauges */}
       {Array.from({ length: 2 }, (_, i) => {
-        const positions = [[0, 2.8, 2.0], [-1.5, 2.0, 1.5]];
+        const positions = [[0, 2.8, 2.0], [-1.5, 2.0, 1.5]] as const;
         return (
           <group key={i} position={positions[i]}>
             <mesh castShadow>

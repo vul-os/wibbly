@@ -52,9 +52,11 @@ const RackSystem: PlantObjectComponent<RackSystemProps, RackSystemPort> = ({ pos
     }
   ];
 
+  const GRID_SIZE = gridSize || 1.0;
+
   const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
   useFrame(() => {
@@ -1269,31 +1271,31 @@ const RackSystem: PlantObjectComponent<RackSystemProps, RackSystemPort> = ({ pos
         
         // Define realistic product categories
         const productTypes = [
-          { 
-            name: 'Electronics', 
-            colors: ['#2C3E50', '#34495E', '#1A1A1A'], 
+          {
+            name: 'Electronics',
+            colors: ['#2C3E50', '#34495E', '#1A1A1A'],
             sizes: [[1.0, 0.3, 0.7], [0.8, 0.25, 0.5], [1.1, 0.35, 0.6]],
             labels: ['FRAGILE', 'ELECTRONICS', 'THIS SIDE UP']
           },
-          { 
-            name: 'Automotive', 
-            colors: ['#8D6E63', '#A1887F', '#795548'], 
+          {
+            name: 'Automotive',
+            colors: ['#8D6E63', '#A1887F', '#795548'],
             sizes: [[1.2, 0.4, 0.8], [1.0, 0.35, 0.7], [1.1, 0.3, 0.9]],
             labels: ['AUTO PARTS', 'HEAVY', 'HANDLE WITH CARE']
           },
-          { 
-            name: 'Textiles', 
-            colors: ['#607D8B', '#78909C', '#546E7A'], 
+          {
+            name: 'Textiles',
+            colors: ['#607D8B', '#78909C', '#546E7A'],
             sizes: [[1.0, 0.6, 0.6], [0.9, 0.5, 0.7], [1.1, 0.4, 0.8]],
             labels: ['TEXTILES', 'SOFT GOODS', 'DRY ONLY']
           },
-          { 
-            name: 'Food_Beverage', 
-            colors: ['#D4AC0D', '#F39C12', '#E67E22'], 
+          {
+            name: 'Food_Beverage',
+            colors: ['#D4AC0D', '#F39C12', '#E67E22'],
             sizes: [[1.2, 0.25, 0.8], [1.0, 0.3, 0.6], [1.1, 0.28, 0.7]],
             labels: ['FOOD GRADE', 'PERISHABLE', 'KEEP COOL']
           }
-        ];
+        ] as const;
         
         const productType = productTypes[Math.floor(Math.random() * productTypes.length)];
         
