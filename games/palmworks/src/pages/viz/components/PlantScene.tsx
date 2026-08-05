@@ -1,4 +1,5 @@
 import React, { forwardRef, useImperativeHandle, useState, useRef } from 'react';
+import type { ThreeEvent } from '@react-three/fiber';
 import Boiler from './objects/Boiler';
 import ControlUnit from './objects/ControlUnit';
 import Valve from './objects/Valve';
@@ -28,18 +29,76 @@ import WaterDrain from './objects/WaterDrain';
 import WaterPump from './objects/WaterPump';
 import HeatPump from './objects/HeatPump';
 
-import AutoRoutingConnection from './AutoRoutingConnection';
+import AutoRoutingConnection, { type RoutePort } from './AutoRoutingConnection';
 
-const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, gridSnap, gridSize, showCoordinates, onManualConnectionStateChange }, ref) => {
-  const [objects, setObjects] = useState([]);
-  const [connections, setConnections] = useState([]);
-  const [connectionStart, setConnectionStart] = useState(null); // Will store { object, port }
-  const [editingConnection, setEditingConnection] = useState(null);
+type Vec3Tuple = [number, number, number];
+
+/**
+ * The port shapes differ across object components (some use `offset` +
+ * a `[x,y,z]` `direction`, others use `position` + a string `direction`
+ * like 'input'/'output' - see objects/types.ts). PlantScene only ever
+ * reads `.id`/`.type`/`.label` off a port itself; everything else is
+ * forwarded opaquely to AutoRoutingConnection, which documents the same
+ * cross-shape inconsistency for the offset/direction fields it reads.
+ */
+interface PlantPort {
+  id: string;
+  type: string;
+  label: string;
+  [key: string]: unknown;
+}
+
+interface PlantObject {
+  id: number;
+  type: string;
+  position: Vec3Tuple;
+  connections: number[];
+}
+
+interface PortData {
+  object: PlantObject;
+  port: PlantPort;
+  position: Vec3Tuple;
+}
+
+interface PlantConnection {
+  id: number;
+  startObjectId: number;
+  endObjectId: number;
+  startPort: PlantPort;
+  endPort: PlantPort;
+  type: string;
+  startPosition: Vec3Tuple;
+  endPosition: Vec3Tuple;
+}
+
+export interface PlantSceneHandle {
+  addObject: (type: string) => void;
+  autoLayout: () => void;
+  clearAll: () => void;
+  setCameraControlsRef: (controlsRef: unknown) => void;
+}
+
+interface PlantSceneProps {
+  mode: string;
+  selectedObjects: number[];
+  setSelectedObjects: React.Dispatch<React.SetStateAction<number[]>>;
+  gridSnap: boolean;
+  gridSize: number;
+  showCoordinates: boolean;
+  onManualConnectionStateChange?: (state: boolean) => void;
+}
+
+const PlantScene = forwardRef<PlantSceneHandle, PlantSceneProps>(({ mode, selectedObjects, setSelectedObjects, gridSnap, gridSize, showCoordinates, onManualConnectionStateChange }, ref) => {
+  const [objects, setObjects] = useState<PlantObject[]>([]);
+  const [connections, setConnections] = useState<PlantConnection[]>([]);
+  const [connectionStart, setConnectionStart] = useState<PortData | null>(null); // Will store { object, port }
+  const [editingConnection, setEditingConnection] = useState<number | null>(null);
   const objectIdRef = useRef(0);
   const connectionIdRef = useRef(0);
-  const cameraControlsRef = useRef();
+  const cameraControlsRef = useRef<unknown>(null);
 
-  const snapToGrid = (value) => {
+  const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
     return Math.round(value / gridSize) * gridSize;
   };
@@ -48,7 +107,7 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
   const GROUND_LEVEL = 0;
 
   // Object height offsets to position bottoms on ground level
-  const OBJECT_GROUND_OFFSETS = {
+  const OBJECT_GROUND_OFFSETS: Record<string, number> = {
     boiler: 1.6,      // Bottom cap extends 1.6 units below center
     pump: 0.8,        // Base plate bottom is 0.8 units below center
     valve: 1.0,       // Valve body base bottom is 1.0 units below center  
@@ -79,36 +138,36 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     heatPump: 0.8 // Heat pump system center is 0.8 units above ground level
   };
 
-  const getObjectGroundPosition = (basePosition, objectType) => {
+  const getObjectGroundPosition = (basePosition: Vec3Tuple, objectType: string): Vec3Tuple => {
     const offset = OBJECT_GROUND_OFFSETS[objectType] || 0;
     return [basePosition[0], GROUND_LEVEL + offset, basePosition[2]];
   };
 
   // Verify if two specific ports can be connected
-  const canPortsConnect = (sourcePortData, targetPortData) => {
+  const canPortsConnect = (sourcePortData: PortData, targetPortData: PortData): boolean => {
     const { port: sourcePort } = sourcePortData;
     const { port: targetPort } = targetPortData;
-    
+
     // Must be same type
     if (sourcePort.type !== targetPort.type) {
       return false;
     }
-    
+
     // Prevent connecting port to itself
     if (sourcePortData.object.id === targetPortData.object.id && sourcePort.id === targetPort.id) {
       return false;
     }
-    
+
     return true;
   };
 
-  const handlePortClick = (port, objectPosition, objectId, event) => {
+  const handlePortClick = (port: PlantPort, objectPosition: Vec3Tuple, objectId: number, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
-    
+
     const clickedObject = objects.find(obj => obj.id === objectId);
     if (!clickedObject) return;
-    
-    const portData = {
+
+    const portData: PortData = {
       object: clickedObject,
       port: port,
       position: objectPosition
@@ -117,7 +176,7 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     // If we have a connection start, try to connect to this port
     if (connectionStart) {
       if (canPortsConnect(connectionStart, portData)) {
-        const newConnection = {
+        const newConnection: PlantConnection = {
           id: connectionIdRef.current++,
           startObjectId: connectionStart.object.id,
           endObjectId: objectId,
@@ -127,13 +186,13 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
           startPosition: connectionStart.object.position,
           endPosition: clickedObject.position
         };
-        
+
         setConnections(prev => [...prev, newConnection]);
         console.log(`Connected ${connectionStart.port.type} port: ${connectionStart.port.label} -> ${port.label}`);
       } else {
         console.warn(`Cannot connect ${connectionStart.port.type} port to ${port.type} port`);
       }
-      
+
       // Clear connection start
       setConnectionStart(null);
       setSelectedObjects([]);
@@ -145,7 +204,7 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     }
   };
 
-  const handleObjectClick = (objectId, event) => {
+  const handleObjectClick = (objectId: number, event?: ThreeEvent<MouseEvent>) => {
     event?.stopPropagation();
     
     const clickedObject = objects.find(obj => obj.id === objectId);
@@ -174,24 +233,24 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     }
   };
 
-  const handleObjectDrag = (objectId, newPosition) => {
+  const handleObjectDrag = (objectId: number, newPosition: Vec3Tuple) => {
     if (mode === 'select') {
       const obj = objects.find(o => o.id === objectId);
       if (!obj) return;
-      
+
       // Apply grid snapping to the new position
-      const basePosition = [
+      const basePosition: Vec3Tuple = [
         snapToGrid(newPosition[0]),
         GROUND_LEVEL,
         snapToGrid(newPosition[2])
       ];
-      
+
       const snappedPosition = getObjectGroundPosition(basePosition, obj.type);
-      
+
       setObjects(prev => prev.map(obj =>
         obj.id === objectId ? { ...obj, position: snappedPosition } : obj
       ));
-      
+
       // Update connections that involve this object (auto-reroute)
       setConnections(prev => prev.map(conn => {
         if (conn.startObjectId === objectId) {
@@ -204,9 +263,9 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     }
   };
 
-  const handleConnectionClick = (connectionId, event) => {
+  const handleConnectionClick = (connectionId: number, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
-    
+
     if (mode === 'delete') {
       setConnections(prev => prev.filter(conn => conn.id !== connectionId));
       setEditingConnection(null);
@@ -225,14 +284,15 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
     }
   }, [mode]);
 
-  const renderObject = (obj) => {
-    const isConnecting = connectionStart && connectionStart.object.id === obj.id;
-    
+  const renderObject = (obj: PlantObject) => {
+    const isConnecting = Boolean(connectionStart && connectionStart.object.id === obj.id);
+
     const commonProps = {
       position: obj.position,
-      onClick: (e) => handleObjectClick(obj.id, e),
-      onDrag: (pos) => handleObjectDrag(obj.id, pos),
-      onPortClick: (port, position, e) => handlePortClick(port, position, obj.id, e),
+      onClick: (e: unknown) => handleObjectClick(obj.id, e as ThreeEvent<MouseEvent>),
+      onDrag: (pos: Vec3Tuple) => handleObjectDrag(obj.id, pos),
+      onPortClick: (port: unknown, position: Vec3Tuple | undefined, e: unknown) =>
+        handlePortClick(port as PlantPort, position ?? obj.position, obj.id, e as ThreeEvent<MouseEvent>),
       isSelected: selectedObjects.includes(obj.id) || isConnecting,
       isDraggable: mode === 'select',
       gridSnap,
@@ -310,12 +370,12 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
       const rawX = (Math.random() - 0.5) * 10;
       const rawZ = (Math.random() - 0.5) * 10;
       
-      const basePosition = [
+      const basePosition: Vec3Tuple = [
         snapToGrid(rawX),
         GROUND_LEVEL,
         snapToGrid(rawZ)
       ];
-      
+
       const position = getObjectGroundPosition(basePosition, type);
       
       const newObject = {
@@ -339,12 +399,12 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
         const rawX = Math.cos(angle) * radius;
         const rawZ = Math.sin(angle) * radius;
         
-        const basePosition = [
+        const basePosition: Vec3Tuple = [
           snapToGrid(rawX),
           GROUND_LEVEL,
           snapToGrid(rawZ)
         ];
-        
+
         return {
           ...obj,
           position: getObjectGroundPosition(basePosition, obj.type)
@@ -380,12 +440,18 @@ const PlantScene = forwardRef(({ mode, selectedObjects, setSelectedObjects, grid
             key={connection.id}
             startPosition={connection.startPosition}
             endPosition={connection.endPosition}
-            startPort={connection.startPort}
-            endPort={connection.endPort}
+            // AutoRoutingConnection only ever reads .offset/.direction off
+            // these (see its own RoutePort docstring) - a handful of object
+            // families use a different port shape (position + string
+            // direction) for their own rendering, so this cast can be
+            // wrong for those at runtime; pre-existing cross-shape
+            // inconsistency, not introduced or fixed here.
+            startPort={connection.startPort as unknown as RoutePort}
+            endPort={connection.endPort as unknown as RoutePort}
             type={connection.type}
             objects={objects}
             isEditing={editingConnection === connection.id}
-            onClick={(e) => handleConnectionClick(connection.id, e)}
+            onClick={(e) => handleConnectionClick(connection.id, e as ThreeEvent<MouseEvent>)}
           />
         );
       })}

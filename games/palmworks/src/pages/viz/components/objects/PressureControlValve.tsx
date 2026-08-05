@@ -1,13 +1,27 @@
 import React, { useRef, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
+import type { PlantObjectComponent, PlantObjectProps } from './types';
 
-const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
-  const meshRef = useRef();
-  const groupRef = useRef();
+interface PressureControlValveProps extends PlantObjectProps {
+  position: [number, number, number];
+}
+
+interface PressureControlValvePort {
+  id: string;
+  type: 'electric' | 'liquid' | 'gas';
+  label: string;
+  offset: [number, number, number];
+  direction: [number, number, number];
+  required: boolean;
+}
+
+const PressureControlValve: PlantObjectComponent<PressureControlValveProps, PressureControlValvePort> = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [hoveredPort, setHoveredPort] = useState(null);
+  const [hoveredPort, setHoveredPort] = useState<string | null>(null);
   const [, setCurrentPressure] = useState(8.5);
   const [setpoint] = useState(10.0);
   const [valvePosition, setValvePosition] = useState(45); // 0-100% open
@@ -28,7 +42,7 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
   };
 
   // Define connection ports for comprehensive I/O
-  const connectionPorts = [
+  const connectionPorts: PressureControlValvePort[] = [
     {
       id: 'process_inlet',
       type: 'liquid',
@@ -87,9 +101,11 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
     }
   ];
 
-  const snapToGrid = (value) => {
+  const GRID_SIZE = gridSize || 1.0;
+
+  const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
   // Simulate realistic pressure control valve operation
@@ -123,12 +139,13 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
 
   useFrame(() => {
     if (meshRef.current) {
+      const material = meshRef.current.material as THREE.MeshPhongMaterial;
       if (isSelected) {
-        meshRef.current.material.emissive.setHex(0x221122);
+        material.emissive.setHex(0x221122);
       } else if (hovered && isDraggable) {
-        meshRef.current.material.emissive.setHex(0x111111);
+        material.emissive.setHex(0x111111);
       } else {
-        meshRef.current.material.emissive.setHex(0x000000);
+        material.emissive.setHex(0x000000);
       }
     }
     
@@ -138,39 +155,39 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
     }
   });
 
-  const handlePointerDown = (event) => {
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!isDraggable) {
       onClick?.(event);
       return;
     }
-    
+
     event.stopPropagation();
     let hasMovedMouse = false;
     gl.domElement.style.cursor = 'grabbing';
-    
-    const handlePointerMove = (moveEvent) => {
+
+    const handlePointerMove = (moveEvent: MouseEvent) => {
       if (!onDrag) return;
-      
+
       if (!hasMovedMouse) {
         hasMovedMouse = true;
         setIsDragging(true);
       }
-      
+
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
-      
+
       mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
       mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
-      
+
       raycaster.setFromCamera(mouse, camera);
-      
+
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
       const intersection = new THREE.Vector3();
-      
+
       if (raycaster.ray.intersectPlane(plane, intersection)) {
         const snappedX = snapToGrid(intersection.x);
         const snappedZ = snapToGrid(intersection.z);
-        const newPosition = [snappedX, position[1], snappedZ];
+        const newPosition: [number, number, number] = [snappedX, position[1], snappedZ];
         onDrag(newPosition);
       }
     };
@@ -179,34 +196,34 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       if (!hasMovedMouse) {
         setIsDragging(false);
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-        
+
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove);
-        document.removeEventListener('touchend', handlePointerUp);
-        
+        document.removeEventListener('touchmove', handlePointerMove as EventListener);
+        document.removeEventListener('touchend', handlePointerUp as EventListener);
+
         onClick?.(event);
         return;
       }
-      
+
       setIsDragging(false);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-      
+
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove);
-      document.removeEventListener('touchend', handlePointerUp);
+      document.removeEventListener('touchmove', handlePointerMove as EventListener);
+      document.removeEventListener('touchend', handlePointerUp as EventListener);
     };
 
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove);
-    document.addEventListener('touchend', handlePointerUp);
-    
-    event.preventDefault?.();
+    document.addEventListener('touchmove', handlePointerMove as EventListener);
+    document.addEventListener('touchend', handlePointerUp as EventListener);
+
+    (event as unknown as { preventDefault?: () => void }).preventDefault?.();
   };
 
-  const handlePortClick = (port, event) => {
+  const handlePortClick = (port: PressureControlValvePort, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     if (onPortClick) {
       onPortClick(port, position, event);
@@ -228,7 +245,7 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
     }
   };
 
-  const handlePortHover = (portId) => {
+  const handlePortHover = (portId: string) => {
     setHoveredPort(portId);
     gl.domElement.style.cursor = 'pointer';
   };
@@ -238,7 +255,7 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
     gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
   };
 
-  const getPortColor = (port) => {
+  const getPortColor = (port: PressureControlValvePort): string => {
     switch (port.type) {
       case 'electric': return '#FF6B35';
       case 'liquid': return '#4A90E2';
@@ -272,14 +289,17 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       {/* Primary Valve Body - Cast Steel */}
       <mesh ref={meshRef} castShadow receiveShadow>
         <boxGeometry args={[2.8, 1.6, 1.4]} />
-        <meshPhongMaterial 
-          color="#7A7A7A" 
-          specular="#AAAAAA" 
+        {/* `roughness` isn't a MeshPhongMaterial property (Phong uses
+            specular/shininess, not the PBR roughness/metalness params) -
+            three.js silently ignores unknown material props, so this was
+            already a no-op. Dropped rather than typed around. */}
+        <meshPhongMaterial
+          color="#7A7A7A"
+          specular="#AAAAAA"
           shininess={30}
-          roughness={0.8}
         />
       </mesh>
-      
+
       {/* Valve Body Top Cover */}
       <mesh position={[0, 0.9, 0]} castShadow>
         <boxGeometry args={[2.6, 0.2, 1.2]} />
@@ -297,37 +317,37 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       {/* Inlet Flange Assembly */}
       <group position={[-1.6, 0, 0]}>
         {/* Main Flange */}
-        <mesh castShadow>
-          <cylinderGeometry args={[0.8, 0.8, 0.25, 20]} rotation={[0, 0, Math.PI/2]} />
+        <mesh rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.8, 0.8, 0.25, 20]} />
           <meshPhongMaterial color="#5A5A5A" specular="#888888" shininess={40} />
         </mesh>
         {/* Flange Face */}
-        <mesh position={[-0.15, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.82, 0.82, 0.05, 20]} rotation={[0, 0, Math.PI/2]} />
+        <mesh position={[-0.15, 0, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.82, 0.82, 0.05, 20]} />
           <meshPhongMaterial color="#4A4A4A" specular="#777777" shininess={50} />
         </mesh>
         {/* Inner Bore */}
-        <mesh position={[-0.1, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.4, 0.4, 0.3, 16]} rotation={[0, 0, Math.PI/2]} />
+        <mesh position={[-0.1, 0, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.4, 0.4, 0.3, 16]} />
           <meshPhongMaterial color="#3A3A3A" />
         </mesh>
       </group>
-      
+
       {/* Outlet Flange Assembly */}
       <group position={[1.6, 0, 0]}>
         {/* Main Flange */}
-        <mesh castShadow>
-          <cylinderGeometry args={[0.8, 0.8, 0.25, 20]} rotation={[0, 0, Math.PI/2]} />
+        <mesh rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.8, 0.8, 0.25, 20]} />
           <meshPhongMaterial color="#5A5A5A" specular="#888888" shininess={40} />
         </mesh>
         {/* Flange Face */}
-        <mesh position={[0.15, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.82, 0.82, 0.05, 20]} rotation={[0, 0, Math.PI/2]} />
+        <mesh position={[0.15, 0, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.82, 0.82, 0.05, 20]} />
           <meshPhongMaterial color="#4A4A4A" specular="#777777" shininess={50} />
         </mesh>
         {/* Inner Bore */}
-        <mesh position={[0.1, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.4, 0.4, 0.3, 16]} rotation={[0, 0, Math.PI/2]} />
+        <mesh position={[0.1, 0, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.4, 0.4, 0.3, 16]} />
           <meshPhongMaterial color="#3A3A3A" />
         </mesh>
       </group>
@@ -341,29 +361,29 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
               <group key={`bolt-${i}-${j}`}>
                 {/* Bolt Head */}
                 <mesh position={[
-                  xPos + (i === 0 ? -0.05 : 0.05), 
-                  Math.cos(angle) * 0.6, 
+                  xPos + (i === 0 ? -0.05 : 0.05),
+                  Math.cos(angle) * 0.6,
                   Math.sin(angle) * 0.6
-                ]} castShadow>
-                  <cylinderGeometry args={[0.04, 0.04, 0.08, 6]} rotation={[0, 0, Math.PI/2]} />
+                ]} rotation={[0, 0, Math.PI/2]} castShadow>
+                  <cylinderGeometry args={[0.04, 0.04, 0.08, 6]} />
                   <meshPhongMaterial color="#2A2A2A" specular="#666666" shininess={60} />
                 </mesh>
                 {/* Bolt Shaft */}
                 <mesh position={[
-                  xPos, 
-                  Math.cos(angle) * 0.6, 
+                  xPos,
+                  Math.cos(angle) * 0.6,
                   Math.sin(angle) * 0.6
-                ]} castShadow>
-                  <cylinderGeometry args={[0.025, 0.025, 0.3, 12]} rotation={[0, 0, Math.PI/2]} />
+                ]} rotation={[0, 0, Math.PI/2]} castShadow>
+                  <cylinderGeometry args={[0.025, 0.025, 0.3, 12]} />
                   <meshPhongMaterial color="#333333" />
                 </mesh>
                 {/* Washer */}
                 <mesh position={[
-                  xPos + (i === 0 ? -0.08 : 0.08), 
-                  Math.cos(angle) * 0.6, 
+                  xPos + (i === 0 ? -0.08 : 0.08),
+                  Math.cos(angle) * 0.6,
                   Math.sin(angle) * 0.6
-                ]} castShadow>
-                  <cylinderGeometry args={[0.035, 0.035, 0.02, 16]} rotation={[0, 0, Math.PI/2]} />
+                ]} rotation={[0, 0, Math.PI/2]} castShadow>
+                  <cylinderGeometry args={[0.035, 0.035, 0.02, 16]} />
                   <meshPhongMaterial color="#4A4A4A" specular="#777777" shininess={40} />
                 </mesh>
               </group>
@@ -395,14 +415,16 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       {/* Main Actuator Cylinder */}
       <mesh position={[0, 2.2, 0]} castShadow>
         <cylinderGeometry args={[0.9, 0.9, 1.4, 24]} />
-        <meshPhongMaterial 
-          color="#8A8A8A" 
-          specular="#BBBBBB" 
+        {/* `metalness` isn't a MeshPhongMaterial property (that's a PBR
+            param); three.js silently ignores unknown material props, so
+            this was already a no-op. Dropped rather than typed around. */}
+        <meshPhongMaterial
+          color="#8A8A8A"
+          specular="#BBBBBB"
           shininess={50}
-          metalness={0.3}
         />
       </mesh>
-      
+
       {/* Actuator End Caps */}
       <mesh position={[0, 2.9, 0]} castShadow>
         <cylinderGeometry args={[0.95, 0.95, 0.15, 24]} />
@@ -417,14 +439,13 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       {/* Actuator Piston Rod */}
       <mesh position={[0, 1.0, 0]} castShadow>
         <cylinderGeometry args={[0.12, 0.12, 0.8, 16]} />
-        <meshPhongMaterial 
-          color="#4A4A4A" 
-          specular="#888888" 
+        <meshPhongMaterial
+          color="#4A4A4A"
+          specular="#888888"
           shininess={80}
-          metalness={0.7}
         />
       </mesh>
-      
+
       {/* Piston Rod Seal Gland */}
       <mesh position={[0, 1.4, 0]} castShadow>
         <cylinderGeometry args={[0.2, 0.2, 0.2, 16]} />
@@ -436,14 +457,13 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       {/* Digital Positioner Housing */}
       <mesh position={[0, 2.8, 0.8]} castShadow>
         <boxGeometry args={[1.4, 1.0, 0.6]} />
-        <meshPhongMaterial 
-          color="#2A2A3A" 
-          specular="#555566" 
+        <meshPhongMaterial
+          color="#2A2A3A"
+          specular="#555566"
           shininess={60}
-          metalness={0.1}
         />
       </mesh>
-      
+
       {/* Positioner Front Panel */}
       <mesh position={[0, 2.8, 1.12]} castShadow>
         <boxGeometry args={[1.35, 0.95, 0.04]} />
@@ -477,22 +497,24 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       </mesh>
       
       {/* Control Button Array */}
-      {[
-        { pos: [-0.5, 2.6, 1.14], color: '#DC2626', label: 'STOP', active: false },
-        { pos: [-0.2, 2.6, 1.14], color: '#10B981', label: 'AUTO', active: !manualMode },
-        { pos: [0.1, 2.6, 1.14], color: '#F59E0B', label: 'MANUAL', active: manualMode },
-        { pos: [0.4, 2.6, 1.14], color: '#3B82F6', label: 'RESET', active: false }
-      ].map((button, i) => (
+      {(
+        [
+          { pos: [-0.5, 2.6, 1.14], color: '#DC2626', label: 'STOP', active: false },
+          { pos: [-0.2, 2.6, 1.14], color: '#10B981', label: 'AUTO', active: !manualMode },
+          { pos: [0.1, 2.6, 1.14], color: '#F59E0B', label: 'MANUAL', active: manualMode },
+          { pos: [0.4, 2.6, 1.14], color: '#3B82F6', label: 'RESET', active: false }
+        ] as const
+      ).map((button, i) => (
         <group key={`button-group-${i}`}>
           {/* Button Housing */}
-          <mesh position={button.pos} castShadow>
-            <cylinderGeometry args={[0.05, 0.05, 0.03, 16]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={button.pos} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.03, 16]} />
             <meshPhongMaterial color="#3A3A3A" specular="#666666" shininess={50} />
           </mesh>
           {/* Button Top */}
-          <mesh position={[button.pos[0], button.pos[1], button.pos[2] + 0.018]} castShadow>
-            <cylinderGeometry args={[0.04, 0.04, 0.015, 16]} rotation={[Math.PI/2, 0, 0]} />
-            <meshPhongMaterial 
+          <mesh position={[button.pos[0], button.pos[1], button.pos[2] + 0.018]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.04, 0.04, 0.015, 16]} />
+            <meshPhongMaterial
               color={button.color}
               emissive={button.active ? button.color : '#000000'}
               emissiveIntensity={button.active ? 0.4 : 0}
@@ -502,23 +524,25 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
           </mesh>
         </group>
       ))}
-      
+
       {/* Status LED Array with Housings */}
-      {[
-        { pos: [-0.5, 2.9, 1.14], color: '#DC2626', active: highAlarm, label: 'HI-ALARM' },
-        { pos: [-0.2, 2.9, 1.14], color: '#F59E0B', active: lowAlarm, label: 'LO-ALARM' },
-        { pos: [0.1, 2.9, 1.14], color: '#10B981', active: controlActive, label: 'READY' },
-        { pos: [0.4, 2.9, 1.14], color: '#3B82F6', active: !manualMode, label: 'AUTO' }
-      ].map((led, i) => (
+      {(
+        [
+          { pos: [-0.5, 2.9, 1.14], color: '#DC2626', active: highAlarm, label: 'HI-ALARM' },
+          { pos: [-0.2, 2.9, 1.14], color: '#F59E0B', active: lowAlarm, label: 'LO-ALARM' },
+          { pos: [0.1, 2.9, 1.14], color: '#10B981', active: controlActive, label: 'READY' },
+          { pos: [0.4, 2.9, 1.14], color: '#3B82F6', active: !manualMode, label: 'AUTO' }
+        ] as const
+      ).map((led, i) => (
         <group key={`led-group-${i}`}>
           {/* LED Housing */}
-          <mesh position={led.pos} castShadow>
-            <cylinderGeometry args={[0.03, 0.03, 0.025, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={led.pos} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.03, 0.03, 0.025, 12]} />
             <meshPhongMaterial color="#2A2A2A" />
           </mesh>
           {/* LED Lens */}
-          <mesh position={[led.pos[0], led.pos[1], led.pos[2] + 0.015]} castShadow>
-            <cylinderGeometry args={[0.025, 0.025, 0.01, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={[led.pos[0], led.pos[1], led.pos[2] + 0.015]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.025, 0.025, 0.01, 12]} />
             <meshPhongMaterial 
               color={led.color}
               emissive={led.active ? led.color : '#000000'}
@@ -589,8 +613,8 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       
       {/* Cable Glands */}
       {[-0.3, 0, 0.3].map((xPos, i) => (
-        <mesh key={`gland-${i}`} position={[xPos, 2.4, 1.25]} castShadow>
-          <cylinderGeometry args={[0.04, 0.04, 0.1, 12]} rotation={[Math.PI/2, 0, 0]} />
+        <mesh key={`gland-${i}`} position={[xPos, 2.4, 1.25]} rotation={[Math.PI/2, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.04, 0.04, 0.1, 12]} />
           <meshPhongMaterial color="#2A2A2A" specular="#555555" shininess={40} />
         </mesh>
       ))}
@@ -600,14 +624,13 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       {/* Valve Mounting Skid */}
       <mesh position={[0, -1.0, 0]} castShadow>
         <boxGeometry args={[3.5, 0.25, 2.0]} />
-        <meshPhongMaterial 
-          color="#5A5A5A" 
-          specular="#888888" 
+        <meshPhongMaterial
+          color="#5A5A5A"
+          specular="#888888"
           shininess={30}
-          roughness={0.7}
         />
       </mesh>
-      
+
       {/* Mounting Brackets */}
       {[-1.5, 1.5].map((xPos, i) => (
         <mesh key={`bracket-${i}`} position={[xPos, -0.7, 0]} castShadow>
@@ -647,9 +670,9 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       </mesh>
       
       {/* Flow Direction Indicator */}
-      <mesh position={[0, 0.3, 0.72]} castShadow>
-        <coneGeometry args={[0.12, 0.3, 4]} rotation={[0, 0, -Math.PI/2]} />
-        <meshPhongMaterial 
+      <mesh position={[0, 0.3, 0.72]} rotation={[0, 0, -Math.PI/2]} castShadow>
+        <coneGeometry args={[0.12, 0.3, 4]} />
+        <meshPhongMaterial
           color="#FFD700" 
           emissive="#FFD700" 
           emissiveIntensity={0.2}
@@ -755,8 +778,8 @@ const PressureControlValve = ({ position, onClick, onDrag, isSelected, isDraggab
       </group>
       
       {/* Position Scale */}
-      <mesh position={[0, 0.8, 0.82]} castShadow>
-        <cylinderGeometry args={[0.25, 0.25, 0.02, 32]} rotation={[Math.PI/2, 0, 0]} />
+      <mesh position={[0, 0.8, 0.82]} rotation={[Math.PI/2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.25, 0.25, 0.02, 32]} />
         <meshPhongMaterial color="#E8E8E8" specular="#FFFFFF" shininess={80} />
       </mesh>
       

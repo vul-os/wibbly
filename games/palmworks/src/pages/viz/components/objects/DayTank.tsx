@@ -24,9 +24,9 @@ const DayTank = ({ position, selected, onClick, showCoordinates }: DayTankProps)
 
   return (
     <group 
-      ref={groupRef} 
-      position={position} 
-      onClick={onClick}
+      ref={groupRef}
+      position={position}
+      onClick={(e) => onClick?.(e)}
       onPointerOver={(e) => {
         e.stopPropagation();
         document.body.style.cursor = 'pointer';

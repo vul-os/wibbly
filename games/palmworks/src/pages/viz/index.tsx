@@ -1,8 +1,10 @@
 import React, { Suspense, useState, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import type { LucideIcon } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import PlantScene from './components/PlantScene';
+import PlantScene, { type PlantSceneHandle } from './components/PlantScene';
 import {
   Zap,
   Cog,
@@ -37,23 +39,38 @@ import {
   Droplets
 } from 'lucide-react';
 
+interface PlantComponentDef {
+  type: string;
+  label: string;
+  icon: LucideIcon;
+  color: string;
+  description: string;
+  keywords: string[];
+}
+
+interface CategoryInfo {
+  icon: LucideIcon;
+  color: string;
+  description: string;
+}
+
 const PalmworksViz = () => {
   const [currentMode, setCurrentMode] = useState('select');
-  const [selectedObjects, setSelectedObjects] = useState([]);
+  const [selectedObjects, setSelectedObjects] = useState<number[]>([]);
   const [gridSnap, setGridSnap] = useState(true);
   const [gridSize, setGridSize] = useState(1.0);
   const [showCoordinates, setShowCoordinates] = useState(true);
   const [showCADControls, setShowCADControls] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTooltip, setActiveTooltip] = useState(null);
+  const [activeTooltip, setActiveTooltip] = useState<PlantComponentDef | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const sceneRef = useRef();
-  const cameraControlsRef = useRef();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const sceneRef = useRef<PlantSceneHandle>(null);
+  const cameraControlsRef = useRef<OrbitControlsImpl>(null);
 
   // Categorized plant objects - expandable to 1000s
-  const componentCategories = {
+  const componentCategories: Record<string, PlantComponentDef[]> = {
     'Processing Equipment': [
     { 
       type: 'boiler', 
@@ -289,7 +306,7 @@ const PalmworksViz = () => {
   };
 
   // Category information with icons and colors
-  const categoryInfo = {
+  const categoryInfo: Record<string, CategoryInfo> = {
     'Processing Equipment': {
       icon: Factory,
       color: '#FF9800',
@@ -319,13 +336,13 @@ const PalmworksViz = () => {
     { value: 5.0, label: '5.0m' }
   ];
 
-  const addObject = (type) => {
+  const addObject = (type: string) => {
     if (sceneRef.current) {
       sceneRef.current.addObject(type);
     }
   };
 
-  const setMode = (mode) => {
+  const setMode = (mode: string) => {
     setCurrentMode(mode);
     setSelectedObjects([]);
   };
@@ -343,8 +360,8 @@ const PalmworksViz = () => {
     setSelectedObjects([]);
   };
 
-  const handleTooltipShow = (component, event) => {
-    const rect = event.target.getBoundingClientRect();
+  const handleTooltipShow = (component: PlantComponentDef, event: React.MouseEvent<HTMLElement>) => {
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
     setTooltipPosition({
       x: rect.left + rect.width / 2,
       y: rect.top - 10
@@ -439,11 +456,16 @@ const PalmworksViz = () => {
             shadow-mapSize-height={2048}
           />
 
-          {/* Enhanced Grid with snap indicators */}
+          {/* Enhanced Grid with snap indicators.
+              `size`/`color` aren't real GridProps (drei's Grid takes
+              cellSize/cellColor - see GridMaterialType in Grid.d.ts), so
+              the grid's cell size and color never actually followed
+              gridSize/gridSnap; only sectionColor (a real prop) did.
+              Renamed to the real props, same values. */}
           <Grid
             infiniteGrid
-            size={gridSize}
-            color={gridSnap ? "#666666" : "#444444"}
+            cellSize={gridSize}
+            cellColor={gridSnap ? "#666666" : "#444444"}
             sectionColor={gridSnap ? "#888888" : "#666666"}
             fadeDistance={50}
             fadeStrength={1}

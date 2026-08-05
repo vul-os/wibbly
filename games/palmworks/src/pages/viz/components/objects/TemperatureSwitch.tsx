@@ -1,13 +1,27 @@
 import React, { useRef, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
+import type { PlantObjectComponent, PlantObjectProps } from './types';
 
-const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
-  const meshRef = useRef();
-  const groupRef = useRef();
+interface TemperatureSwitchProps extends PlantObjectProps {
+  position: [number, number, number];
+}
+
+interface TemperatureSwitchPort {
+  id: string;
+  type: 'electric' | 'liquid' | 'gas';
+  label: string;
+  offset: [number, number, number];
+  direction: [number, number, number];
+  required: boolean;
+}
+
+const TemperatureSwitch: PlantObjectComponent<TemperatureSwitchProps, TemperatureSwitchPort> = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [hoveredPort, setHoveredPort] = useState(null);
+  const [hoveredPort, setHoveredPort] = useState<string | null>(null);
   const [, setCurrentTemp] = useState(67.3);
   const [highAlarm, setHighAlarm] = useState(false);
   const [lowAlarm, setLowAlarm] = useState(false);
@@ -26,7 +40,7 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
   };
 
   // Define connection ports for the industrial temperature controller
-  const connectionPorts = [
+  const connectionPorts: TemperatureSwitchPort[] = [
     {
       id: 'power_main_120vac',
       type: 'electric',
@@ -101,9 +115,11 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
     }
   ];
 
-  const snapToGrid = (value) => {
+  const GRID_SIZE = gridSize || 1.0;
+
+  const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
   // Simulate realistic temperature monitoring
@@ -136,12 +152,13 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
 
   useFrame(() => {
     if (meshRef.current) {
+      const material = meshRef.current.material as THREE.MeshLambertMaterial;
       if (isSelected) {
-        meshRef.current.material.emissive.setHex(0x444444);
+        material.emissive.setHex(0x444444);
       } else if (hovered && isDraggable) {
-        meshRef.current.material.emissive.setHex(0x222222);
+        material.emissive.setHex(0x222222);
       } else {
-        meshRef.current.material.emissive.setHex(0x000000);
+        material.emissive.setHex(0x000000);
       }
     }
     
@@ -152,39 +169,39 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
     }
   });
 
-  const handlePointerDown = (event) => {
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!isDraggable) {
       onClick?.(event);
       return;
     }
-    
+
     event.stopPropagation();
     let hasMovedMouse = false;
     gl.domElement.style.cursor = 'grabbing';
-    
-    const handlePointerMove = (moveEvent) => {
+
+    const handlePointerMove = (moveEvent: MouseEvent) => {
       if (!onDrag) return;
-      
+
       if (!hasMovedMouse) {
         hasMovedMouse = true;
         setIsDragging(true);
       }
-      
+
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
-      
+
       mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
       mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
-      
+
       raycaster.setFromCamera(mouse, camera);
-      
+
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
       const intersection = new THREE.Vector3();
-      
+
       if (raycaster.ray.intersectPlane(plane, intersection)) {
         const snappedX = snapToGrid(intersection.x);
         const snappedZ = snapToGrid(intersection.z);
-        const newPosition = [snappedX, position[1], snappedZ];
+        const newPosition: [number, number, number] = [snappedX, position[1], snappedZ];
         onDrag(newPosition);
       }
     };
@@ -193,34 +210,34 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
       if (!hasMovedMouse) {
         setIsDragging(false);
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-        
+
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove);
-        document.removeEventListener('touchend', handlePointerUp);
-        
+        document.removeEventListener('touchmove', handlePointerMove as EventListener);
+        document.removeEventListener('touchend', handlePointerUp as EventListener);
+
         onClick?.(event);
         return;
       }
-      
+
       setIsDragging(false);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-      
+
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove);
-      document.removeEventListener('touchend', handlePointerUp);
+      document.removeEventListener('touchmove', handlePointerMove as EventListener);
+      document.removeEventListener('touchend', handlePointerUp as EventListener);
     };
 
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove);
-    document.addEventListener('touchend', handlePointerUp);
-    
-    event.preventDefault?.();
+    document.addEventListener('touchmove', handlePointerMove as EventListener);
+    document.addEventListener('touchend', handlePointerUp as EventListener);
+
+    (event as unknown as { preventDefault?: () => void }).preventDefault?.();
   };
 
-  const handlePortClick = (port, event) => {
+  const handlePortClick = (port: TemperatureSwitchPort, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     if (onPortClick) {
       onPortClick(port, position, event);
@@ -242,7 +259,7 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
     }
   };
 
-  const handlePortHover = (portId) => {
+  const handlePortHover = (portId: string) => {
     setHoveredPort(portId);
     gl.domElement.style.cursor = 'pointer';
   };
@@ -252,7 +269,7 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
     gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
   };
 
-  const getPortColor = (port) => {
+  const getPortColor = (port: TemperatureSwitchPort): string => {
     switch (port.type) {
       case 'electric': return '#FF5722';
       case 'liquid': return '#2196F3';
@@ -298,9 +315,11 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
       </mesh>
       
       {/* Enclosure Mounting Flanges */}
-      {[
-        [-0.6, 0.9, 0], [0.6, 0.9, 0], [-0.6, -0.9, 0], [0.6, -0.9, 0]
-      ].map((pos, i) => (
+      {(
+        [
+          [-0.6, 0.9, 0], [0.6, 0.9, 0], [-0.6, -0.9, 0], [0.6, -0.9, 0]
+        ] as const
+      ).map((pos, i) => (
         <mesh key={`flange-${i}`} position={pos} castShadow>
           <boxGeometry args={[0.2, 0.2, 0.6]} />
           <meshLambertMaterial color="#95A5A6" />
@@ -308,11 +327,13 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
       ))}
       
       {/* Mounting Bolt Holes */}
-      {[
-        [-0.6, 0.9, 0.3], [0.6, 0.9, 0.3], [-0.6, -0.9, 0.3], [0.6, -0.9, 0.3]
-      ].map((pos, i) => (
-        <mesh key={`bolt-hole-${i}`} position={pos} castShadow>
-          <cylinderGeometry args={[0.03, 0.03, 0.08, 8]} rotation={[Math.PI/2, 0, 0]} />
+      {(
+        [
+          [-0.6, 0.9, 0.3], [0.6, 0.9, 0.3], [-0.6, -0.9, 0.3], [0.6, -0.9, 0.3]
+        ] as const
+      ).map((pos, i) => (
+        <mesh key={`bolt-hole-${i}`} position={pos} rotation={[Math.PI/2, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.03, 0.03, 0.08, 8]} />
           <meshLambertMaterial color="#2C3E50" />
         </mesh>
       ))}
@@ -383,21 +404,23 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
           =========================================== */}
       
       {/* Function Buttons - Professional Layout */}
-      {[
-        { pos: [-0.25, 0.15, 0.34], label: 'MENU', color: '#34495E' },
-        { pos: [-0.08, 0.15, 0.34], label: 'UP', color: '#2ECC71' },
-        { pos: [0.08, 0.15, 0.34], label: 'DOWN', color: '#E74C3C' },
-        { pos: [0.25, 0.15, 0.34], label: 'ENTER', color: '#3498DB' }
-      ].map((btn, i) => (
+      {(
+        [
+          { pos: [-0.25, 0.15, 0.34], label: 'MENU', color: '#34495E' },
+          { pos: [-0.08, 0.15, 0.34], label: 'UP', color: '#2ECC71' },
+          { pos: [0.08, 0.15, 0.34], label: 'DOWN', color: '#E74C3C' },
+          { pos: [0.25, 0.15, 0.34], label: 'ENTER', color: '#3498DB' }
+        ] as const
+      ).map((btn, i) => (
         <group key={`function-btn-${i}`}>
           {/* Button Housing */}
-          <mesh position={btn.pos} castShadow>
-            <cylinderGeometry args={[0.04, 0.04, 0.02, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={btn.pos} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.04, 0.04, 0.02, 12]} />
             <meshLambertMaterial color="#7F8C8D" />
           </mesh>
           {/* Button Cap */}
-          <mesh position={[btn.pos[0], btn.pos[1], btn.pos[2] + 0.015]} castShadow>
-            <cylinderGeometry args={[0.035, 0.035, 0.01, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={[btn.pos[0], btn.pos[1], btn.pos[2] + 0.015]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.035, 0.035, 0.01, 12]} />
             <meshLambertMaterial color={btn.color} />
           </mesh>
           {/* Button Label Plate */}
@@ -407,24 +430,26 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
           </mesh>
         </group>
       ))}
-      
+
       {/* Status LED Array - Industrial Grade */}
-      {[
-        { pos: [-0.35, -0.1, 0.34], color: '#E74C3C', active: highAlarm, label: 'HIGH ALARM' },
-        { pos: [-0.12, -0.1, 0.34], color: '#3498DB', active: lowAlarm, label: 'LOW ALARM' },
-        { pos: [0.12, -0.1, 0.34], color: '#FF6B35', active: shutdown, label: 'SHUTDOWN' },
-        { pos: [0.35, -0.1, 0.34], color: '#2ECC71', active: communicationActive, label: 'COMM OK' }
-      ].map((led, i) => (
+      {(
+        [
+          { pos: [-0.35, -0.1, 0.34], color: '#E74C3C', active: highAlarm, label: 'HIGH ALARM' },
+          { pos: [-0.12, -0.1, 0.34], color: '#3498DB', active: lowAlarm, label: 'LOW ALARM' },
+          { pos: [0.12, -0.1, 0.34], color: '#FF6B35', active: shutdown, label: 'SHUTDOWN' },
+          { pos: [0.35, -0.1, 0.34], color: '#2ECC71', active: communicationActive, label: 'COMM OK' }
+        ] as const
+      ).map((led, i) => (
         <group key={`status-led-${i}`}>
           {/* LED Housing */}
-          <mesh position={led.pos} castShadow>
-            <cylinderGeometry args={[0.025, 0.025, 0.015, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={led.pos} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.025, 0.025, 0.015, 12]} />
             <meshLambertMaterial color="#2C3E50" />
           </mesh>
           {/* LED Lens */}
-          <mesh position={[led.pos[0], led.pos[1], led.pos[2] + 0.01]} castShadow>
-            <cylinderGeometry args={[0.02, 0.02, 0.008, 12]} rotation={[Math.PI/2, 0, 0]} />
-            <meshLambertMaterial 
+          <mesh position={[led.pos[0], led.pos[1], led.pos[2] + 0.01]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.02, 0.02, 0.008, 12]} />
+            <meshLambertMaterial
               color={led.color} 
               emissive={led.active ? led.color : '#000000'}
               emissiveIntensity={led.active ? 0.8 : 0}
@@ -529,42 +554,48 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
       </mesh>
       
       {/* Terminal Cover Screws */}
-      {[
-        [0.91, -1.25, -0.12], [0.91, -1.25, 0.12],
-        [0.91, -1.75, -0.12], [0.91, -1.75, 0.12]
-      ].map((pos, i) => (
-        <mesh key={`term-cover-screw-${i}`} position={pos} castShadow>
-          <cylinderGeometry args={[0.012, 0.012, 0.01, 6]} rotation={[0, 0, Math.PI/2]} />
+      {(
+        [
+          [0.91, -1.25, -0.12], [0.91, -1.25, 0.12],
+          [0.91, -1.75, -0.12], [0.91, -1.75, 0.12]
+        ] as const
+      ).map((pos, i) => (
+        <mesh key={`term-cover-screw-${i}`} position={pos} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.012, 0.012, 0.01, 6]} />
           <meshLambertMaterial color="#2C3E50" />
         </mesh>
       ))}
-      
+
       {/* Conduit Entries - Professional Grade */}
-      {[
-        { pos: [0.65, -1.9, 0.2], size: 0.04, label: 'POWER' },
-        { pos: [0.65, -1.9, -0.2], size: 0.03, label: 'SIGNAL' },
-        { pos: [0.65, -1.1, 0], size: 0.035, label: 'COMM' }
-      ].map((conduit, i) => (
+      {(
+        [
+          { pos: [0.65, -1.9, 0.2], size: 0.04, label: 'POWER' },
+          { pos: [0.65, -1.9, -0.2], size: 0.03, label: 'SIGNAL' },
+          { pos: [0.65, -1.1, 0], size: 0.035, label: 'COMM' }
+        ] as const
+      ).map((conduit, i) => (
         <group key={`conduit-${i}`}>
           {/* Conduit Hub */}
-          <mesh position={conduit.pos} castShadow>
-            <cylinderGeometry args={[conduit.size + 0.01, conduit.size + 0.01, 0.08, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={conduit.pos} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[conduit.size + 0.01, conduit.size + 0.01, 0.08, 12]} />
             <meshLambertMaterial color="#34495E" />
           </mesh>
           {/* Conduit Pipe */}
-          <mesh position={[conduit.pos[0], conduit.pos[1] - 0.15, conduit.pos[2]]} castShadow>
-            <cylinderGeometry args={[conduit.size, conduit.size, 0.2, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={[conduit.pos[0], conduit.pos[1] - 0.15, conduit.pos[2]]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[conduit.size, conduit.size, 0.2, 12]} />
             <meshLambertMaterial color="#7F8C8D" />
           </mesh>
         </group>
       ))}
-      
+
       {/* Cable Glands - Professional Grade */}
-      {[
-        [0.4, -1.5, 0.15], [0.4, -1.5, -0.15], [0.4, -1.2, 0]
-      ].map((pos, i) => (
-        <mesh key={`gland-${i}`} position={pos} castShadow>
-          <cylinderGeometry args={[0.025, 0.025, 0.12, 12]} rotation={[0, 0, Math.PI/2]} />
+      {(
+        [
+          [0.4, -1.5, 0.15], [0.4, -1.5, -0.15], [0.4, -1.2, 0]
+        ] as const
+      ).map((pos, i) => (
+        <mesh key={`gland-${i}`} position={pos} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.025, 0.025, 0.12, 12]} />
           <meshLambertMaterial color="#2C3E50" />
         </mesh>
       ))}
@@ -592,13 +623,15 @@ const TemperatureSwitch = ({ position, onClick, onDrag, isSelected, isDraggable,
       </mesh>
       
       {/* Certification Labels */}
-      {[
-        { pos: [-0.3, -0.8, 0.34], text: 'UL', color: '#E74C3C' },
-        { pos: [-0.15, -0.8, 0.34], text: 'CSA', color: '#3498DB' },
-        { pos: [0, -0.8, 0.34], text: 'ATEX', color: '#F39C12' },
-        { pos: [0.15, -0.8, 0.34], text: 'IECEx', color: '#2ECC71' },
-        { pos: [0.3, -0.8, 0.34], text: 'SIL2', color: '#9B59B6' }
-      ].map((cert, i) => (
+      {(
+        [
+          { pos: [-0.3, -0.8, 0.34], text: 'UL', color: '#E74C3C' },
+          { pos: [-0.15, -0.8, 0.34], text: 'CSA', color: '#3498DB' },
+          { pos: [0, -0.8, 0.34], text: 'ATEX', color: '#F39C12' },
+          { pos: [0.15, -0.8, 0.34], text: 'IECEx', color: '#2ECC71' },
+          { pos: [0.3, -0.8, 0.34], text: 'SIL2', color: '#9B59B6' }
+        ] as const
+      ).map((cert, i) => (
         <mesh key={`cert-${i}`} position={cert.pos} castShadow>
           <boxGeometry args={[0.08, 0.03, 0.001]} />
           <meshLambertMaterial color={cert.color} />

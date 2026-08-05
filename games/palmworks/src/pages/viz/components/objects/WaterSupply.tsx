@@ -1,42 +1,59 @@
 import { useRef, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
+import type { PlantObjectComponent, PlantObjectProps } from './types';
 
-const WaterSupply = ({ 
-  position = [0, 0, 0], 
-  onClick, 
-  onDrag, 
+interface WaterSupplyProps extends PlantObjectProps {
+  position: [number, number, number];
+  showCoordinates?: boolean;
+}
+
+interface WaterSupplyPort {
+  id: string;
+  label: string;
+  position: [number, number, number];
+  type: 'electric' | 'liquid';
+  direction: 'input' | 'output';
+}
+
+const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
+  position = [0, 0, 0],
+  onClick,
+  onDrag,
   onPortClick,
-  isSelected = false, 
+  isSelected = false,
   isDraggable = false,
   gridSnap = false,
   gridSize = 1.0,
   showCoordinates = false
 }) => {
-  const groupRef = useRef();
+  const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [, setDragStart] = useState({ x: 0, y: 0 });
+  const [, setDragStart] = useState<[number, number, number] | null>(null);
 
   // Animation states - Professional grade equipment
-  const pump1ImpellerRef = useRef();
-  const pump2ImpellerRef = useRef();
-  const pump1MotorRef = useRef();
-  const pump2MotorRef = useRef();
-  const filterRotorRef = useRef();
-  const waterRef = useRef();
-  const waterFlowRef = useRef();
-  const waterJetRef = useRef();
-  const pressureGaugeRef = useRef();
-  const flowMeterRef = useRef();
-  const statusLEDRef = useRef();
-  const systemLEDRef = useRef();
-  const alarmLEDRef = useRef();
-  const bubbleRef = useRef();
-  const steamRef = useRef();
+  const pump1ImpellerRef = useRef<THREE.Mesh>(null);
+  const pump2ImpellerRef = useRef<THREE.Mesh>(null);
+  // Declared and read in the useFrame loop below but never attached to any
+  // JSX element - same dead-ref class as RackSystem's meshRef/HeatPump's
+  // condenserFinsRef. `.current` is always null; pre-existing, not fixed.
+  const pump1MotorRef = useRef<THREE.Mesh>(null);
+  const pump2MotorRef = useRef<THREE.Mesh>(null);
+  const filterRotorRef = useRef<THREE.Mesh>(null);
+  const waterRef = useRef<THREE.Mesh>(null);
+  const waterFlowRef = useRef<THREE.Mesh>(null); // also never attached, see above
+  const waterJetRef = useRef<THREE.Mesh>(null);
+  const pressureGaugeRef = useRef<THREE.Mesh>(null);
+  const flowMeterRef = useRef<THREE.Mesh>(null); // also never attached, see above
+  const statusLEDRef = useRef<THREE.Mesh>(null);
+  const systemLEDRef = useRef<THREE.Mesh>(null);
+  const alarmLEDRef = useRef<THREE.Mesh>(null);
+  const bubbleRef = useRef<THREE.Mesh>(null);
+  const steamRef = useRef<THREE.Mesh>(null);
 
   // Water supply system connection ports
-  const connectionPorts = [
+  const connectionPorts: WaterSupplyPort[] = [
     // Water inlet/outlet
     { id: 'water_inlet', label: 'INLET', position: [-1.5, 0.5, 1.8], type: 'liquid', direction: 'input' },
     { id: 'filtered_outlet', label: 'FILTERED', position: [1.5, 0.5, 1.8], type: 'liquid', direction: 'output' },
@@ -86,18 +103,18 @@ const WaterSupply = ({
     
     // Realistic water level animation
     if (waterRef.current) {
-      waterRef.current.material.opacity = 0.4 + Math.sin(time * 2) * 0.1;
+      (waterRef.current.material as THREE.MeshStandardMaterial).opacity = 0.4 + Math.sin(time * 2) * 0.1;
     }
-    
+
     // Professional water flow effects
     if (waterFlowRef.current) {
       waterFlowRef.current.rotation.z = time * 5; // Flow indicator rotation
     }
     if (waterJetRef.current) {
       const jetIntensity = 0.7 + Math.sin(time * 4) * 0.2;
-      waterJetRef.current.material.emissiveIntensity = jetIntensity;
+      (waterJetRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = jetIntensity;
     }
-    
+
     // Industrial gauge animations
     if (pressureGaugeRef.current) {
       const pressure = 85 + Math.sin(time * 1.2) * 5; // Pressure variation 80-90 PSI
@@ -106,25 +123,25 @@ const WaterSupply = ({
     if (flowMeterRef.current) {
       flowMeterRef.current.rotation.z = time * 8; // Flow meter turbine
     }
-    
+
     // Professional status LED patterns
     if (statusLEDRef.current) {
       const intensity = 0.9 + Math.sin(time * 2) * 0.1; // System operational
-      statusLEDRef.current.material.emissiveIntensity = intensity;
+      (statusLEDRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = intensity;
     }
     if (systemLEDRef.current) {
       const blinkRate = 1.5;
       const intensity = Math.sin(time * blinkRate) > 0 ? 0.9 : 0.3; // Heartbeat pattern
-      systemLEDRef.current.material.emissiveIntensity = intensity;
+      (systemLEDRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = intensity;
     }
     if (alarmLEDRef.current) {
-      alarmLEDRef.current.material.emissiveIntensity = 0; // No alarms (off)
+      (alarmLEDRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0; // No alarms (off)
     }
-    
+
     // Water bubbles and steam effects
     if (bubbleRef.current) {
       bubbleRef.current.position.y = 0.2 + Math.sin(time * 3) * 0.1;
-      bubbleRef.current.material.opacity = 0.3 + Math.sin(time * 4) * 0.2;
+      (bubbleRef.current.material as THREE.MeshStandardMaterial).opacity = 0.3 + Math.sin(time * 4) * 0.2;
     }
     if (steamRef.current) {
       steamRef.current.rotation.y = time * 0.5;
@@ -134,49 +151,51 @@ const WaterSupply = ({
 
   const { camera, gl } = useThree();
 
-  const snapToGrid = (value) => {
+  const GRID_SIZE = gridSize || 1.0;
+
+  const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
-  const handlePointerDown = (event) => {
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!isDraggable) {
       onClick?.(event);
       return;
     }
-    
+
     event.stopPropagation();
     let hasMovedMouse = false;
     setDragStart(position);
     gl.domElement.style.cursor = 'grabbing';
-    
-    const handlePointerMove = (moveEvent) => {
+
+    const handlePointerMove = (moveEvent: MouseEvent) => {
       if (!onDrag) return;
-      
+
       // Only set dragging to true when we actually move
       if (!hasMovedMouse) {
         hasMovedMouse = true;
         setIsDragging(true);
       }
-      
+
       // Get intersection with ground plane
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
-      
+
       mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
       mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
-      
+
       raycaster.setFromCamera(mouse, camera);
-      
+
       // Intersect with ground plane at y=0
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
       const intersection = new THREE.Vector3();
-      
+
       if (raycaster.ray.intersectPlane(plane, intersection)) {
         // Snap to grid for CAD-like behavior
         const snappedX = snapToGrid(intersection.x);
         const snappedZ = snapToGrid(intersection.z);
-        const newPosition = [snappedX, position[1], snappedZ];
+        const newPosition: [number, number, number] = [snappedX, position[1], snappedZ];
         onDrag(newPosition);
       }
     };
@@ -187,45 +206,45 @@ const WaterSupply = ({
         setIsDragging(false);
         setDragStart(null);
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-        
+
         // Remove event listeners
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove);
-        document.removeEventListener('touchend', handlePointerUp);
-        
+        document.removeEventListener('touchmove', handlePointerMove as EventListener);
+        document.removeEventListener('touchend', handlePointerUp as EventListener);
+
         // Trigger click handler
         onClick?.(event);
         return;
       }
-      
+
       setIsDragging(false);
       setDragStart(null);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-      
+
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove);
-      document.removeEventListener('touchend', handlePointerUp);
+      document.removeEventListener('touchmove', handlePointerMove as EventListener);
+      document.removeEventListener('touchend', handlePointerUp as EventListener);
     };
 
     // Add global event listeners for better drag experience
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove);
-    document.addEventListener('touchend', handlePointerUp);
-    
+    document.addEventListener('touchmove', handlePointerMove as EventListener);
+    document.addEventListener('touchend', handlePointerUp as EventListener);
+
     // Prevent default to avoid text selection
-    event.preventDefault?.();
+    (event as unknown as { preventDefault?: () => void }).preventDefault?.();
   };
 
-  const handleClick = (event) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     if (!isDragging) {
       onClick?.(event);
     }
   };
 
-  const handlePortClick = (port, event) => {
+  const handlePortClick = (port: WaterSupplyPort, event: ThreeEvent<MouseEvent>) => {
     if (onPortClick) {
       const worldPosition = new THREE.Vector3(...port.position).add(new THREE.Vector3(...position));
       onPortClick(port, [worldPosition.x, worldPosition.y, worldPosition.z], event);
@@ -248,14 +267,14 @@ const WaterSupply = ({
         
         {/* Reinforcement Rebar Grid */}
         {[...Array(8)].map((_, i) => (
-          <mesh key={`rebar-x-${i}`} position={[-1.75 + i * 0.5, -0.15, 0]} castShadow>
-            <cylinderGeometry args={[0.008, 0.008, 3.0, 8]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh key={`rebar-x-${i}`} position={[-1.75 + i * 0.5, -0.15, 0]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.008, 0.008, 3.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}
         {[...Array(7)].map((_, i) => (
-          <mesh key={`rebar-z-${i}`} position={[0, -0.15, -1.25 + i * 0.42]} castShadow>
-            <cylinderGeometry args={[0.008, 0.008, 4.0, 8]} rotation={[0, 0, Math.PI/2]} />
+          <mesh key={`rebar-z-${i}`} position={[0, -0.15, -1.25 + i * 0.42]} rotation={[0, 0, Math.PI/2]} castShadow>
+            <cylinderGeometry args={[0.008, 0.008, 4.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}

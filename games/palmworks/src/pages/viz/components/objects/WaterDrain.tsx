@@ -1,38 +1,52 @@
 import { useRef, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
+import type { PlantObjectComponent, PlantObjectProps } from './types';
 
-const WaterDrain = ({ 
-  position = [0, 0, 0], 
-  onClick, 
-  onDrag, 
+interface WaterDrainProps extends PlantObjectProps {
+  position: [number, number, number];
+  showCoordinates?: boolean;
+}
+
+interface WaterDrainPort {
+  id: string;
+  label: string;
+  position: [number, number, number];
+  type: 'electric' | 'liquid';
+  direction: 'input' | 'output';
+}
+
+const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
+  position = [0, 0, 0],
+  onClick,
+  onDrag,
   onPortClick,
-  isSelected = false, 
+  isSelected = false,
   isDraggable = false,
   gridSnap = false,
   gridSize = 1.0,
   showCoordinates = false
 }) => {
-  const groupRef = useRef();
+  const groupRef = useRef<THREE.Group>(null);
   const [, setIsDragging] = useState(false);
   const [hasMovedMouse, setHasMovedMouse] = useState(false);
   const { camera, raycaster } = useThree();
 
   // Animation references for realistic effects
-  const pumpImpellerRef = useRef();
-  const pumpMotorRef = useRef();
-  const drainWaterRef = useRef();
-  const levelIndicatorRef = useRef();
-  const statusLEDRef = useRef();
-  const alarmLEDRef = useRef();
-  const flowMeterRef = useRef();
-  const bubbleRef = useRef();
-  const waterJetRef = useRef();
-  const sumpWaterRef = useRef();
+  const pumpImpellerRef = useRef<THREE.Group>(null);
+  const pumpMotorRef = useRef<THREE.Mesh>(null);
+  const drainWaterRef = useRef<THREE.Mesh>(null);
+  const levelIndicatorRef = useRef<THREE.Mesh>(null);
+  const statusLEDRef = useRef<THREE.Mesh>(null);
+  const alarmLEDRef = useRef<THREE.Mesh>(null);
+  const flowMeterRef = useRef<THREE.Mesh>(null);
+  const bubbleRef = useRef<THREE.Mesh>(null);
+  const waterJetRef = useRef<THREE.Mesh>(null);
+  const sumpWaterRef = useRef<THREE.Mesh>(null);
 
   // Professional water drain system connection ports
-  const connectionPorts = [
+  const connectionPorts: WaterDrainPort[] = [
     // Water collection inlets
     { id: 'floor_drain_1', label: 'FLOOR-1', position: [-1.2, -0.8, 1.6], type: 'liquid', direction: 'input' },
     { id: 'floor_drain_2', label: 'FLOOR-2', position: [-0.4, -0.8, 1.6], type: 'liquid', direction: 'input' },
@@ -73,13 +87,13 @@ const WaterDrain = ({
     if (sumpWaterRef.current) {
       const level = 0.3 + Math.sin(time * 0.6) * 0.1; // Water level fluctuation
       sumpWaterRef.current.scale.y = level;
-      sumpWaterRef.current.material.opacity = 0.6 + Math.sin(time * 1.5) * 0.2;
+      (sumpWaterRef.current.material as THREE.MeshStandardMaterial).opacity = 0.6 + Math.sin(time * 1.5) * 0.2;
     }
-    
+
     // Drain water flow effect
     if (drainWaterRef.current) {
       drainWaterRef.current.rotation.z = time * 8; // Swirling drain effect
-      drainWaterRef.current.material.opacity = 0.5 + Math.sin(time * 4) * 0.2;
+      (drainWaterRef.current.material as THREE.MeshStandardMaterial).opacity = 0.5 + Math.sin(time * 4) * 0.2;
     }
     
     // Level indicator movement
@@ -91,88 +105,88 @@ const WaterDrain = ({
     // Status LED patterns
     if (statusLEDRef.current) {
       const intensity = 0.9 + Math.sin(time * 1.8) * 0.1; // System operational
-      statusLEDRef.current.material.emissiveIntensity = intensity;
+      (statusLEDRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = intensity;
     }
     if (alarmLEDRef.current) {
-      alarmLEDRef.current.material.emissiveIntensity = 0; // No alarms
+      (alarmLEDRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0; // No alarms
     }
-    
+
     // Flow meter turbine
     if (flowMeterRef.current) {
       flowMeterRef.current.rotation.z = time * 10; // Flow measurement
     }
-    
+
     // Water effects
     if (bubbleRef.current) {
       bubbleRef.current.position.y = -0.2 + Math.sin(time * 2.5) * 0.1;
-      bubbleRef.current.material.opacity = 0.3 + Math.sin(time * 3) * 0.2;
+      (bubbleRef.current.material as THREE.MeshStandardMaterial).opacity = 0.3 + Math.sin(time * 3) * 0.2;
     }
     if (waterJetRef.current) {
       const jetIntensity = 0.6 + Math.sin(time * 3.5) * 0.3;
-      waterJetRef.current.material.emissiveIntensity = jetIntensity;
+      (waterJetRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = jetIntensity;
     }
   });
 
-  const handlePointerDown = (event) => {
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!isDraggable) return;
     event.stopPropagation();
     setHasMovedMouse(false);
-    
-    const rect = event.target.getBoundingClientRect();
+
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
     const mouse = new THREE.Vector2();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-    
+
     raycaster.setFromCamera(mouse, camera);
     const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     const intersection = new THREE.Vector3();
     raycaster.ray.intersectPlane(ground, intersection);
-    
-    const handleMouseMove = (moveEvent) => {
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
       setHasMovedMouse(true);
-      
-      const newRect = moveEvent.target.getBoundingClientRect?.() || rect;
+
+      const newRect = (moveEvent.target as HTMLElement | null)?.getBoundingClientRect?.() || rect;
       const newMouse = new THREE.Vector2();
       newMouse.x = ((moveEvent.clientX - newRect.left) / newRect.width) * 2 - 1;
       newMouse.y = -((moveEvent.clientY - newRect.top) / newRect.height) * 2 + 1;
-      
+
       raycaster.setFromCamera(newMouse, camera);
       const newIntersection = new THREE.Vector3();
       raycaster.ray.intersectPlane(ground, newIntersection);
-      
-      const newPosition = [newIntersection.x, position[1], newIntersection.z];
-      
+
+      const newPosition: [number, number, number] = [newIntersection.x, position[1], newIntersection.z];
+
       if (gridSnap && gridSize > 0) {
         newPosition[0] = Math.round(newPosition[0] / gridSize) * gridSize;
         newPosition[2] = Math.round(newPosition[2] / gridSize) * gridSize;
       }
-      
+
       if (onDrag) {
         onDrag(newPosition);
       }
     };
-    
+
     const handleMouseUp = () => {
       setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = 'default';
     };
-    
+
     setIsDragging(true);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     document.body.style.cursor = 'grabbing';
   };
 
-  const handleClick = (event) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     if (!hasMovedMouse && onClick) {
       event.stopPropagation();
       onClick(event);
     }
   };
 
-  const handlePortClick = (port, event) => {
+  const handlePortClick = (port: WaterDrainPort, event: ThreeEvent<MouseEvent>) => {
     if (onPortClick) {
       const worldPosition = new THREE.Vector3(...port.position).add(new THREE.Vector3(...position));
       onPortClick(port, [worldPosition.x, worldPosition.y, worldPosition.z], event);
@@ -197,14 +211,14 @@ const WaterDrain = ({
         
         {/* Rebar Reinforcement Grid */}
         {[...Array(9)].map((_, i) => (
-          <mesh key={`rebar-x-${i}`} position={[-1.8 + i * 0.45, -0.18, 0]} castShadow>
-            <cylinderGeometry args={[0.008, 0.008, 3.0, 8]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh key={`rebar-x-${i}`} position={[-1.8 + i * 0.45, -0.18, 0]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.008, 0.008, 3.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}
         {[...Array(7)].map((_, i) => (
-          <mesh key={`rebar-z-${i}`} position={[0, -0.18, -1.35 + i * 0.45]} castShadow>
-            <cylinderGeometry args={[0.008, 0.008, 4.0, 8]} rotation={[0, 0, Math.PI/2]} />
+          <mesh key={`rebar-z-${i}`} position={[0, -0.18, -1.35 + i * 0.45]} rotation={[0, 0, Math.PI/2]} castShadow>
+            <cylinderGeometry args={[0.008, 0.008, 4.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}
@@ -315,8 +329,8 @@ const WaterDrain = ({
             <meshStandardMaterial color="#37474F" metalness={0.8} roughness={0.2} />
           </mesh>
           {[...Array(6)].map((_, i) => (
-            <mesh key={`rung-${i}`} position={[0, 0.5 - i * 0.2, 0.12]} castShadow>
-              <cylinderGeometry args={[0.015, 0.015, 0.2, 12]} rotation={[0, 0, Math.PI/2]} />
+            <mesh key={`rung-${i}`} position={[0, 0.5 - i * 0.2, 0.12]} rotation={[0, 0, Math.PI/2]} castShadow>
+              <cylinderGeometry args={[0.015, 0.015, 0.2, 12]} />
               <meshStandardMaterial color="#37474F" metalness={0.8} roughness={0.2} />
             </mesh>
           ))}
@@ -377,7 +391,9 @@ const WaterDrain = ({
         </mesh>
 
         {/* Anti-Vibration Mounting Pads */}
-        {[[-0.25, -0.33, -0.2], [0.25, -0.33, -0.2], [-0.25, -0.33, 0.2], [0.25, -0.33, 0.2]].map((pos, i) => (
+        {(
+          [[-0.25, -0.33, -0.2], [0.25, -0.33, -0.2], [-0.25, -0.33, 0.2], [0.25, -0.33, 0.2]] as const
+        ).map((pos, i) => (
           <mesh key={`pad-${i}`} position={pos} castShadow>
             <cylinderGeometry args={[0.04, 0.04, 0.03, 12]} />
             <meshStandardMaterial color="#1C1C1C" metalness={0.2} roughness={0.8} />

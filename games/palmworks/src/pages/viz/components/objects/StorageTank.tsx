@@ -268,12 +268,14 @@ const StorageTank: PlantObjectComponent<StorageTankProps, StorageTankPort> = ({ 
       </mesh>
       
       {/* Tank Support Legs */}
-      {[
-        [1.2, -2.5, 1.2],
-        [-1.2, -2.5, 1.2],
-        [1.2, -2.5, -1.2],
-        [-1.2, -2.5, -1.2]
-      ].map((legPos, i) => (
+      {(
+        [
+          [1.2, -2.5, 1.2],
+          [-1.2, -2.5, 1.2],
+          [1.2, -2.5, -1.2],
+          [-1.2, -2.5, -1.2]
+        ] as const
+      ).map((legPos, i) => (
         <mesh key={`leg-${i}`} position={legPos} castShadow>
           <cylinderGeometry args={[0.1, 0.1, 1, 8]} />
           <meshLambertMaterial color="#37474F" />
@@ -281,12 +283,14 @@ const StorageTank: PlantObjectComponent<StorageTankProps, StorageTankPort> = ({ 
       ))}
       
       {/* Tank Support Base Plates */}
-      {[
-        [1.2, -3, 1.2],
-        [-1.2, -3, 1.2],
-        [1.2, -3, -1.2],
-        [-1.2, -3, -1.2]
-      ].map((platePos, i) => (
+      {(
+        [
+          [1.2, -3, 1.2],
+          [-1.2, -3, 1.2],
+          [1.2, -3, -1.2],
+          [-1.2, -3, -1.2]
+        ] as const
+      ).map((platePos, i) => (
         <mesh key={`plate-${i}`} position={platePos} castShadow>
           <cylinderGeometry args={[0.25, 0.25, 0.1, 8]} />
           <meshLambertMaterial color="#37474F" />

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 
 /**
@@ -14,7 +14,7 @@ import * as THREE from 'three';
  * `undefined` at runtime — a pre-existing cross-shape inconsistency in the
  * app, not something this migration changes.
  */
-interface RoutePort {
+export interface RoutePort {
   type?: string;
   label?: string;
   offset: [number, number, number];
@@ -24,7 +24,7 @@ interface RoutePort {
 type Vec3Tuple = [number, number, number];
 
 /** The subset of a PlantScene object this file reads for collision avoidance. */
-interface RoutableObject {
+export interface RoutableObject {
   position: Vec3Tuple;
   type: string;
 }
@@ -119,9 +119,19 @@ const AutoRoutingConnection = ({
     const MIN_SEGMENT = 0.15;
     const PORT_APPROACH_DISTANCE = 0.8;
     const OBJECT_CLEARANCE_HEIGHT = 3.0; // Height to go above objects
-    
-    // Object footprints for collision detection
-    const OBJECT_FOOTPRINTS = {
+
+    // Object footprints for collision detection. Shapes vary by object
+    // (radius for round objects, width/depth for rectangular ones) so every
+    // field but height/clearance is optional.
+    interface ObjectFootprint {
+      radius?: number;
+      width?: number;
+      depth?: number;
+      height: number;
+      clearance: number;
+    }
+
+    const OBJECT_FOOTPRINTS: Record<string, ObjectFootprint> = {
       boiler: { radius: 1.4, height: 3.5, clearance: 1.6 },
       pump: { width: 1.6, depth: 1.2, height: 1.0, clearance: 1.4 },
       valve: { radius: 0.8, height: 1.5, clearance: 1.2 },
@@ -130,88 +140,101 @@ const AutoRoutingConnection = ({
       controlUnit: { width: 1.0, depth: 0.6, height: 1.2, clearance: 1.1 },
       conveyorBelt: { width: 8.0, depth: 1.5, height: 1.0, clearance: 4.0 }
     };
-    
+
+    interface ObjectFootprintResult {
+      position: THREE.Vector3;
+      type: string;
+      footprint: ObjectFootprint;
+      blocksGroundPath: (pathStart: THREE.Vector3, pathEnd: THREE.Vector3, buffer?: number) => boolean;
+      getClearanceRadius: () => number;
+      getHeight: () => number;
+    }
+
     // Collision detection functions
-    const getObjectFootprint = (objPosition, objType) => {
+    const getObjectFootprint = (objPosition: Vec3Tuple, objType: string): ObjectFootprintResult => {
       const footprint = OBJECT_FOOTPRINTS[objType] || { radius: 1.0, height: 2.0, clearance: 1.5 };
       const pos = new THREE.Vector3(...objPosition);
-      
+
       return {
         position: pos,
         type: objType,
         footprint: footprint,
-        
+
         // Check if a ground-level path intersects this object's clearance zone
-        blocksGroundPath: (pathStart, pathEnd, buffer = 0.1) => {
+        blocksGroundPath: (pathStart: THREE.Vector3, pathEnd: THREE.Vector3, buffer = 0.1) => {
           const clearanceRadius = footprint.clearance + buffer;
           const pathDir = new THREE.Vector3().subVectors(pathEnd, pathStart);
           const pathLength = pathDir.length();
-          
+
           if (pathLength < 0.01) return false;
-          
+
           pathDir.normalize();
           const toObj = new THREE.Vector3().subVectors(pos, pathStart);
           const projection = toObj.dot(pathDir);
-          
+
           if (projection < -clearanceRadius || projection > pathLength + clearanceRadius) {
             return false;
           }
-          
+
           const closestPoint = pathStart.clone().add(pathDir.clone().multiplyScalar(
             Math.max(0, Math.min(pathLength, projection))
           ));
-          
+
           const horizontalDistance = Math.sqrt(
-            Math.pow(pos.x - closestPoint.x, 2) + 
+            Math.pow(pos.x - closestPoint.x, 2) +
             Math.pow(pos.z - closestPoint.z, 2)
           );
-          
+
           return horizontalDistance < clearanceRadius;
         },
-        
+
         // Get clearance radius for approach calculations
         getClearanceRadius: () => footprint.clearance,
-        
+
         // Get object height for vertical clearance
         getHeight: () => pos.y + (footprint.height || 2.0) / 2
       };
     };
-    
+
     // Analyze all objects for collision detection
     const allObjects = objects.map(obj => getObjectFootprint(obj.position, obj.type));
-    
+
     // Find source and destination objects to exclude from collision checks
     const sourceObj = allObjects.find(obj => obj.position.distanceTo(start) < 0.5);
     const destObj = allObjects.find(obj => obj.position.distanceTo(end) < 0.5);
-    
+
     // Check if ground path is clear of objects
-    const isGroundPathClear = (fromPos, toPos, excludeObjects = []) => {
+    const isGroundPathClear = (
+      fromPos: THREE.Vector3,
+      toPos: THREE.Vector3,
+      excludeObjects: (ObjectFootprintResult | undefined)[] = []
+    ) => {
       for (const obj of allObjects) {
         // Skip source and destination objects
         if (excludeObjects.includes(obj)) continue;
-        
+
         if (obj.blocksGroundPath(fromPos, toPos)) {
           return false;
         }
       }
       return true;
     };
-    
+
     // Find minimum safe height to clear all objects on path
-    const findSafeHeight = (fromPos, toPos) => {
+    const findSafeHeight = (fromPos: THREE.Vector3, toPos: THREE.Vector3) => {
       let maxHeight = GROUND_LEVEL;
-      
+
       for (const obj of allObjects) {
         if (obj.blocksGroundPath(fromPos, toPos)) {
           const objHeight = obj.getHeight();
           maxHeight = Math.max(maxHeight, objHeight + OBJECT_CLEARANCE_HEIGHT);
         }
       }
-      
+
       return maxHeight;
     };
-    
-    const routePoints = [];
+
+    const routePoints: THREE.Vector3[] = [];
     
     // Analyze port orientations
     const startDirection = startPort ? new THREE.Vector3(...startPort.direction).normalize() : new THREE.Vector3(1, 0, 0);
@@ -391,7 +414,7 @@ const AutoRoutingConnection = ({
     }
     
     // PHASE 6: Clean up route - remove duplicate points
-    const cleanedPoints = [];
+    const cleanedPoints: THREE.Vector3[] = [];
     for (let i = 0; i < routePoints.length; i++) {
       const point = routePoints[i];
       const lastPoint = cleanedPoints[cleanedPoints.length - 1];
@@ -505,20 +528,21 @@ const AutoRoutingConnection = ({
     
     // UNIFIED animation for all connection types
     groupRef.current.children.forEach((child, index) => {
-      if (child.userData.isFlow && child.material) {
-        if (child.material.uniforms) {
-          // Shader material animation
-          child.material.uniforms.time.value = time + index * 0.5;
-        } else {
-          // Basic material emissive animation
-      const pulse = Math.sin(time * 8) * 0.5 + 0.5;
-          child.material.emissive.setScalar(pulse * 0.3);
-        }
+      if (!(child instanceof THREE.Mesh) || !child.userData.isFlow || !child.material) return;
+
+      const material = child.material as THREE.ShaderMaterial | THREE.MeshLambertMaterial;
+      if ('uniforms' in material) {
+        // Shader material animation
+        material.uniforms.time.value = time + index * 0.5;
+      } else {
+        // Basic material emissive animation
+        const pulse = Math.sin(time * 8) * 0.5 + 0.5;
+        material.emissive.setScalar(pulse * 0.3);
       }
     });
   });
 
-  const handleClick = (event) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     onClick?.(event);
   };

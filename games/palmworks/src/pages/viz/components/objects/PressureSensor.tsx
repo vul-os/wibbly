@@ -179,8 +179,13 @@ const PressureSensor: PlantObjectComponent<PressureSensorProps, PressureSensorPo
     document.addEventListener('mouseup', handlePointerUp);
     document.addEventListener('touchmove', handlePointerMove as EventListener);
     document.addEventListener('touchend', handlePointerUp as EventListener);
-    
-    event.preventDefault?.();
+
+    // `ThreeEvent` (the R3F synthetic pointer event) never had a
+    // `preventDefault` - only non-function properties are copied from the
+    // native event - so this was already a no-op before this migration; the
+    // cast just lets us ask the same (always-false) question under strict
+    // typing. See Boiler.tsx for the same pattern.
+    (event as unknown as { preventDefault?: () => void }).preventDefault?.();
   };
 
   const handlePortClick = (port: PressureSensorPort, event: ThreeEvent<MouseEvent>) => {
@@ -249,7 +254,11 @@ const PressureSensor: PlantObjectComponent<PressureSensorProps, PressureSensorPo
       {/* Main Electronics Housing */}
       <mesh ref={meshRef} castShadow receiveShadow position={[0, 0.8, 0]}>
         <boxGeometry args={[1.2, 1.8, 0.8]} />
-        <meshLambertMaterial color="#8E9AAF" roughness={0.3} />
+        {/* `roughness` isn't a MeshLambertMaterial property (that's a PBR
+            Standard/Physical material param) - three.js silently ignores
+            unknown material props, so this was already a no-op. Dropped
+            rather than typed around. */}
+        <meshLambertMaterial color="#8E9AAF" />
       </mesh>
       
       {/* Housing Top Cap */}
@@ -301,21 +310,23 @@ const PressureSensor: PlantObjectComponent<PressureSensorProps, PressureSensorPo
       </mesh>
       
       {/* Status LED Array */}
-      {[
-        { pos: [-0.35, 0.5, 0.44], color: '#DC2626', active: highAlarm, label: 'HI' },
-        { pos: [-0.15, 0.5, 0.44], color: '#F59E0B', active: lowAlarm, label: 'LO' },
-        { pos: [0.05, 0.5, 0.44], color: '#10B981', active: communicationActive, label: 'OK' },
-        { pos: [0.25, 0.5, 0.44], color: '#3B82F6', active: true, label: 'PWR' }
-      ].map((led, i) => (
+      {(
+        [
+          { pos: [-0.35, 0.5, 0.44], color: '#DC2626', active: highAlarm, label: 'HI' },
+          { pos: [-0.15, 0.5, 0.44], color: '#F59E0B', active: lowAlarm, label: 'LO' },
+          { pos: [0.05, 0.5, 0.44], color: '#10B981', active: communicationActive, label: 'OK' },
+          { pos: [0.25, 0.5, 0.44], color: '#3B82F6', active: true, label: 'PWR' }
+        ] as const
+      ).map((led, i) => (
         <group key={`led-group-${i}`}>
           {/* LED Housing */}
-          <mesh position={led.pos} castShadow>
-            <cylinderGeometry args={[0.025, 0.025, 0.02, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={led.pos} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.025, 0.025, 0.02, 12]} />
             <meshLambertMaterial color="#374151" />
           </mesh>
           {/* LED Light */}
-          <mesh position={[led.pos[0], led.pos[1], led.pos[2] + 0.012]} castShadow>
-            <cylinderGeometry args={[0.02, 0.02, 0.01, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={[led.pos[0], led.pos[1], led.pos[2] + 0.012]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.02, 0.02, 0.01, 12]} />
             <meshLambertMaterial 
               color={led.color} 
               emissive={led.active ? led.color : '#000000'}
@@ -336,13 +347,13 @@ const PressureSensor: PlantObjectComponent<PressureSensorProps, PressureSensorPo
       </mesh>
       
       {/* Cable Gland Threads */}
-      <mesh position={[-0.15, 1.5, 0.3]} castShadow>
-        <cylinderGeometry args={[0.08, 0.08, 0.2, 12]} rotation={[Math.PI/2, 0, 0]} />
+      <mesh position={[-0.15, 1.5, 0.3]} rotation={[Math.PI/2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.08, 0.08, 0.2, 12]} />
         <meshLambertMaterial color="#4B5563" />
       </mesh>
-      
-      <mesh position={[0.15, 1.5, 0.3]} castShadow>
-        <cylinderGeometry args={[0.08, 0.08, 0.2, 12]} rotation={[Math.PI/2, 0, 0]} />
+
+      <mesh position={[0.15, 1.5, 0.3]} rotation={[Math.PI/2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.08, 0.08, 0.2, 12]} />
         <meshLambertMaterial color="#4B5563" />
       </mesh>
       
@@ -355,13 +366,13 @@ const PressureSensor: PlantObjectComponent<PressureSensorProps, PressureSensorPo
       </mesh>
       
       {/* Mounting Holes */}
-      <mesh position={[-0.6, 0.2, -0.52]} castShadow>
-        <cylinderGeometry args={[0.08, 0.08, 0.12, 16]} rotation={[Math.PI/2, 0, 0]} />
+      <mesh position={[-0.6, 0.2, -0.52]} rotation={[Math.PI/2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.08, 0.08, 0.12, 16]} />
         <meshLambertMaterial color="#374151" />
       </mesh>
-      
-      <mesh position={[0.6, 0.2, -0.52]} castShadow>
-        <cylinderGeometry args={[0.08, 0.08, 0.12, 16]} rotation={[Math.PI/2, 0, 0]} />
+
+      <mesh position={[0.6, 0.2, -0.52]} rotation={[Math.PI/2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.08, 0.08, 0.12, 16]} />
         <meshLambertMaterial color="#374151" />
       </mesh>
       

@@ -101,9 +101,11 @@ const Extruder: PlantObjectComponent<ExtruderProps, ExtruderPort> = ({ position,
     }
   });
 
+  const GRID_SIZE = gridSize || 1.0;
+
   const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
   useFrame(() => {

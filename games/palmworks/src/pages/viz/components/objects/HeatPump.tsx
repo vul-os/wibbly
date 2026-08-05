@@ -1,69 +1,88 @@
 import { useRef, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
+import type { PlantObjectComponent, PlantObjectProps } from './types';
 
-const HeatPump = ({ 
-  position = [0, 0, 0], 
-  onClick, 
-  onDrag, 
+interface HeatPumpProps extends PlantObjectProps {
+  position: [number, number, number];
+}
+
+interface HeatPumpPort {
+  id: string;
+  label: string;
+  position: [number, number, number];
+  type: 'electric' | 'liquid' | 'gas';
+  direction: 'input' | 'output' | 'service';
+}
+
+const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
+  position = [0, 0, 0],
+  onClick,
+  onDrag,
   onPortClick,
-  isSelected = false, 
+  isSelected = false,
   isDraggable = false,
   gridSnap = false,
   gridSize = 1.0
 }) => {
-  const groupRef = useRef();
+  const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [, setDragStartPos] = useState(null);
+  const [, setDragStartPos] = useState<[number, number, number] | null>(null);
   const { camera, gl } = useThree();
 
   // Animation references for ultra-realistic heat pump operation
-  const compressorRef = useRef();
-  const fanRef = useRef();
-  const refrigerantFlowRef = useRef();
-  const temperatureDisplayRef = useRef();
-  const statusLEDRef = useRef();
-  const defrostLEDRef = useRef();
-  const heatExchangerRef = useRef();
-  const steamRef = useRef();
-  const condensateRef = useRef();
-  const evaporatorFinsRef = useRef();
-  const condenserFinsRef = useRef();
-  const pressureGaugeRef = useRef();
-  const flowMeterRef = useRef();
-  const alarmLEDRef = useRef();
-  const waterJetRef = useRef();
-  const systemLEDRef = useRef();
-  const vibrationRef = useRef();
+  const compressorRef = useRef<THREE.Mesh>(null);
+  const fanRef = useRef<THREE.Group>(null);
+  const refrigerantFlowRef = useRef<THREE.Mesh>(null);
+  const temperatureDisplayRef = useRef<THREE.Mesh>(null);
+  const statusLEDRef = useRef<THREE.Mesh>(null);
+  const defrostLEDRef = useRef<THREE.Mesh>(null);
+  const heatExchangerRef = useRef<THREE.Mesh>(null);
+  const steamRef = useRef<THREE.Mesh>(null);
+  const condensateRef = useRef<THREE.Mesh>(null);
+  const evaporatorFinsRef = useRef<THREE.Mesh>(null);
+  // Declared and read in the useFrame loop below but never attached to any
+  // JSX element (no `ref={condenserFinsRef}` anywhere) - the same class of
+  // dead-ref bug as RackSystem's meshRef; `.current` is always null so the
+  // condenser-fin heat effect never runs. Pre-existing, not fixed here.
+  const condenserFinsRef = useRef<THREE.Mesh>(null);
+  const pressureGaugeRef = useRef<THREE.Mesh>(null);
+  const flowMeterRef = useRef<THREE.Mesh>(null);
+  const alarmLEDRef = useRef<THREE.Mesh>(null);
+  const waterJetRef = useRef<THREE.Mesh>(null);
+  const systemLEDRef = useRef<THREE.Mesh>(null);
+  const vibrationRef = useRef<THREE.Group>(null);
 
   // Professional heat pump connection ports
-  const connectionPorts = [
+  const connectionPorts: HeatPumpPort[] = [
     // Water circulation (pool heating loop)
     { id: 'water_inlet', label: 'WATER-IN', position: [-1.2, -0.4, 1.8], type: 'liquid', direction: 'input' },
     { id: 'water_outlet', label: 'WATER-OUT', position: [1.2, -0.4, 1.8], type: 'liquid', direction: 'output' },
     { id: 'bypass_valve', label: 'BYPASS', position: [0, -0.6, 1.8], type: 'liquid', direction: 'output' },
     { id: 'condensate_drain', label: 'DRAIN', position: [0.8, -0.8, 1.8], type: 'liquid', direction: 'output' },
-    
+
     // Electrical connections
     { id: 'power_input', label: 'PWR-IN', position: [-1.4, -0.8, 1.8], type: 'electric', direction: 'input' },
     { id: 'control_input', label: 'CTRL-IN', position: [-0.8, -0.8, 1.8], type: 'electric', direction: 'input' },
     { id: 'fan_control', label: 'FAN-CTRL', position: [-0.2, -0.8, 1.8], type: 'electric', direction: 'input' },
     { id: 'defrost_control', label: 'DEFROST', position: [0.4, -0.8, 1.8], type: 'electric', direction: 'input' },
-    
+
     // Monitoring outputs
     { id: 'temp_signal', label: 'TEMP-SIG', position: [1.0, -0.8, 1.8], type: 'electric', direction: 'output' },
     { id: 'status_signal', label: 'STATUS', position: [1.6, -0.8, 1.8], type: 'electric', direction: 'output' },
     { id: 'alarm_signal', label: 'ALARM', position: [1.8, -0.6, 1.8], type: 'electric', direction: 'output' },
-    
+
     // Refrigerant service ports
     { id: 'service_high', label: 'HIGH-P', position: [-0.6, 0.8, 1.8], type: 'gas', direction: 'service' },
     { id: 'service_low', label: 'LOW-P', position: [0.6, 0.8, 1.8], type: 'gas', direction: 'service' }
   ];
 
-  const snapToGrid = (value) => {
+  const GRID_SIZE = gridSize || 1.0;
+
+  const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
   useFrame((state) => {
@@ -90,38 +109,38 @@ const HeatPump = ({
     
     // Refrigerant flow visualization in lines
     if (refrigerantFlowRef.current) {
-      refrigerantFlowRef.current.material.opacity = 0.4 + Math.sin(time * 6) * 0.3;
+      (refrigerantFlowRef.current.material as THREE.MeshStandardMaterial).opacity = 0.4 + Math.sin(time * 6) * 0.3;
       refrigerantFlowRef.current.position.y = Math.sin(time * 3) * 0.03;
     }
-    
+
     // Professional temperature display animation (28°C setpoint with realistic variation)
     if (temperatureDisplayRef.current) {
       const intensity = 0.85 + Math.sin(time * 3) * 0.08; // Realistic LCD flicker
-      temperatureDisplayRef.current.material.emissiveIntensity = intensity;
+      (temperatureDisplayRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = intensity;
     }
-    
+
     // Advanced status LED patterns
     if (statusLEDRef.current) {
       const runPattern = Math.sin(time * 1.5) > 0 ? 0.95 : 0.4; // Professional running indicator
-      statusLEDRef.current.material.emissiveIntensity = runPattern;
+      (statusLEDRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = runPattern;
     }
     if (defrostLEDRef.current) {
       // Defrost cycle every 120 seconds simulation
       const defrostCycle = Math.sin(time * 0.052) > 0.92 ? 0.95 : 0;
-      defrostLEDRef.current.material.emissiveIntensity = defrostCycle;
+      (defrostLEDRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = defrostCycle;
     }
     if (alarmLEDRef.current) {
-      alarmLEDRef.current.material.emissiveIntensity = 0; // No alarms (normal operation)
+      (alarmLEDRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0; // No alarms (normal operation)
     }
     if (systemLEDRef.current) {
       const heartbeat = Math.sin(time * 2.5) > 0.7 ? 0.9 : 0.2; // System heartbeat
-      systemLEDRef.current.material.emissiveIntensity = heartbeat;
+      (systemLEDRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = heartbeat;
     }
-    
+
     // Heat exchanger thermal effects with realistic heat distribution
     if (heatExchangerRef.current) {
       const thermalActivity = 0.15 + Math.sin(time * 1.2) * 0.08;
-      heatExchangerRef.current.material.emissiveIntensity = thermalActivity;
+      (heatExchangerRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = thermalActivity;
     }
     
     // Professional pressure gauge simulation
@@ -139,73 +158,73 @@ const HeatPump = ({
     if (steamRef.current) {
       steamRef.current.rotation.y = time * 0.4;
       steamRef.current.position.y = 2.8 + Math.sin(time * 1.8) * 0.12;
-      steamRef.current.material.opacity = 0.15 + Math.sin(time * 2.5) * 0.08;
+      (steamRef.current.material as THREE.MeshStandardMaterial).opacity = 0.15 + Math.sin(time * 2.5) * 0.08;
     }
-    
+
     // Condensate drip animation with realistic timing
     if (condensateRef.current) {
       condensateRef.current.position.y = -0.4 + Math.sin(time * 4) * 0.08;
-      condensateRef.current.material.opacity = 0.7 + Math.sin(time * 3.5) * 0.25;
+      (condensateRef.current.material as THREE.MeshStandardMaterial).opacity = 0.7 + Math.sin(time * 3.5) * 0.25;
     }
-    
+
     // Evaporator fin frost buildup simulation (seasonal effect)
     if (evaporatorFinsRef.current) {
       const frostLevel = Math.max(0, Math.sin(time * 0.025) * 0.4);
-      evaporatorFinsRef.current.material.color.setRGB(
-        0.88 + frostLevel * 0.12, 
-        0.9 + frostLevel * 0.1, 
+      (evaporatorFinsRef.current.material as THREE.MeshStandardMaterial).color.setRGB(
+        0.88 + frostLevel * 0.12,
+        0.9 + frostLevel * 0.1,
         0.95 + frostLevel * 0.05
       );
     }
-    
+
     // Condenser fin heat dissipation effects
     if (condenserFinsRef.current) {
       const heatLevel = 0.08 + Math.sin(time * 1.8) * 0.05;
-      condenserFinsRef.current.material.emissiveIntensity = heatLevel;
+      (condenserFinsRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = heatLevel;
     }
-    
+
     // Water jet effects from heated water
     if (waterJetRef.current) {
       const jetIntensity = 0.8 + Math.sin(time * 2.2) * 0.15;
-      waterJetRef.current.material.emissiveIntensity = jetIntensity;
+      (waterJetRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = jetIntensity;
       waterJetRef.current.scale.setScalar(jetIntensity);
     }
   });
 
-  const handlePointerDown = (event) => {
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!isDraggable) {
       onClick?.(event);
       return;
     }
-    
+
     event.stopPropagation();
     let hasMovedMouse = false;
     setDragStartPos(position);
     gl.domElement.style.cursor = 'grabbing';
     
-    const handlePointerMove = (moveEvent) => {
+    const handlePointerMove = (moveEvent: MouseEvent) => {
       if (!onDrag) return;
-      
+
       if (!hasMovedMouse) {
         hasMovedMouse = true;
         setIsDragging(true);
       }
-      
+
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
-      
+
       mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
       mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
-      
+
       raycaster.setFromCamera(mouse, camera);
-      
+
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
       const intersection = new THREE.Vector3();
-      
+
       if (raycaster.ray.intersectPlane(plane, intersection)) {
         const snappedX = snapToGrid(intersection.x);
         const snappedZ = snapToGrid(intersection.z);
-        const newPosition = [snappedX, position[1], snappedZ];
+        const newPosition: [number, number, number] = [snappedX, position[1], snappedZ];
         onDrag(newPosition);
       }
     };
@@ -215,48 +234,48 @@ const HeatPump = ({
         setIsDragging(false);
         setDragStartPos(null);
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-        
+
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove);
-        document.removeEventListener('touchend', handlePointerUp);
-        
+        document.removeEventListener('touchmove', handlePointerMove as EventListener);
+        document.removeEventListener('touchend', handlePointerUp as EventListener);
+
         onClick?.(event);
         return;
       }
-      
+
       setIsDragging(false);
       setDragStartPos(null);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-      
+
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove);
-      document.removeEventListener('touchend', handlePointerUp);
+      document.removeEventListener('touchmove', handlePointerMove as EventListener);
+      document.removeEventListener('touchend', handlePointerUp as EventListener);
     };
 
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove);
-    document.addEventListener('touchend', handlePointerUp);
-    
-    event.preventDefault?.();
+    document.addEventListener('touchmove', handlePointerMove as EventListener);
+    document.addEventListener('touchend', handlePointerUp as EventListener);
+
+    (event as unknown as { preventDefault?: () => void }).preventDefault?.();
   };
 
-  const handleClick = (event) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     if (!isDragging) {
       onClick?.(event);
     }
   };
 
-  const handlePortClick = (port, event) => {
+  const handlePortClick = (port: HeatPumpPort, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     if (onPortClick) {
       onPortClick(port, position, event);
     }
   };
 
-  const getPortColor = (type) => {
+  const getPortColor = (type: HeatPumpPort['type']): string => {
     switch (type) {
       case 'electric': return '#FF5722';
       case 'liquid': return '#2196F3';
@@ -281,20 +300,22 @@ const HeatPump = ({
 
         {/* Concrete Rebar Reinforcement Grid */}
         {[...Array(10)].map((_, i) => (
-          <mesh key={`rebar-x-${i}`} position={[-2.0 + i * 0.45, -0.25, 0]} castShadow>
-            <cylinderGeometry args={[0.008, 0.008, 3.0, 8]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh key={`rebar-x-${i}`} position={[-2.0 + i * 0.45, -0.25, 0]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.008, 0.008, 3.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}
         {[...Array(7)].map((_, i) => (
-          <mesh key={`rebar-z-${i}`} position={[0, -0.25, -1.35 + i * 0.45]} castShadow>
-            <cylinderGeometry args={[0.008, 0.008, 4.5, 8]} rotation={[0, 0, Math.PI/2]} />
+          <mesh key={`rebar-z-${i}`} position={[0, -0.25, -1.35 + i * 0.45]} rotation={[0, 0, Math.PI/2]} castShadow>
+            <cylinderGeometry args={[0.008, 0.008, 4.5, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}
 
         {/* Professional Anti-Vibration Isolators */}
-        {[[-1.8, -0.18, -1.2], [1.8, -0.18, -1.2], [-1.8, -0.18, 1.2], [1.8, -0.18, 1.2]].map((pos, i) => (
+        {(
+          [[-1.8, -0.18, -1.2], [1.8, -0.18, -1.2], [-1.8, -0.18, 1.2], [1.8, -0.18, 1.2]] as const
+        ).map((pos, i) => (
           <group key={`isolator-${i}`} position={pos}>
             <mesh castShadow>
               <cylinderGeometry args={[0.1, 0.1, 0.06, 16]} />
@@ -336,13 +357,13 @@ const HeatPump = ({
         </mesh>
 
         {/* Skid Support Beams (I-Beam Construction) */}
-        {[[-1.8, -0.12, 0], [1.8, -0.12, 0]].map((pos, i) => (
+        {([[-1.8, -0.12, 0], [1.8, -0.12, 0]] as const).map((pos, i) => (
           <mesh key={`beam-long-${i}`} position={pos} castShadow>
             <boxGeometry args={[0.12, 0.15, 2.8]} />
             <meshStandardMaterial color="#263238" metalness={0.85} roughness={0.18} />
           </mesh>
         ))}
-        {[[0, -0.12, -1.25], [0, -0.12, 1.25]].map((pos, i) => (
+        {([[0, -0.12, -1.25], [0, -0.12, 1.25]] as const).map((pos, i) => (
           <mesh key={`beam-cross-${i}`} position={pos} castShadow>
             <boxGeometry args={[4.0, 0.15, 0.12]} />
             <meshStandardMaterial color="#263238" metalness={0.85} roughness={0.18} />
@@ -350,7 +371,9 @@ const HeatPump = ({
         ))}
 
         {/* Professional Anchor Bolts with Washers */}
-        {[[-1.8, -0.22, -1.25], [1.8, -0.22, -1.25], [-1.8, -0.22, 1.25], [1.8, -0.22, 1.25]].map((pos, i) => (
+        {(
+          [[-1.8, -0.22, -1.25], [1.8, -0.22, -1.25], [-1.8, -0.22, 1.25], [1.8, -0.22, 1.25]] as const
+        ).map((pos, i) => (
           <group key={`anchor-${i}`} position={pos}>
             <mesh castShadow>
               <cylinderGeometry args={[0.015, 0.015, 0.18, 8]} />
@@ -387,7 +410,9 @@ const HeatPump = ({
         </mesh>
 
         {/* Cabinet Corner Reinforcements */}
-        {[[-1.95, 0.8, -1.2], [1.95, 0.8, -1.2], [-1.95, 0.8, 1.2], [1.95, 0.8, 1.2]].map((pos, i) => (
+        {(
+          [[-1.95, 0.8, -1.2], [1.95, 0.8, -1.2], [-1.95, 0.8, 1.2], [1.95, 0.8, 1.2]] as const
+        ).map((pos, i) => (
           <mesh key={`corner-${i}`} position={pos} castShadow>
             <boxGeometry args={[0.1, 1.85, 0.1]} />
             <meshStandardMaterial color="#BDBDBD" metalness={0.8} roughness={0.2} />
@@ -519,7 +544,9 @@ const HeatPump = ({
         </mesh>
 
         {/* Professional Anti-Vibration Mounts */}
-        {[[-0.35, -0.33, -0.25], [0.35, -0.33, -0.25], [-0.35, -0.33, 0.25], [0.35, -0.33, 0.25]].map((pos, i) => (
+        {(
+          [[-0.35, -0.33, -0.25], [0.35, -0.33, -0.25], [-0.35, -0.33, 0.25], [0.35, -0.33, 0.25]] as const
+        ).map((pos, i) => (
           <mesh key={`comp-mount-${i}`} position={pos} castShadow>
             <cylinderGeometry args={[0.04, 0.04, 0.03, 12]} />
             <meshStandardMaterial color="#1C1C1C" metalness={0.2} roughness={0.8} />
@@ -770,10 +797,12 @@ const HeatPump = ({
         </mesh>
 
         {/* Professional Service Valves */}
-        {[
-          { pos: [-0.6, 1.2, 0.4], type: 'high', color: '#D32F2F' },
-          { pos: [0.6, 1.2, 0.4], type: 'low', color: '#2E7D32' }
-        ].map((valve, i) => (
+        {(
+          [
+            { pos: [-0.6, 1.2, 0.4], type: 'high', color: '#D32F2F' },
+            { pos: [0.6, 1.2, 0.4], type: 'low', color: '#2E7D32' }
+          ] as const
+        ).map((valve, i) => (
           <group key={`service-${i}`} position={valve.pos}>
             <mesh castShadow>
               <cylinderGeometry args={[0.025, 0.025, 0.1, 12]} />
@@ -992,12 +1021,14 @@ const HeatPump = ({
         </group>
 
         {/* Professional Control Buttons */}
-        {[
-          { pos: [-0.35, -0.4, 0.095], label: 'POWER', color: '#4CAF50' },
-          { pos: [-0.1, -0.4, 0.095], label: 'SET', color: '#FF9800' },
-          { pos: [0.15, -0.4, 0.095], label: 'MODE', color: '#2196F3' },
-          { pos: [0.4, -0.4, 0.095], label: 'RESET', color: '#F44336' }
-        ].map((btn, i) => (
+        {(
+          [
+            { pos: [-0.35, -0.4, 0.095], label: 'POWER', color: '#4CAF50' },
+            { pos: [-0.1, -0.4, 0.095], label: 'SET', color: '#FF9800' },
+            { pos: [0.15, -0.4, 0.095], label: 'MODE', color: '#2196F3' },
+            { pos: [0.4, -0.4, 0.095], label: 'RESET', color: '#F44336' }
+          ] as const
+        ).map((btn, i) => (
           <group key={`button-${i}`}>
             <mesh position={btn.pos} castShadow>
               <cylinderGeometry args={[0.03, 0.03, 0.015, 16]} />
@@ -1017,12 +1048,14 @@ const HeatPump = ({
 
         {/* Professional Multi-LED Status Panel */}
         <group position={[0, -0.25, 0.095]}>
-          {[
-            { pos: [-0.25, 0, 0], label: 'SYSTEM', color: '#4CAF50', ref: systemLEDRef },
-            { pos: [-0.08, 0, 0], label: 'HEATING', color: '#FF5722', ref: statusLEDRef },
-            { pos: [0.08, 0, 0], label: 'DEFROST', color: '#2196F3', ref: defrostLEDRef },
-            { pos: [0.25, 0, 0], label: 'ALARM', color: '#F44336', ref: alarmLEDRef }
-          ].map((led, i) => (
+          {(
+            [
+              { pos: [-0.25, 0, 0], label: 'SYSTEM', color: '#4CAF50', ref: systemLEDRef },
+              { pos: [-0.08, 0, 0], label: 'HEATING', color: '#FF5722', ref: statusLEDRef },
+              { pos: [0.08, 0, 0], label: 'DEFROST', color: '#2196F3', ref: defrostLEDRef },
+              { pos: [0.25, 0, 0], label: 'ALARM', color: '#F44336', ref: alarmLEDRef }
+            ] as const
+          ).map((led, i) => (
             <group key={`led-${i}`}>
               <mesh ref={led.ref} position={led.pos} castShadow>
                 <cylinderGeometry args={[0.012, 0.012, 0.008, 8]} />

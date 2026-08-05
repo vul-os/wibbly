@@ -1,19 +1,33 @@
 import { useRef, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
+import type { PlantObjectComponent, PlantObjectProps } from './types';
 
-const MixerAgitator = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
-  const meshRef = useRef();
-  const groupRef = useRef();
-  const agitatorRef = useRef();
+interface MixerAgitatorProps extends PlantObjectProps {
+  position: [number, number, number];
+}
+
+interface MixerAgitatorPort {
+  id: string;
+  type: 'electric' | 'liquid' | 'gas';
+  label: string;
+  offset: [number, number, number];
+  direction: [number, number, number];
+  required: boolean;
+}
+
+const MixerAgitator: PlantObjectComponent<MixerAgitatorProps, MixerAgitatorPort> = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const agitatorRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [hoveredPort, setHoveredPort] = useState(null);
-  const [, setDragStartPos] = useState(null);
+  const [hoveredPort, setHoveredPort] = useState<string | null>(null);
+  const [, setDragStartPos] = useState<[number, number, number] | null>(null);
   const { camera, gl } = useThree();
 
   // Define connection ports for the mixer/agitator
-  const connectionPorts = [
+  const connectionPorts: MixerAgitatorPort[] = [
     {
       id: 'electric_in',
       type: 'electric',
@@ -75,19 +89,20 @@ const MixerAgitator = ({ position, onClick, onDrag, isSelected, isDraggable, gri
   // Grid snap size (CAD-like behavior)
   const GRID_SIZE = gridSize || 1.0;
 
-  const snapToGrid = (value) => {
+  const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
     return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
   useFrame(() => {
     if (meshRef.current) {
+      const material = meshRef.current.material as THREE.MeshStandardMaterial;
       if (isSelected) {
-        meshRef.current.material.emissive.setHex(0x444444);
+        material.emissive.setHex(0x444444);
       } else if (hovered && isDraggable) {
-        meshRef.current.material.emissive.setHex(0x222222);
+        material.emissive.setHex(0x222222);
       } else {
-        meshRef.current.material.emissive.setHex(0x000000);
+        material.emissive.setHex(0x000000);
       }
     }
     
@@ -103,44 +118,44 @@ const MixerAgitator = ({ position, onClick, onDrag, isSelected, isDraggable, gri
     }
   });
 
-  const handlePointerDown = (event) => {
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!isDraggable) {
       onClick?.(event);
       return;
     }
-    
+
     event.stopPropagation();
     let hasMovedMouse = false;
     setDragStartPos(position);
     gl.domElement.style.cursor = 'grabbing';
-    
-    const handlePointerMove = (moveEvent) => {
+
+    const handlePointerMove = (moveEvent: MouseEvent) => {
       if (!onDrag) return;
-      
+
       // Only set dragging to true when we actually move
       if (!hasMovedMouse) {
         hasMovedMouse = true;
         setIsDragging(true);
       }
-      
+
       // Get intersection with ground plane
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
-      
+
       mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
       mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
-      
+
       raycaster.setFromCamera(mouse, camera);
-      
+
       // Intersect with ground plane at y=0
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
       const intersection = new THREE.Vector3();
-      
+
       if (raycaster.ray.intersectPlane(plane, intersection)) {
         // Snap to grid for CAD-like behavior
         const snappedX = snapToGrid(intersection.x);
         const snappedZ = snapToGrid(intersection.z);
-        const newPosition = [snappedX, position[1], snappedZ];
+        const newPosition: [number, number, number] = [snappedX, position[1], snappedZ];
         onDrag(newPosition);
       }
     };
@@ -151,39 +166,39 @@ const MixerAgitator = ({ position, onClick, onDrag, isSelected, isDraggable, gri
         setIsDragging(false);
         setDragStartPos(null);
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-        
+
         // Remove event listeners
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove);
-        document.removeEventListener('touchend', handlePointerUp);
-        
+        document.removeEventListener('touchmove', handlePointerMove as EventListener);
+        document.removeEventListener('touchend', handlePointerUp as EventListener);
+
         // Trigger click handler
         onClick?.(event);
         return;
       }
-      
+
       setIsDragging(false);
       setDragStartPos(null);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-      
+
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove);
-      document.removeEventListener('touchend', handlePointerUp);
+      document.removeEventListener('touchmove', handlePointerMove as EventListener);
+      document.removeEventListener('touchend', handlePointerUp as EventListener);
     };
 
     // Add global event listeners for better drag experience
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove);
-    document.addEventListener('touchend', handlePointerUp);
-    
+    document.addEventListener('touchmove', handlePointerMove as EventListener);
+    document.addEventListener('touchend', handlePointerUp as EventListener);
+
     // Prevent default to avoid text selection
-    event.preventDefault?.();
+    (event as unknown as { preventDefault?: () => void }).preventDefault?.();
   };
 
-  const handlePortClick = (port, event) => {
+  const handlePortClick = (port: MixerAgitatorPort, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     if (onPortClick) {
       onPortClick(port, position, event);
@@ -205,7 +220,7 @@ const MixerAgitator = ({ position, onClick, onDrag, isSelected, isDraggable, gri
     }
   };
 
-  const handlePortHover = (portId) => {
+  const handlePortHover = (portId: string) => {
     setHoveredPort(portId);
     gl.domElement.style.cursor = 'pointer';
   };
@@ -215,7 +230,7 @@ const MixerAgitator = ({ position, onClick, onDrag, isSelected, isDraggable, gri
     gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
   };
 
-  const getPortColor = (port) => {
+  const getPortColor = (port: MixerAgitatorPort): string => {
     switch (port.type) {
       case 'electric': return '#FF5722';
       case 'liquid': return '#2196F3';
