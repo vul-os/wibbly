@@ -91,7 +91,7 @@ const Boiler: PlantObjectComponent<BoilerProps, BoilerPort> = ({ position, onCli
     setDragStartPos(position);
     gl.domElement.style.cursor = 'grabbing';
 
-    const handlePointerMove = (moveEvent: MouseEvent) => {
+    const handlePointerMove = (moveEvent: MouseEvent | TouchEvent) => {
       if (!onDrag) return;
 
       // Only set dragging to true when we actually move
@@ -100,12 +100,19 @@ const Boiler: PlantObjectComponent<BoilerProps, BoilerPort> = ({ position, onCli
         setIsDragging(true);
       }
 
+      // A TouchEvent carries its coordinates on `.touches[0]`, not on the
+      // event itself — reading `.clientX`/`.clientY` straight off the event
+      // (as this used to) is always `undefined` for touch input, which is
+      // why touch-drag never moved anything.
+      const point = 'touches' in moveEvent ? moveEvent.touches[0] : moveEvent;
+      if (!point) return;
+
       // Get intersection with ground plane
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
-      mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
-      mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
+      mouse.x = (point.clientX / gl.domElement.clientWidth) * 2 - 1;
+      mouse.y = -(point.clientY / gl.domElement.clientHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
 
@@ -132,13 +139,8 @@ const Boiler: PlantObjectComponent<BoilerProps, BoilerPort> = ({ position, onCli
         // Remove event listeners
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        // Same handler reused for touch events — it only ever reads
-        // `.clientX`/`.clientY`, which a bare `TouchEvent` doesn't carry (that
-        // would need `.touches[0]`), so touch-dragging was already inert
-        // before this migration. The cast preserves that as-is; fixing it is
-        // a behavior change, out of scope here.
-        document.removeEventListener('touchmove', handlePointerMove as EventListener);
-        document.removeEventListener('touchend', handlePointerUp as EventListener);
+        document.removeEventListener('touchmove', handlePointerMove);
+        document.removeEventListener('touchend', handlePointerUp);
 
         // Trigger click handler
         onClick?.(event);
@@ -151,15 +153,15 @@ const Boiler: PlantObjectComponent<BoilerProps, BoilerPort> = ({ position, onCli
 
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove as EventListener);
-      document.removeEventListener('touchend', handlePointerUp as EventListener);
+      document.removeEventListener('touchmove', handlePointerMove);
+      document.removeEventListener('touchend', handlePointerUp);
     };
 
     // Add global event listeners for better drag experience
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove as EventListener);
-    document.addEventListener('touchend', handlePointerUp as EventListener);
+    document.addEventListener('touchmove', handlePointerMove);
+    document.addEventListener('touchend', handlePointerUp);
 
     // Prevent default to avoid text selection. `ThreeEvent` (the R3F
     // synthetic pointer event) never had a `preventDefault` — only

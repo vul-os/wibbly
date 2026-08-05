@@ -35,17 +35,12 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
   // Animation states - Professional grade equipment
   const pump1ImpellerRef = useRef<THREE.Mesh>(null);
   const pump2ImpellerRef = useRef<THREE.Mesh>(null);
-  // Declared and read in the useFrame loop below but never attached to any
-  // JSX element - same dead-ref class as RackSystem's meshRef/HeatPump's
-  // condenserFinsRef. `.current` is always null; pre-existing, not fixed.
   const pump1MotorRef = useRef<THREE.Mesh>(null);
   const pump2MotorRef = useRef<THREE.Mesh>(null);
   const filterRotorRef = useRef<THREE.Mesh>(null);
   const waterRef = useRef<THREE.Mesh>(null);
-  const waterFlowRef = useRef<THREE.Mesh>(null); // also never attached, see above
   const waterJetRef = useRef<THREE.Mesh>(null);
   const pressureGaugeRef = useRef<THREE.Mesh>(null);
-  const flowMeterRef = useRef<THREE.Mesh>(null); // also never attached, see above
   const statusLEDRef = useRef<THREE.Mesh>(null);
   const systemLEDRef = useRef<THREE.Mesh>(null);
   const alarmLEDRef = useRef<THREE.Mesh>(null);
@@ -106,10 +101,6 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
       (waterRef.current.material as THREE.MeshStandardMaterial).opacity = 0.4 + Math.sin(time * 2) * 0.1;
     }
 
-    // Professional water flow effects
-    if (waterFlowRef.current) {
-      waterFlowRef.current.rotation.z = time * 5; // Flow indicator rotation
-    }
     if (waterJetRef.current) {
       const jetIntensity = 0.7 + Math.sin(time * 4) * 0.2;
       (waterJetRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = jetIntensity;
@@ -119,9 +110,6 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
     if (pressureGaugeRef.current) {
       const pressure = 85 + Math.sin(time * 1.2) * 5; // Pressure variation 80-90 PSI
       pressureGaugeRef.current.rotation.z = ((pressure - 40) / 100) * Math.PI - Math.PI/2;
-    }
-    if (flowMeterRef.current) {
-      flowMeterRef.current.rotation.z = time * 8; // Flow meter turbine
     }
 
     // Professional status LED patterns
@@ -169,8 +157,15 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
     setDragStart(position);
     gl.domElement.style.cursor = 'grabbing';
 
-    const handlePointerMove = (moveEvent: MouseEvent) => {
+    const handlePointerMove = (moveEvent: MouseEvent | TouchEvent) => {
       if (!onDrag) return;
+
+      // A TouchEvent carries its coordinates on `.touches[0]`, not on the
+      // event itself — reading `.clientX`/`.clientY` straight off the event
+      // (as this used to) is always `undefined` for touch input, which is
+      // why touch-drag never moved anything.
+      const point = 'touches' in moveEvent ? moveEvent.touches[0] : moveEvent;
+      if (!point) return;
 
       // Only set dragging to true when we actually move
       if (!hasMovedMouse) {
@@ -182,8 +177,8 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
-      mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
-      mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
+      mouse.x = (point.clientX / gl.domElement.clientWidth) * 2 - 1;
+      mouse.y = -(point.clientY / gl.domElement.clientHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
 
@@ -210,8 +205,8 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
         // Remove event listeners
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove as EventListener);
-        document.removeEventListener('touchend', handlePointerUp as EventListener);
+        document.removeEventListener('touchmove', handlePointerMove);
+        document.removeEventListener('touchend', handlePointerUp);
 
         // Trigger click handler
         onClick?.(event);
@@ -224,15 +219,15 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
 
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove as EventListener);
-      document.removeEventListener('touchend', handlePointerUp as EventListener);
+      document.removeEventListener('touchmove', handlePointerMove);
+      document.removeEventListener('touchend', handlePointerUp);
     };
 
     // Add global event listeners for better drag experience
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove as EventListener);
-    document.addEventListener('touchend', handlePointerUp as EventListener);
+    document.addEventListener('touchmove', handlePointerMove);
+    document.addEventListener('touchend', handlePointerUp);
 
     // Prevent default to avoid text selection
     (event as unknown as { preventDefault?: () => void }).preventDefault?.();
@@ -577,7 +572,7 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
           </mesh>
           
           {/* Motor */}
-          <mesh position={[0, 0.5, 0]} castShadow>
+          <mesh ref={pump1MotorRef} position={[0, 0.5, 0]} castShadow>
             <cylinderGeometry args={[0.2, 0.2, 0.4, 12]} />
             <meshStandardMaterial color="#424242" metalness={0.7} roughness={0.3} />
           </mesh>
@@ -606,7 +601,7 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
           </mesh>
           
           {/* Motor */}
-          <mesh position={[0, 0.5, 0]} castShadow>
+          <mesh ref={pump2MotorRef} position={[0, 0.5, 0]} castShadow>
             <cylinderGeometry args={[0.2, 0.2, 0.4, 12]} />
             <meshStandardMaterial color="#424242" metalness={0.7} roughness={0.3} />
           </mesh>
