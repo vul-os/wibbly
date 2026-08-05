@@ -207,13 +207,13 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
         </mesh>
 
         {/* Concrete Rebar Reinforcement Grid */}
-        {[...Array(8)].map((_, i) => (
+        {[...Array<unknown>(8)].map((_, i) => (
           <mesh key={`rebar-x-${i}`} position={[-1.1 + i * 0.32, -0.28, 0]} rotation={[Math.PI/2, 0, 0]} castShadow>
             <cylinderGeometry args={[0.006, 0.006, 1.8, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}
-        {[...Array(6)].map((_, i) => (
+        {[...Array<unknown>(6)].map((_, i) => (
           <mesh key={`rebar-z-${i}`} position={[0, -0.28, -0.85 + i * 0.34]} rotation={[0, 0, Math.PI/2]} castShadow>
             <cylinderGeometry args={[0.006, 0.006, 2.4, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
@@ -231,8 +231,8 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
         </mesh>
 
         {/* Diamond Plate Pattern */}
-        {[...Array(12)].map((_, x) => 
-          [...Array(9)].map((_, z) => (
+        {[...Array<unknown>(12)].map((_, x) => 
+          [...Array<unknown>(9)].map((_, z) => (
             <mesh 
               key={`diamond-${x}-${z}`} 
               position={[-1.0 + x * 0.18, -0.15, -0.72 + z * 0.18]} 
@@ -327,7 +327,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
         </mesh>
 
         {/* Professional Housing Bolts with Washers */}
-        {[...Array(10)].map((_, i) => {
+        {[...Array<unknown>(10)].map((_, i) => {
           const angle = (i * Math.PI) / 5;
           const x = Math.cos(angle) * 0.28;
           const z = Math.sin(angle) * 0.28;
@@ -378,7 +378,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
           </mesh>
           
           {/* Professional Mesh Pattern - Vertical Slats */}
-          {[...Array(16)].map((_, i) => (
+          {[...Array<unknown>(16)].map((_, i) => (
             <mesh key={`mesh-vert-${i}`} position={[0, 0, 0]} rotation={[0, (i * Math.PI) / 8, 0]} castShadow>
               <boxGeometry args={[0.003, 0.25, 0.3]} />
               <meshStandardMaterial color="#263238" metalness={0.9} roughness={0.1} />
@@ -386,7 +386,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
           ))}
           
           {/* Horizontal Support Rings */}
-          {[...Array(6)].map((_, i) => (
+          {[...Array<unknown>(6)].map((_, i) => (
             <mesh key={`mesh-ring-${i}`} position={[0, -0.12 + i * 0.04, 0]} castShadow>
               <torusGeometry args={[0.16, 0.003, 8, 20]} />
               <meshStandardMaterial color="#263238" metalness={0.9} roughness={0.1} />
@@ -423,7 +423,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
         </mesh>
 
         {/* Simulated Debris in Strainer */}
-        {[...Array(5)].map((_, i) => (
+        {[...Array<unknown>(5)].map((_, i) => (
           <mesh key={`debris-${i}`} position={[-0.45 + (Math.random() - 0.5) * 0.2, -0.15 + Math.random() * 0.1, (Math.random() - 0.5) * 0.2]} castShadow>
             <sphereGeometry args={[0.008, 8, 6]} />
             <meshStandardMaterial color="#8D6E63" metalness={0.1} roughness={0.9} />
@@ -456,7 +456,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
         </mesh>
         
         {/* Pool-Optimized Impeller Vanes */}
-        {[...Array(6)].map((_, i) => {
+        {[...Array<unknown>(6)].map((_, i) => {
           const angle = (i * Math.PI) / 3;
           const x = Math.cos(angle) * 0.14;
           const z = Math.sin(angle) * 0.14;
@@ -520,7 +520,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
       </mesh>
 
       {/* Motor Frame Ribs */}
-      {[...Array(8)].map((_, i) => (
+      {[...Array<unknown>(8)].map((_, i) => (
         <mesh key={`frame-rib-${i}`} position={[0, 0.35 + i * 0.02, 0]} rotation={[0, (i * Math.PI) / 4, 0]} castShadow>
           <boxGeometry args={[0.01, 0.02, 0.2]} />
           <meshStandardMaterial color="#263238" metalness={0.8} roughness={0.2} />
@@ -528,7 +528,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
       ))}
 
       {/* Professional Motor Cooling Fins */}
-      {[...Array(20)].map((_, i) => (
+      {[...Array<unknown>(20)].map((_, i) => (
         <mesh key={`motor-fin-${i}`} position={[0, 0.48, 0]} rotation={[0, (i * Math.PI) / 10, 0]} castShadow>
           <boxGeometry args={[0.006, 0.35, 0.2]} />
           <meshStandardMaterial color="#263238" metalness={0.8} roughness={0.2} />
@@ -542,7 +542,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
       </mesh>
 
       {/* Cooling Fan Blades */}
-      {[...Array(6)].map((_, i) => (
+      {[...Array<unknown>(6)].map((_, i) => (
         <mesh key={`fan-blade-${i}`} position={[0, 0.74, 0]} rotation={[0, (i * Math.PI) / 3, Math.PI/12]} castShadow>
           <boxGeometry args={[0.08, 0.002, 0.12]} />
           <meshStandardMaterial color="#37474F" metalness={0.8} roughness={0.2} />
@@ -728,7 +728,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
         </group>
 
         {/* Advanced Cooling System */}
-        {[...Array(8)].map((_, i) => (
+        {[...Array<unknown>(8)].map((_, i) => (
           <mesh key={`vfd-vent-${i}`} position={[0, -0.18 + i * 0.03, 0.092]} castShadow>
             <boxGeometry args={[0.3, 0.003, 0.01]} />
             <meshStandardMaterial color="#37474F" metalness={0.8} roughness={0.3} />
@@ -825,7 +825,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
         </mesh>
 
         {/* Advanced Water Droplet System */}
-        {[...Array(12)].map((_, i) => (
+        {[...Array<unknown>(12)].map((_, i) => (
           <mesh key={`water-drop-${i}`} position={[1.4 + Math.random() * 0.3, 0.0 + Math.random() * 0.15, (Math.random() - 0.5) * 0.4]} castShadow>
             <sphereGeometry args={[0.005 + Math.random() * 0.008, 8, 6]} />
             <meshStandardMaterial 
@@ -972,7 +972,7 @@ const WaterPump: PlantObjectComponent<WaterPumpProps, WaterPumpPort> = ({
             <boxGeometry args={[0.6, 0.03, 0.08]} />
             <meshStandardMaterial color="#607D8B" metalness={0.8} roughness={0.2} />
           </mesh>
-          {[...Array(5)].map((_, i) => (
+          {[...Array<unknown>(5)].map((_, i) => (
             <mesh key={`cable-tie-${i}`} position={[-0.2 + i * 0.1, 0, 0]} castShadow>
               <boxGeometry args={[0.01, 0.03, 0.08]} />
               <meshStandardMaterial color="#546E7A" metalness={0.8} roughness={0.3} />

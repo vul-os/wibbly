@@ -111,7 +111,7 @@ export function setupState(): SetupState {
       // forced onto the spacebar fallback.
       outcome:
         parsedRecord.outcome === 'camera' || parsedRecord.outcome === 'keyboard'
-          ? (parsedRecord.outcome as SetupOutcome)
+          ? parsedRecord.outcome
           : null,
       at: typeof parsedRecord.at === 'number' ? parsedRecord.at : 0,
     };

@@ -388,7 +388,13 @@ export class MagnetiteAuthority {
     const state_hash = hashMatch ? hashMatch[1] : '0';
     let rejects: Array<[number, unknown]> = [];
     try {
-      rejects = (JSON.parse(raw).rejects as Array<[number, unknown]>) ?? [];
+      // Type the parse result at the boundary (mirroring snapshot()'s `as
+      // ArenaSnapshot` below) rather than reaching `.rejects` off JSON.parse's
+      // `any` directly — the latter is what no-unsafe-member-access flags,
+      // and for good reason: it type-checks even if `mag_step`'s payload
+      // shape drifts out from under this cast.
+      const parsed = JSON.parse(raw) as { rejects?: Array<[number, unknown]> };
+      rejects = parsed.rejects ?? [];
     } catch {
       rejects = [];
     }

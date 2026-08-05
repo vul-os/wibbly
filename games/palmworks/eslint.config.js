@@ -1,9 +1,13 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import js from '@eslint/js'
 import globals from 'globals'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
+
+const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url))
 
 // palmworks is a SEPARATE npm project from the workspace root one level up
 // (its own package.json, package-lock.json and node_modules) — see the doc
@@ -58,13 +62,37 @@ export default tseslint.config(
     },
   },
   // src/ is TS/TSX end to end — parse with the typescript-eslint parser and
-  // lint with the recommended TS rule set.
+  // lint with the type-aware recommended TS rule set. projectService is
+  // scoped to this package's own tsconfig.json (this is a separate npm
+  // project from the workspace root one level up — see the file's top
+  // comment), so no-floating-promises, no-misused-promises and the
+  // no-unsafe-* family run against this package's own type information.
+  //
+  // Level: recommendedTypeChecked, not strictTypeChecked — measured
+  // 2026-08-05, see triage notes; strictTypeChecked's extra findings were
+  // dominated by no-confusing-void-expression/no-non-null-assertion
+  // fighting deliberate idioms here, matching the fleet-wide pattern.
   {
     files: ['**/*.{ts,tsx}'],
-    extends: [tseslint.configs.recommended],
+    extends: [tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       globals: globals.browser,
-      parserOptions: { ecmaFeatures: { jsx: true } },
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        projectService: true,
+        tsconfigRootDir,
+      },
+    },
+    rules: {
+      // The one no-misused-promises finding surfaced when type-aware linting
+      // was turned on: not-found.tsx's onClick={() => navigate('/')}.
+      // react-router's NavigateFunction is typed `void | Promise<void>` and
+      // used fire-and-forget in react-router's own docs; there is no
+      // meaningful rejection a client-side navigation call produces here.
+      // Same reasoning and same option (typescript-eslint's own documented
+      // fix for this exact JSX-handler false-positive) as the root
+      // eslint.config.js one level up.
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
     },
   },
   {

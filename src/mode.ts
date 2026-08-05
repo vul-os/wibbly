@@ -72,7 +72,7 @@ export function resolveMode(env: WibblyEnv = {}, win: WibblyWindow | null = null
 /** Live mode for the running app. */
 export function currentMode(): WibblyMode {
   return resolveMode(
-    (typeof import.meta !== 'undefined' ? import.meta.env : {}) as WibblyEnv,
+    typeof import.meta !== 'undefined' ? import.meta.env : {},
     // `window` shares none of WibblyWindow's (all-optional) properties by its
     // own DOM typing, which trips TypeScript's "weak type" detection — hence
     // the cast, not a structural gap in the real object.

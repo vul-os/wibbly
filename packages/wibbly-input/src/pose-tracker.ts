@@ -197,6 +197,25 @@ export interface TfLike {
 }
 
 /**
+ * `String(err)` on an `unknown` catch binding gives `[object Object]` for
+ * anything that isn't a primitive or doesn't override `toString` — exactly
+ * what no-base-to-string flags below, and exactly the failure mode that
+ * makes a "Last error: ..." warning useless. Prefer the real message, then
+ * the value itself if it already stringifies meaningfully, then a
+ * best-effort JSON dump before giving up.
+ */
+function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  if (typeof err === 'number' || typeof err === 'boolean') return String(err);
+  try {
+    return JSON.stringify(err) ?? 'non-Error value thrown';
+  } catch {
+    return 'non-Error value thrown (not JSON-serialisable)';
+  }
+}
+
+/**
  * Select a TFJS backend explicitly, in preference order, and report honestly
  * what was actually obtained.
  *
@@ -262,7 +281,7 @@ export async function selectBackend(
           `Pose tracking could not start the preferred backend (${preferred.join(', ')}) and ` +
           `explicitly fell back to "${name}". It will run, but slowly — expect a long startup ` +
           `and low frame rates. This usually means hardware acceleration (WebGL) is disabled or ` +
-          `unavailable in this browser.` + (lastError ? ` Last error: ${String(lastError)}` : ''),
+          `unavailable in this browser.` + (lastError ? ` Last error: ${describeError(lastError)}` : ''),
       };
     }
   }
@@ -277,10 +296,10 @@ export async function selectBackend(
     ? `Pose tracking fell back to the "${backend}" TFJS backend. That backend needs ` +
       `'wasm-unsafe-eval' in the page's script-src, which the embedded build does NOT have, ` +
       `so tracking will not work here. Preferred: ${preferred.join(', ')}.` +
-      (lastError ? ` Last error: ${String(lastError)}` : '')
+      (lastError ? ` Last error: ${describeError(lastError)}` : '')
     : `Pose tracking could not start the preferred backend (${preferred.join(', ')}) and fell ` +
       `back to "${backend}". It will run, but slowly — expect a long startup and low frame ` +
-      `rates.` + (lastError ? ` Last error: ${String(lastError)}` : '');
+      `rates.` + (lastError ? ` Last error: ${describeError(lastError)}` : '');
 
   return { backend, preferred: false, cspHostile: hostile, warning };
 }
@@ -348,7 +367,7 @@ export class MoveNetMultiPoseTracker implements PoseTracker {
     // Pick the backend BEFORE creating the detector: createDetector compiles
     // kernels against whatever is current, so switching afterwards means
     // paying for the model load twice.
-    this.backendInfo = await selectBackend(tf as unknown as TfLike, this.preferredBackends);
+    this.backendInfo = await selectBackend(tf, this.preferredBackends);
     if (this.backendInfo.warning) {
       // Loud, not swallowed. A tracker on a dead backend produces no skeletons
       // and no errors, which reads as "the game ignores me".
@@ -356,10 +375,10 @@ export class MoveNetMultiPoseTracker implements PoseTracker {
     }
     this.onBackend?.(this.backendInfo);
 
-    this.detector = (await poseDetection.createDetector(
+    this.detector = await poseDetection.createDetector(
       poseDetection.SupportedModels.MoveNet,
-      this.modelConfig() as never,
-    )) as unknown as RawDetector;
+      this.modelConfig(),
+    );
   }
 
   private modelConfig(): Record<string, unknown> {

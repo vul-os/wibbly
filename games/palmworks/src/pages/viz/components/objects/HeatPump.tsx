@@ -295,13 +295,13 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
         </mesh>
 
         {/* Concrete Rebar Reinforcement Grid */}
-        {[...Array(10)].map((_, i) => (
+        {[...Array<unknown>(10)].map((_, i) => (
           <mesh key={`rebar-x-${i}`} position={[-2.0 + i * 0.45, -0.25, 0]} rotation={[Math.PI/2, 0, 0]} castShadow>
             <cylinderGeometry args={[0.008, 0.008, 3.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}
-        {[...Array(7)].map((_, i) => (
+        {[...Array<unknown>(7)].map((_, i) => (
           <mesh key={`rebar-z-${i}`} position={[0, -0.25, -1.35 + i * 0.45]} rotation={[0, 0, Math.PI/2]} castShadow>
             <cylinderGeometry args={[0.008, 0.008, 4.5, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
@@ -322,7 +322,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
               <meshStandardMaterial color="#37474F" metalness={0.8} roughness={0.2} />
             </mesh>
             {/* Isolator mounting bolts */}
-            {[...Array(4)].map((_, j) => {
+            {[...Array<unknown>(4)].map((_, j) => {
               const angle = (j * Math.PI) / 2;
               const x = Math.cos(angle) * 0.06;
               const z = Math.sin(angle) * 0.06;
@@ -418,7 +418,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
         {/* Professional Louvered Side Panels for Airflow */}
         {[-2.05, 2.05].map((x, side) => (
           <group key={`louvers-${side}`} position={[x, 0.8, 0]}>
-            {[...Array(16)].map((_, i) => (
+            {[...Array<unknown>(16)].map((_, i) => (
               <mesh key={`louver-${i}`} position={[0, -0.7 + i * 0.09, 0]} rotation={[0, 0, Math.PI/6]} castShadow>
                 <boxGeometry args={[0.06, 2.2, 0.025]} />
                 <meshStandardMaterial color="#E0E0E0" metalness={0.75} roughness={0.25} />
@@ -434,7 +434,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
         </mesh>
 
         {/* Professional Fan Grille Protection Grid */}
-        {[...Array(12)].map((_, i) => {
+        {[...Array<unknown>(12)].map((_, i) => {
           const angle = (i * Math.PI) / 6;
           const x = Math.cos(angle) * 0.6;
           const z = Math.sin(angle) * 0.6;
@@ -463,7 +463,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
           </mesh>
           
           {/* Motor Cooling Fins */}
-          {[...Array(12)].map((_, i) => (
+          {[...Array<unknown>(12)].map((_, i) => (
             <mesh key={`motor-fin-${i}`} position={[0, 0, 0]} rotation={[0, (i * Math.PI) / 6, 0]} castShadow>
               <boxGeometry args={[0.015, 0.2, 0.14]} />
               <meshStandardMaterial color="#37474F" metalness={0.8} roughness={0.2} />
@@ -471,7 +471,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
           ))}
           
           {/* Professional Fan Blades (Aerodynamically Optimized) */}
-          {[...Array(7)].map((_, i) => {
+          {[...Array<unknown>(7)].map((_, i) => {
             const angle = (i * Math.PI * 2) / 7;
             return (
               <mesh 
@@ -501,7 +501,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
           </mesh>
 
           {/* Dynamic Balancing Weights */}
-          {[...Array(4)].map((_, i) => {
+          {[...Array<unknown>(4)].map((_, i) => {
             const angle = (i * Math.PI) / 2;
             const x = Math.cos(angle) * 0.12;
             const z = Math.sin(angle) * 0.12;
@@ -577,7 +577,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
         </mesh>
 
         {/* Compressor Mounting Bolts with Professional Hardware */}
-        {[...Array(8)].map((_, i) => {
+        {[...Array<unknown>(8)].map((_, i) => {
           const angle = (i * Math.PI) / 4;
           const x = Math.cos(angle) * 0.4;
           const z = Math.sin(angle) * 0.4;
@@ -662,7 +662,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
           </mesh>
           
           {/* Ultra-Fine Fin Pattern */}
-          {[...Array(20)].map((_, i) => (
+          {[...Array<unknown>(20)].map((_, i) => (
             <mesh key={`evap-fin-${i}`} position={[-0.7 + i * 0.07, 0, 0]} castShadow>
               <boxGeometry args={[0.008, 0.95, 0.22]} />
               <meshStandardMaterial color="#90A4AE" metalness={0.85} roughness={0.35} />
@@ -670,7 +670,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
           ))}
 
           {/* Copper Refrigerant Tubes with Professional Bends */}
-          {[...Array(8)].map((_, i) => (
+          {[...Array<unknown>(8)].map((_, i) => (
             <mesh key={`evap-tube-${i}`} position={[0, -0.4 + i * 0.1, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
               <cylinderGeometry args={[0.01, 0.01, 1.5, 12]} />
               <meshStandardMaterial color="#B87333" metalness={0.95} roughness={0.05} />
@@ -678,7 +678,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
           ))}
 
           {/* Tube Bends and U-Returns */}
-          {[...Array(4)].map((_, i) => (
+          {[...Array<unknown>(4)].map((_, i) => (
             <mesh key={`evap-bend-${i}`} position={[0.7, -0.3 + i * 0.2, 0]} rotation={[Math.PI/2, 0, 0]} castShadow>
               <torusGeometry args={[0.05, 0.01, 8, 16]} />
               <meshStandardMaterial color="#B87333" metalness={0.95} roughness={0.05} />
@@ -712,7 +712,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
           </mesh>
 
           {/* Professional Tube Bundle Pattern */}
-          {[...Array(12)].map((_, i) => {
+          {[...Array<unknown>(12)].map((_, i) => {
             const angle = (i * Math.PI) / 6;
             const x = Math.cos(angle) * 0.18;
             const z = Math.sin(angle) * 0.18;
@@ -838,7 +838,7 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
         </mesh>
 
         {/* Multiple Steam Plumes for Realistic Effect */}
-        {[...Array(3)].map((_, i) => (
+        {[...Array<unknown>(3)].map((_, i) => (
           <mesh key={`steam-${i}`} position={[0.3 - i * 0.3, 2.5 + i * 0.1, 0.2 - i * 0.1]} castShadow>
             <sphereGeometry args={[0.2, 12, 10]} />
             <meshStandardMaterial 

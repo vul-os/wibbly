@@ -55,7 +55,7 @@ function peerTransport(): PeerTransport | null {
     // because mode.ts must stay a pure, library-agnostic module; this is the
     // one call site that knows the real shape.
     return resolvePeerTransport(
-        (import.meta.env ?? {}) as Record<string, unknown>,
+        import.meta.env ?? {},
         (typeof window !== 'undefined' ? window : null) as WibblyWindow | null,
     ) as PeerTransport | null;
 }
@@ -95,8 +95,19 @@ function disposeObject3D(root: THREE.Object3D | null | undefined): void {
         node.geometry?.dispose();
         const materials = Array.isArray(node.material) ? node.material : node.material ? [node.material] : [];
         for (const material of materials) {
-            for (const key of Object.keys(material) as Array<keyof THREE.Material>) {
-                const value = material[key] as unknown;
+            // Enumerated as an untyped record rather than `keyof THREE.Material`:
+            // indexing by the real key type resolves to a union that includes
+            // THREE.Material's own methods (clone, dispose, ...), and reading
+            // one of those out into `value` is exactly what
+            // @typescript-eslint/unbound-method warns about — a method
+            // reference detached from its object. Nothing here is ever called
+            // detached (the isTexture check + .dispose() below both happen on
+            // `value` immediately, in the same expression), but the cast to
+            // an untyped record sidesteps the false alarm entirely rather
+            // than suppressing the rule.
+            const materialProps = material as unknown as Record<string, unknown>;
+            for (const key of Object.keys(materialProps)) {
+                const value = materialProps[key];
                 if (value && typeof value === 'object' && (value as { isTexture?: boolean }).isTexture) {
                     (value as { dispose: () => void }).dispose();
                 }
@@ -328,8 +339,11 @@ function TennisGame({
 
         // Load the court. Async and not awaited — the match starts on the
         // fallback/empty ground and the real model slots in whenever it
-        // arrives.
-        loadCourt(scene).then((model) => {
+        // arrives. `void`: loadCourt's own Promise executor (court.ts) only
+        // ever calls `resolve` — its GLTFLoader error callback resolves with
+        // a fallback court instead of rejecting — so this Promise cannot
+        // reject and there is no error path this .then is missing.
+        void loadCourt(scene).then((model) => {
             if (cancelled) {
                 // Cleanup already ran and already disposed whatever was in
                 // the scene at that point; this model attached itself
@@ -714,14 +728,33 @@ function TennisGame({
         // Setup gesture input early
         if (gameStateRef.current.usePoseDetection) {
             debugLog("Starting gesture input setup...");
-            setupGestureInput();
+            // setupGestureInput's own try/catch (see its body) covers every
+            // expected failure (camera denied, tracker init failure) and
+            // already falls back to keyboard. This .catch is only for the
+            // unexpected case — a synchronous throw in the setup code before
+            // that try/catch (e.g. a bad WibblyInput config) — which would
+            // otherwise surface as an unhandled promise rejection instead of
+            // the loud, visible error it should be.
+            setupGestureInput().catch((err: unknown) => {
+                console.error('Gesture input setup failed unexpectedly:', err);
+                gameStateRef.current.usePoseDetection = false;
+                if (!cancelled) onInputStateRef.current?.('keyboard');
+            });
         } else {
             onInputStateRef.current?.('keyboard');
         }
 
         // Optional, and deliberately not awaited: the game starts immediately
-        // and the peer session joins it if and when it connects.
-        setupPeerSession();
+        // and the peer session joins it if and when it connects. setupPeerSession's
+        // own try/catch already treats every expected connect failure as "stay
+        // local, not a failure" (see its body) — this .catch only guards the
+        // synchronous-throw case before that try/catch (assertNoPeerSession's
+        // loud invariant check, or the PeerSession constructor), so that
+        // failure surfaces as a console error rather than an unhandled
+        // rejection.
+        setupPeerSession().catch((err: unknown) => {
+            console.warn('[peer] setup failed unexpectedly:', err);
+        });
 
         // Bring up the magnetite authority. Full app only — startMagnetiteAuthority
         // refuses in demo mode, and we don't even call it there. Not awaited: the

@@ -5,7 +5,6 @@ import {
   recordSetup,
   saveSettings,
   setupState,
-  type GameSettings,
   type SettingsStorage,
 } from '../src/components/game-settings';
 
@@ -135,7 +134,7 @@ describe('game-settings localStorage hardening', () => {
       // else a caller (or an old/new build's schema) hands it, so the extra
       // key can only be smuggled in past the type checker with a cast.
       const withExtra = { usePoseDetection: false, debug: true, somethingElse: 'x' };
-      saveSettings(withExtra as GameSettings);
+      saveSettings(withExtra);
       expect(JSON.parse(store.getItem('wibbly.settings.v1')!)).toEqual({
         usePoseDetection: false,
         debug: true,

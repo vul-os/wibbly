@@ -107,10 +107,15 @@ describe('selectHandDelegate', () => {
 
   it('falls back to CPU when GPU fails to initialise, and says so honestly', async () => {
     const fake = {} as RawHandLandmarker;
-    const create = vi.fn().mockImplementation(async (delegate: string) => {
-      if (delegate === 'GPU') throw new Error('no WebGL context');
-      return fake;
-    });
+    // Typed so `.mock.calls` below carries real ('CPU' | 'GPU')[] rather than
+    // `any` — the untyped `vi.fn()` this replaced made `c[0]` in the .map()
+    // below an unsafe return.
+    const create = vi
+      .fn<(delegate: 'CPU' | 'GPU') => Promise<RawHandLandmarker>>()
+      .mockImplementation(async (delegate) => {
+        if (delegate === 'GPU') throw new Error('no WebGL context');
+        return fake;
+      });
     const { landmarker, info } = await selectHandDelegate(create, 'GPU');
     expect(landmarker).toBe(fake);
     expect(info.delegate).toBe('CPU');
@@ -120,7 +125,7 @@ describe('selectHandDelegate', () => {
   });
 
   it('never tries CPU when CPU itself was the preferred delegate', async () => {
-    const create = vi.fn().mockResolvedValue({} as RawHandLandmarker);
+    const create = vi.fn().mockResolvedValue({});
     await selectHandDelegate(create, 'CPU');
     expect(create).toHaveBeenCalledTimes(1);
     expect(create).toHaveBeenCalledWith('CPU');

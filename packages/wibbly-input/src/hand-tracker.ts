@@ -190,6 +190,25 @@ const DEFAULT_MAX_HANDS = 2;
  * with no usable WebGL context), not a CSP failure, which no delegate choice
  * here can fix.
  */
+/**
+ * `String(err)` on an `unknown` catch binding gives `[object Object]` for
+ * anything that isn't a primitive or doesn't override `toString` — exactly
+ * what no-base-to-string flags below, and exactly the failure mode that
+ * makes a "Last error: ..." warning useless. Prefer the real message, then
+ * the value itself if it already stringifies meaningfully, then a
+ * best-effort JSON dump before giving up.
+ */
+function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  if (typeof err === 'number' || typeof err === 'boolean') return String(err);
+  try {
+    return JSON.stringify(err) ?? 'non-Error value thrown';
+  } catch {
+    return 'non-Error value thrown (not JSON-serialisable)';
+  }
+}
+
 export async function selectHandDelegate(
   create: (delegate: 'CPU' | 'GPU') => Promise<RawHandLandmarker>,
   preferred: 'CPU' | 'GPU' = 'GPU',
@@ -210,7 +229,7 @@ export async function selectHandDelegate(
           warning: fellBack
             ? `Hand tracking could not start the preferred "${preferred}" delegate and fell back ` +
               `to "${delegate}". It will run, but likely slower.` +
-              (lastError ? ` Last error: ${String(lastError)}` : '')
+              (lastError ? ` Last error: ${describeError(lastError)}` : '')
             : null,
         },
       };
@@ -219,7 +238,13 @@ export async function selectHandDelegate(
     }
   }
 
-  throw lastError ?? new Error('HandLandmarkTracker: failed to initialize');
+  // See the parallel comment in frame-source.ts's acquireCameraStream — same
+  // shape: `lastError` is `unknown`, so only-throw-error correctly flags a
+  // bare rethrow. Re-throw it as-is when it is genuinely an Error (preserving
+  // its identity/stack rather than masking it), else synthesize one.
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('HandLandmarkTracker: failed to initialize');
 }
 
 /**
@@ -368,7 +393,7 @@ export class HandLandmarkTracker implements HandTracker {
           minHandDetectionConfidence: this.cfg.minHandDetectionConfidence,
           minHandPresenceConfidence: this.cfg.minHandPresenceConfidence,
           minTrackingConfidence: this.cfg.minTrackingConfidence,
-        }) as unknown as Promise<RawHandLandmarker>;
+        });
     }
 
     const { landmarker, info } = await selectHandDelegate(create, this.preferredDelegate);
@@ -386,7 +411,7 @@ export class HandLandmarkTracker implements HandTracker {
     const timestampMs = Math.max(now, this.lastTimestampMs + 1);
     this.lastTimestampMs = timestampMs;
 
-    const raw = this.landmarker.detectForVideo(frame as unknown, timestampMs);
+    const raw = this.landmarker.detectForVideo(frame, timestampMs);
     return normalizeHands(raw ?? { landmarks: [], handedness: [] }, this.mirrored).slice(
       0,
       this.maxHands,

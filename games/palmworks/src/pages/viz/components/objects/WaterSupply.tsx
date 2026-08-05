@@ -261,13 +261,13 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
         </mesh>
         
         {/* Reinforcement Rebar Grid */}
-        {[...Array(8)].map((_, i) => (
+        {[...Array<unknown>(8)].map((_, i) => (
           <mesh key={`rebar-x-${i}`} position={[-1.75 + i * 0.5, -0.15, 0]} rotation={[Math.PI/2, 0, 0]} castShadow>
             <cylinderGeometry args={[0.008, 0.008, 3.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}
-        {[...Array(7)].map((_, i) => (
+        {[...Array<unknown>(7)].map((_, i) => (
           <mesh key={`rebar-z-${i}`} position={[0, -0.15, -1.25 + i * 0.42]} rotation={[0, 0, Math.PI/2]} castShadow>
             <cylinderGeometry args={[0.008, 0.008, 4.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
@@ -291,8 +291,8 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
         </mesh>
 
         {/* Anti-Slip Diamond Plate Pattern */}
-        {[...Array(15)].map((_, x) => 
-          [...Array(11)].map((_, z) => (
+        {[...Array<unknown>(15)].map((_, x) => 
+          [...Array<unknown>(11)].map((_, z) => (
             <mesh 
               key={`diamond-${x}-${z}`} 
               position={[-1.75 + x * 0.25, 0.21, -1.25 + z * 0.25]} 
@@ -351,7 +351,7 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
         </mesh>
 
         {/* Ventilation Louvers */}
-        {[...Array(8)].map((_, i) => (
+        {[...Array<unknown>(8)].map((_, i) => (
           <mesh key={`louver-${i}`} position={[0.8, -0.8 + i * 0.15, 2.08]} castShadow>
             <boxGeometry args={[0.6, 0.02, 0.03]} />
             <meshStandardMaterial color="#B0BEC5" metalness={0.8} roughness={0.2} />
@@ -386,7 +386,7 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
         {/* Professional Water Storage Tank System */}
         <group position={[-1.0, 0.8, 0.3]}>
           {/* Tank Support Structure */}
-          {[...Array(4)].map((_, i) => {
+          {[...Array<unknown>(4)].map((_, i) => {
             const angle = (i * Math.PI) / 2;
             const x = Math.cos(angle) * 0.6;
             const z = Math.sin(angle) * 0.6;
@@ -511,7 +511,7 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
             </mesh>
             
             {/* Level Scale Markings */}
-            {[...Array(11)].map((_, i) => (
+            {[...Array<unknown>(11)].map((_, i) => (
               <mesh key={`scale-${i}`} position={[0.045, -0.75 + i * 0.15, 0]} castShadow>
                 <boxGeometry args={[0.02, 0.01, 0.001]} />
                 <meshStandardMaterial color="#FFEB3B" metalness={0.9} roughness={0.1} />
@@ -743,7 +743,7 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
         </mesh>
 
         {/* Pipe Supports and Hangers */}
-        {[...Array(5)].map((_, i) => (
+        {[...Array<unknown>(5)].map((_, i) => (
           <group key={`pipe-support-${i}`} position={[-1.5 + i * 0.75, 1.8, -0.5]}>
             <mesh castShadow>
               <boxGeometry args={[0.05, 0.05, 0.3]} />
@@ -805,7 +805,7 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
         </mesh>
 
         {/* Water Droplets */}
-        {[...Array(6)].map((_, i) => (
+        {[...Array<unknown>(6)].map((_, i) => (
           <mesh 
             key={`droplet-${i}`} 
             position={[
@@ -869,7 +869,7 @@ const WaterSupply: PlantObjectComponent<WaterSupplyProps, WaterSupplyPort> = ({
             <meshStandardMaterial color="#607D8B" metalness={0.8} roughness={0.2} />
           </mesh>
           {/* Cable Tray Supports */}
-          {[...Array(6)].map((_, i) => (
+          {[...Array<unknown>(6)].map((_, i) => (
             <mesh key={`cable-support-${i}`} position={[-1.25 + i * 0.5, -0.12, 0]} castShadow>
               <boxGeometry args={[0.03, 0.1, 0.25]} />
               <meshStandardMaterial color="#455A64" metalness={0.8} roughness={0.3} />

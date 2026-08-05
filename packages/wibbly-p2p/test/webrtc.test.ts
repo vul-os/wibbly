@@ -102,7 +102,7 @@ class FakePeerConnection implements RTCPeerConnectionLike {
     cb: (() => void) | ((ev: { channel: DataChannelLike }) => void),
   ): void {
     if (type === 'datachannel') {
-      const dcCb = cb as (ev: { channel: DataChannelLike }) => void;
+      const dcCb = cb;
       this.dcListeners.push(dcCb);
       if (this.pendingChannel) {
         const channel = this.pendingChannel;

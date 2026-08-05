@@ -208,7 +208,15 @@ export async function acquireCameraStream(
   }
 
   /* c8 ignore next — unreachable: the loop always returns or throws. */
-  throw lastError ?? new Error('WebcamFrameSource: could not acquire a camera stream');
+  // `lastError` is caught as `unknown` (TypeScript cannot prove getUserMedia
+  // only ever throws Error instances), so only-throw-error correctly flags a
+  // bare `throw lastError`. Re-throw it as-is when it genuinely is an Error
+  // (preserving its identity/stack — the whole point of this rethrow, not
+  // wrapping every camera failure in a fresh Error that hides the real one),
+  // and fall back to a synthesized Error only for the non-Error/no-error case.
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('WebcamFrameSource: could not acquire a camera stream');
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -414,9 +422,13 @@ export class WebcamFrameSource implements FrameSource {
   /** play(), with its rejection turned into a warning instead of a throw. */
   private async attemptPlay(el: HTMLVideoElement): Promise<void> {
     try {
-      const p = el.play();
-      // play() returns void on very old implementations; only await a thenable.
-      if (p && typeof (p as Promise<void>).then === 'function') await p;
+      // HTMLMediaElement.play() is typed to always return Promise<void> under
+      // this project's lib target (DOM) — no environment this codebase
+      // actually runs in returns anything else, and no-misused-promises
+      // correctly flagged the previous `if (p && typeof p.then ===
+      // 'function')` guard as testing an object that TypeScript already
+      // knows is unconditionally truthy. Trust the type.
+      await el.play();
     } catch (err) {
       const name = (err as { name?: string } | null)?.name ?? 'Error';
       this.warn(
@@ -487,6 +499,11 @@ export class WebcamFrameSource implements FrameSource {
     // It is still feature-detected on the element rather than assumed, because
     // "rarely" is not "never" and the cost of the check is nil.
     // (W3C spec: https://wicg.github.io/video-rvfc/)
+    // Bound at extraction (`?.bind(el)`), not called later via `.call(el,
+    // ...)` on a bare extracted reference — the same method reference used
+    // twice below (once to arm, once to re-arm inside `step`) is exactly
+    // what @typescript-eslint/unbound-method exists to catch, and `.bind`
+    // is the fix the rule's own message suggests.
     const rvfc = (
       el as HTMLVideoElement & {
         requestVideoFrameCallback?: (
@@ -494,9 +511,9 @@ export class WebcamFrameSource implements FrameSource {
         ) => number;
         cancelVideoFrameCallback?: (h: number) => void;
       }
-    ).requestVideoFrameCallback;
+    ).requestVideoFrameCallback?.bind(el);
 
-    if (typeof rvfc === 'function') {
+    if (rvfc) {
       const step = (now: number, meta: { captureTime?: number }) => {
         // Clear the handle before doing anything: it refers to a callback that
         // has already fired, so cancelling it in stop() would be a no-op on a
@@ -510,9 +527,9 @@ export class WebcamFrameSource implements FrameSource {
         // Re-arm AFTER emitting, and only if still running — emit() runs
         // subscriber code that may call stop().
         if (this.stopped || this.video !== el) return;
-        this.videoFrameHandle = rvfc.call(el, step);
+        this.videoFrameHandle = rvfc(step);
       };
-      this.videoFrameHandle = rvfc.call(el, step);
+      this.videoFrameHandle = rvfc(step);
       return;
     }
 
@@ -601,13 +618,14 @@ export class WebcamFrameSource implements FrameSource {
       this.rafHandle = null;
     }
     if (this.videoFrameHandle !== null && this.video) {
+      // `.bind(this.video)` at extraction, same reasoning as requestVideoFrameCallback above.
       const cancel = (
         this.video as HTMLVideoElement & { cancelVideoFrameCallback?: (h: number) => void }
-      ).cancelVideoFrameCallback;
+      ).cancelVideoFrameCallback?.bind(this.video);
       // Paired feature detection: an engine that has requestVideoFrameCallback
       // is required to have the canceller, but we got the handle from a
       // detected function and we refuse to assume its partner.
-      if (typeof cancel === 'function') cancel.call(this.video, this.videoFrameHandle);
+      if (cancel) cancel(this.videoFrameHandle);
     }
     this.videoFrameHandle = null;
 

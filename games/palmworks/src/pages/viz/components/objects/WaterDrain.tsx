@@ -210,13 +210,13 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
         </mesh>
         
         {/* Rebar Reinforcement Grid */}
-        {[...Array(9)].map((_, i) => (
+        {[...Array<unknown>(9)].map((_, i) => (
           <mesh key={`rebar-x-${i}`} position={[-1.8 + i * 0.45, -0.18, 0]} rotation={[Math.PI/2, 0, 0]} castShadow>
             <cylinderGeometry args={[0.008, 0.008, 3.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
           </mesh>
         ))}
-        {[...Array(7)].map((_, i) => (
+        {[...Array<unknown>(7)].map((_, i) => (
           <mesh key={`rebar-z-${i}`} position={[0, -0.18, -1.35 + i * 0.45]} rotation={[0, 0, Math.PI/2]} castShadow>
             <cylinderGeometry args={[0.008, 0.008, 4.0, 8]} />
             <meshStandardMaterial color="#8B4513" metalness={0.8} roughness={0.4} />
@@ -234,8 +234,8 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
         </mesh>
 
         {/* Diamond Plate Pattern */}
-        {[...Array(16)].map((_, x) => 
-          [...Array(12)].map((_, z) => (
+        {[...Array<unknown>(16)].map((_, x) => 
+          [...Array<unknown>(12)].map((_, z) => (
             <mesh 
               key={`diamond-${x}-${z}`} 
               position={[-1.8 + x * 0.225, 0.045, -1.25 + z * 0.225]} 
@@ -304,7 +304,7 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
         </mesh>
 
         {/* Professional Safety Railings Around Sump */}
-        {[...Array(16)].map((_, i) => {
+        {[...Array<unknown>(16)].map((_, i) => {
           const angle = (i * Math.PI) / 8;
           const x = Math.cos(angle) * 1.1;
           const z = Math.sin(angle) * 1.1;
@@ -328,7 +328,7 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
             <boxGeometry args={[0.05, 1.2, 0.03]} />
             <meshStandardMaterial color="#37474F" metalness={0.8} roughness={0.2} />
           </mesh>
-          {[...Array(6)].map((_, i) => (
+          {[...Array<unknown>(6)].map((_, i) => (
             <mesh key={`rung-${i}`} position={[0, 0.5 - i * 0.2, 0.12]} rotation={[0, 0, Math.PI/2]} castShadow>
               <cylinderGeometry args={[0.015, 0.015, 0.2, 12]} />
               <meshStandardMaterial color="#37474F" metalness={0.8} roughness={0.2} />
@@ -351,13 +351,13 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
           </mesh>
           
           {/* Professional Grate Pattern */}
-          {[...Array(5)].map((_, j) => (
+          {[...Array<unknown>(5)].map((_, j) => (
             <mesh key={`grate-${j}`} position={[0, 0.025, -0.1 + j * 0.05]} castShadow>
               <boxGeometry args={[0.2, 0.01, 0.01]} />
               <meshStandardMaterial color="#263238" metalness={0.9} roughness={0.1} />
             </mesh>
           ))}
-          {[...Array(5)].map((_, j) => (
+          {[...Array<unknown>(5)].map((_, j) => (
             <mesh key={`grate-cross-${j}`} position={[-0.1 + j * 0.05, 0.025, 0]} rotation={[0, Math.PI/2, 0]} castShadow>
               <boxGeometry args={[0.2, 0.01, 0.01]} />
               <meshStandardMaterial color="#263238" metalness={0.9} roughness={0.1} />
@@ -412,7 +412,7 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
         </mesh>
 
         {/* Pump Housing Bolts */}
-        {[...Array(8)].map((_, i) => {
+        {[...Array<unknown>(8)].map((_, i) => {
           const angle = (i * Math.PI) / 4;
           const x = Math.cos(angle) * 0.25;
           const z = Math.sin(angle) * 0.25;
@@ -443,7 +443,7 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
           </mesh>
           
           {/* Precision Impeller Vanes */}
-          {[...Array(8)].map((_, i) => {
+          {[...Array<unknown>(8)].map((_, i) => {
             const angle = (i * Math.PI) / 4;
             const x = Math.cos(angle) * 0.12;
             const z = Math.sin(angle) * 0.12;
@@ -485,7 +485,7 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
         </mesh>
         
         {/* Advanced Motor Cooling Fins */}
-        {[...Array(12)].map((_, i) => (
+        {[...Array<unknown>(12)].map((_, i) => (
           <mesh key={`fin-${i}`} position={[0, 0.45, 0]} rotation={[0, (i * Math.PI) / 6, 0]} castShadow>
             <boxGeometry args={[0.01, 0.25, 0.16]} />
             <meshStandardMaterial color="#263238" metalness={0.75} roughness={0.25} />
@@ -636,7 +636,7 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
         </mesh>
 
         {/* Level Bar Graph */}
-        {[...Array(10)].map((_, i) => (
+        {[...Array<unknown>(10)].map((_, i) => (
           <mesh key={`level-bar-${i}`} position={[-0.75 + i * 0.03, -0.1, 0.195]} castShadow>
             <boxGeometry args={[0.02, 0.12, 0.003]} />
             <meshStandardMaterial 
@@ -824,7 +824,7 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
       </mesh>
 
       {/* Water Droplets Effect */}
-      {[...Array(6)].map((_, i) => (
+      {[...Array<unknown>(6)].map((_, i) => (
         <mesh key={`droplet-${i}`} position={[1.7 + Math.random() * 0.2, 0.15 + Math.random() * 0.1, 1.5 + (Math.random() - 0.5) * 0.3]} castShadow>
           <sphereGeometry args={[0.008, 8, 6]} />
           <meshStandardMaterial 
@@ -893,7 +893,7 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
           <boxGeometry args={[3.0, 0.03, 0.2]} />
           <meshStandardMaterial color="#607D8B" metalness={0.8} roughness={0.2} />
         </mesh>
-        {[...Array(10)].map((_, i) => (
+        {[...Array<unknown>(10)].map((_, i) => (
           <mesh key={`tray-rung-${i}`} position={[-1.35 + i * 0.3, 0, 0]} castShadow>
             <boxGeometry args={[0.02, 0.03, 0.2]} />
             <meshStandardMaterial color="#546E7A" metalness={0.8} roughness={0.3} />
@@ -935,7 +935,7 @@ const WaterDrain: PlantObjectComponent<WaterDrainProps, WaterDrainPort> = ({
           <cylinderGeometry args={[0.015, 0.015, 0.8, 12]} />
           <meshStandardMaterial color="#607D8B" metalness={0.8} roughness={0.2} />
         </mesh>
-        {[...Array(4)].map((_, i) => (
+        {[...Array<unknown>(4)].map((_, i) => (
           <mesh key={`sensor-${i}`} position={[0, -0.3 + i * 0.2, 0]} castShadow>
             <sphereGeometry args={[0.02, 12, 8]} />
             <meshStandardMaterial color="#2196F3" metalness={0.8} roughness={0.2} />
