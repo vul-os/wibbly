@@ -83,6 +83,17 @@ export default tseslint.config(
         tsconfigRootDir,
       },
     },
+    rules: {
+      // The one no-misused-promises finding surfaced when type-aware linting
+      // was turned on: not-found.tsx's onClick={() => navigate('/')}.
+      // react-router's NavigateFunction is typed `void | Promise<void>` and
+      // used fire-and-forget in react-router's own docs; there is no
+      // meaningful rejection a client-side navigation call produces here.
+      // Same reasoning and same option (typescript-eslint's own documented
+      // fix for this exact JSX-handler false-positive) as the root
+      // eslint.config.js one level up.
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
+    },
   },
   {
     // Config files run under Node, not the browser.
