@@ -456,11 +456,16 @@ const PalmworksViz = () => {
             shadow-mapSize-height={2048}
           />
 
-          {/* Enhanced Grid with snap indicators */}
+          {/* Enhanced Grid with snap indicators.
+              `size`/`color` aren't real GridProps (drei's Grid takes
+              cellSize/cellColor - see GridMaterialType in Grid.d.ts), so
+              the grid's cell size and color never actually followed
+              gridSize/gridSnap; only sectionColor (a real prop) did.
+              Renamed to the real props, same values. */}
           <Grid
             infiniteGrid
-            size={gridSize}
-            color={gridSnap ? "#666666" : "#444444"}
+            cellSize={gridSize}
+            cellColor={gridSnap ? "#666666" : "#444444"}
             sectionColor={gridSnap ? "#888888" : "#666666"}
             fadeDistance={50}
             fadeStrength={1}
