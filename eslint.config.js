@@ -5,9 +5,12 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-// This config covers the npm-workspace root: root src/ (the app shell) and
-// packages/* (the @vulos/wibbly-{input,p2p,authority} libraries), which
-// share this install's node_modules via workspace hoisting.
+// This config covers the npm-workspace root: root src/ (the app shell),
+// games/tennis (which relocated out of src/game but stays part of this same
+// project — it has no independent entry point or build of its own, it is a
+// component the app shell renders), and packages/* (the
+// @vulos/wibbly-{input,p2p,authority} libraries), which share this install's
+// node_modules via workspace hoisting.
 //
 // games/palmworks is a SEPARATE npm project (its own package.json,
 // package-lock.json and node_modules) and lints itself via
@@ -16,7 +19,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 // config, since ESLint plugin resolution follows node_modules and mixing
 // two independent installs into a single flat config would be fragile.
 export default defineConfig([
-  globalIgnores(['dist', 'dist-demo', 'games', 'site', 'packages/*/dist']),
+  globalIgnores(['dist', 'dist-demo', 'games/palmworks', 'site', 'packages/*/dist']),
   // Shared across both JS and TS: the app's own plugin rules don't care
   // which language a file is written in.
   {
