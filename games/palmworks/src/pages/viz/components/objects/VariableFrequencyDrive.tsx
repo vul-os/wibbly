@@ -1,13 +1,27 @@
 import React, { useRef, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
+import type { PlantObjectComponent, PlantObjectProps } from './types';
 
-const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
-  const meshRef = useRef();
-  const groupRef = useRef();
+interface VariableFrequencyDriveProps extends PlantObjectProps {
+  position: [number, number, number];
+}
+
+interface VariableFrequencyDrivePort {
+  id: string;
+  type: 'electric' | 'liquid' | 'gas';
+  label: string;
+  offset: [number, number, number];
+  direction: [number, number, number];
+  required: boolean;
+}
+
+const VariableFrequencyDrive: PlantObjectComponent<VariableFrequencyDriveProps, VariableFrequencyDrivePort> = ({ position, onClick, onDrag, isSelected, isDraggable, gridSnap, gridSize, onPortClick }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [hoveredPort, setHoveredPort] = useState(null);
+  const [hoveredPort, setHoveredPort] = useState<string | null>(null);
   const [motorRunning, setMotorRunning] = useState(false);
   const [currentFrequency, setCurrentFrequency] = useState(50.0);
   const [targetFrequency, setTargetFrequency] = useState(50.0);
@@ -32,7 +46,7 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
   };
 
   // Define connection ports for comprehensive VFD I/O
-  const connectionPorts = [
+  const connectionPorts: VariableFrequencyDrivePort[] = [
     {
       id: 'power_input_l1',
       type: 'electric',
@@ -131,9 +145,11 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
     }
   ];
 
-  const snapToGrid = (value) => {
+  const GRID_SIZE = gridSize || 1.0;
+
+  const snapToGrid = (value: number): number => {
     if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
   };
 
   // Simulate realistic VFD operation with frequency control
@@ -201,12 +217,13 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
 
   useFrame(() => {
     if (meshRef.current) {
+      const material = meshRef.current.material as THREE.MeshPhongMaterial;
       if (isSelected) {
-        meshRef.current.material.emissive.setHex(0x001122);
+        material.emissive.setHex(0x001122);
       } else if (hovered && isDraggable) {
-        meshRef.current.material.emissive.setHex(0x111111);
+        material.emissive.setHex(0x111111);
       } else {
-        meshRef.current.material.emissive.setHex(0x000000);
+        material.emissive.setHex(0x000000);
       }
     }
     
@@ -216,39 +233,39 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
     }
   });
 
-  const handlePointerDown = (event) => {
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!isDraggable) {
       onClick?.(event);
       return;
     }
-    
+
     event.stopPropagation();
     let hasMovedMouse = false;
     gl.domElement.style.cursor = 'grabbing';
-    
-    const handlePointerMove = (moveEvent) => {
+
+    const handlePointerMove = (moveEvent: MouseEvent) => {
       if (!onDrag) return;
-      
+
       if (!hasMovedMouse) {
         hasMovedMouse = true;
         setIsDragging(true);
       }
-      
+
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
-      
+
       mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
       mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
-      
+
       raycaster.setFromCamera(mouse, camera);
-      
+
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
       const intersection = new THREE.Vector3();
-      
+
       if (raycaster.ray.intersectPlane(plane, intersection)) {
         const snappedX = snapToGrid(intersection.x);
         const snappedZ = snapToGrid(intersection.z);
-        const newPosition = [snappedX, position[1], snappedZ];
+        const newPosition: [number, number, number] = [snappedX, position[1], snappedZ];
         onDrag(newPosition);
       }
     };
@@ -257,34 +274,34 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
       if (!hasMovedMouse) {
         setIsDragging(false);
         gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-        
+
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove);
-        document.removeEventListener('touchend', handlePointerUp);
-        
+        document.removeEventListener('touchmove', handlePointerMove as EventListener);
+        document.removeEventListener('touchend', handlePointerUp as EventListener);
+
         onClick?.(event);
         return;
       }
-      
+
       setIsDragging(false);
       gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
-      
+
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove);
-      document.removeEventListener('touchend', handlePointerUp);
+      document.removeEventListener('touchmove', handlePointerMove as EventListener);
+      document.removeEventListener('touchend', handlePointerUp as EventListener);
     };
 
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove);
-    document.addEventListener('touchend', handlePointerUp);
-    
-    event.preventDefault?.();
+    document.addEventListener('touchmove', handlePointerMove as EventListener);
+    document.addEventListener('touchend', handlePointerUp as EventListener);
+
+    (event as unknown as { preventDefault?: () => void }).preventDefault?.();
   };
 
-  const handlePortClick = (port, event) => {
+  const handlePortClick = (port: VariableFrequencyDrivePort, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     if (onPortClick) {
       onPortClick(port, position, event);
@@ -306,7 +323,7 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
     }
   };
 
-  const handlePortHover = (portId) => {
+  const handlePortHover = (portId: string) => {
     setHoveredPort(portId);
     gl.domElement.style.cursor = 'pointer';
   };
@@ -316,7 +333,7 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
     gl.domElement.style.cursor = isDraggable ? 'grab' : 'auto';
   };
 
-  const getPortColor = (port) => {
+  const getPortColor = (port: VariableFrequencyDrivePort): string => {
     switch (port.type) {
       case 'electric': return '#FF6B35';
       case 'liquid': return '#4A90E2';
@@ -350,14 +367,16 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
       {/* Primary Enclosure - Industrial Steel Cabinet */}
       <mesh ref={meshRef} castShadow receiveShadow>
         <boxGeometry args={[2.8, 4.0, 1.2]} />
-        <meshPhongMaterial 
-          color="#E0E0E0" 
-          specular="#FFFFFF" 
+        {/* `metalness` isn't a MeshPhongMaterial property (that's a PBR
+            param); three.js silently ignores unknown material props, so
+            this was already a no-op. Dropped rather than typed around. */}
+        <meshPhongMaterial
+          color="#E0E0E0"
+          specular="#FFFFFF"
           shininess={90}
-          metalness={0.1}
         />
       </mesh>
-      
+
       {/* Front Panel */}
       <mesh position={[0, 0, 0.62]} castShadow>
         <boxGeometry args={[2.75, 3.95, 0.04]} />
@@ -403,12 +422,14 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
       </mesh>
       
       {/* Parameter Display Labels */}
-      {[
-        { pos: [-0.6, 1.3, 0.78], label: 'FREQ' },
-        { pos: [-0.2, 1.3, 0.78], label: 'CURR' },
-        { pos: [0.2, 1.3, 0.78], label: 'VOLT' },
-        { pos: [0.6, 1.3, 0.78], label: 'SPEED' }
-      ].map((item, i) => (
+      {(
+        [
+          { pos: [-0.6, 1.3, 0.78], label: 'FREQ' },
+          { pos: [-0.2, 1.3, 0.78], label: 'CURR' },
+          { pos: [0.2, 1.3, 0.78], label: 'VOLT' },
+          { pos: [0.6, 1.3, 0.78], label: 'SPEED' }
+        ] as const
+      ).map((item, i) => (
         <mesh key={`label-${i}`} position={item.pos} castShadow>
           <boxGeometry args={[0.25, 0.08, 0.01]} />
           <meshBasicMaterial 
@@ -418,24 +439,26 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
       ))}
       
       {/* Status Indicator LEDs */}
-      {[
-        { pos: [-1.0, 1.1, 0.78], color: '#10B981', active: motorRunning, label: 'RUN' },
-        { pos: [-0.6, 1.1, 0.78], color: '#DC2626', active: faultCondition, label: 'FAULT' },
-        { pos: [-0.2, 1.1, 0.78], color: '#F59E0B', active: overloadAlarm, label: 'ALARM' },
-        { pos: [0.2, 1.1, 0.78], color: '#3B82F6', active: remoteMode, label: 'REMOTE' },
-        { pos: [0.6, 1.1, 0.78], color: '#8B5CF6', active: !remoteMode, label: 'LOCAL' },
-        { pos: [1.0, 1.1, 0.78], color: '#06B6D4', active: true, label: 'POWER' }
-      ].map((led, i) => (
+      {(
+        [
+          { pos: [-1.0, 1.1, 0.78], color: '#10B981', active: motorRunning, label: 'RUN' },
+          { pos: [-0.6, 1.1, 0.78], color: '#DC2626', active: faultCondition, label: 'FAULT' },
+          { pos: [-0.2, 1.1, 0.78], color: '#F59E0B', active: overloadAlarm, label: 'ALARM' },
+          { pos: [0.2, 1.1, 0.78], color: '#3B82F6', active: remoteMode, label: 'REMOTE' },
+          { pos: [0.6, 1.1, 0.78], color: '#8B5CF6', active: !remoteMode, label: 'LOCAL' },
+          { pos: [1.0, 1.1, 0.78], color: '#06B6D4', active: true, label: 'POWER' }
+        ] as const
+      ).map((led, i) => (
         <group key={`led-group-${i}`}>
           {/* LED Housing */}
-          <mesh position={led.pos} castShadow>
-            <cylinderGeometry args={[0.04, 0.04, 0.03, 12]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={led.pos} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.04, 0.04, 0.03, 12]} />
             <meshPhongMaterial color="#2A2A2A" />
           </mesh>
           {/* LED Lens */}
-          <mesh position={[led.pos[0], led.pos[1], led.pos[2] + 0.02]} castShadow>
-            <cylinderGeometry args={[0.035, 0.035, 0.015, 12]} rotation={[Math.PI/2, 0, 0]} />
-            <meshPhongMaterial 
+          <mesh position={[led.pos[0], led.pos[1], led.pos[2] + 0.02]} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.035, 0.035, 0.015, 12]} />
+            <meshPhongMaterial
               color={led.color}
               emissive={led.active ? led.color : '#000000'}
               emissiveIntensity={led.active ? 0.9 : 0}
@@ -457,59 +480,62 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
       </mesh>
       
       {/* Navigation and Control Buttons */}
-      {[
-        // Navigation buttons
-        { pos: [-0.8, 0.6, 0.76], color: '#3B82F6', label: 'UP', size: 0.06 },
-        { pos: [-0.8, 0.4, 0.76], color: '#3B82F6', label: 'DOWN', size: 0.06 },
-        { pos: [-0.6, 0.5, 0.76], color: '#10B981', label: 'ENTER', size: 0.06 },
-        { pos: [-0.4, 0.5, 0.76], color: '#F59E0B', label: 'MENU', size: 0.05 },
-        
-        // Control buttons
-        { pos: [0.0, 0.6, 0.76], color: '#10B981', label: 'START', size: 0.08, action: () => {
-          if (!faultCondition && !overloadAlarm) {
-            setMotorRunning(true);
-          }
-        }},
-        { pos: [0.3, 0.6, 0.76], color: '#DC2626', label: 'STOP', size: 0.08, action: () => {
-          setMotorRunning(false);
-        }},
-        { pos: [0.6, 0.6, 0.76], color: '#F59E0B', label: 'RESET', size: 0.06, action: () => {
-          setFaultCondition(false);
-          setOverloadAlarm(false);
-        }},
-        
-        // Frequency control
-        { pos: [0.0, 0.3, 0.76], color: '#8B5CF6', label: 'FREQ+', size: 0.06, action: () => {
-          setTargetFrequency(prev => Math.min(vfdSettings.maxFrequency, prev + 5));
-        }},
-        { pos: [0.3, 0.3, 0.76], color: '#8B5CF6', label: 'FREQ-', size: 0.06, action: () => {
-          setTargetFrequency(prev => Math.max(vfdSettings.minFrequency, prev - 5));
-        }},
-        { pos: [0.6, 0.3, 0.76], color: '#06B6D4', label: 'JOG', size: 0.05 },
-        
-        // Mode buttons
-        { pos: [0.0, 0.0, 0.76], color: '#6366F1', label: 'AUTO', size: 0.05 },
-        { pos: [0.3, 0.0, 0.76], color: '#EC4899', label: 'LOCAL', size: 0.05, action: () => {
-          setRemoteMode(false);
-        }},
-        { pos: [0.6, 0.0, 0.76], color: '#14B8A6', label: 'REMOTE', size: 0.05, action: () => {
-          setRemoteMode(true);
-        }}
-      ].map((button, i) => (
+      {(
+        [
+          // Navigation buttons
+          { pos: [-0.8, 0.6, 0.76], color: '#3B82F6', label: 'UP', size: 0.06 },
+          { pos: [-0.8, 0.4, 0.76], color: '#3B82F6', label: 'DOWN', size: 0.06 },
+          { pos: [-0.6, 0.5, 0.76], color: '#10B981', label: 'ENTER', size: 0.06 },
+          { pos: [-0.4, 0.5, 0.76], color: '#F59E0B', label: 'MENU', size: 0.05 },
+
+          // Control buttons
+          { pos: [0.0, 0.6, 0.76], color: '#10B981', label: 'START', size: 0.08, action: () => {
+            if (!faultCondition && !overloadAlarm) {
+              setMotorRunning(true);
+            }
+          }},
+          { pos: [0.3, 0.6, 0.76], color: '#DC2626', label: 'STOP', size: 0.08, action: () => {
+            setMotorRunning(false);
+          }},
+          { pos: [0.6, 0.6, 0.76], color: '#F59E0B', label: 'RESET', size: 0.06, action: () => {
+            setFaultCondition(false);
+            setOverloadAlarm(false);
+          }},
+
+          // Frequency control
+          { pos: [0.0, 0.3, 0.76], color: '#8B5CF6', label: 'FREQ+', size: 0.06, action: () => {
+            setTargetFrequency(prev => Math.min(vfdSettings.maxFrequency, prev + 5));
+          }},
+          { pos: [0.3, 0.3, 0.76], color: '#8B5CF6', label: 'FREQ-', size: 0.06, action: () => {
+            setTargetFrequency(prev => Math.max(vfdSettings.minFrequency, prev - 5));
+          }},
+          { pos: [0.6, 0.3, 0.76], color: '#06B6D4', label: 'JOG', size: 0.05 },
+
+          // Mode buttons
+          { pos: [0.0, 0.0, 0.76], color: '#6366F1', label: 'AUTO', size: 0.05 },
+          { pos: [0.3, 0.0, 0.76], color: '#EC4899', label: 'LOCAL', size: 0.05, action: () => {
+            setRemoteMode(false);
+          }},
+          { pos: [0.6, 0.0, 0.76], color: '#14B8A6', label: 'REMOTE', size: 0.05, action: () => {
+            setRemoteMode(true);
+          }}
+        ] as { pos: [number, number, number]; color: string; label: string; size: number; action?: () => void }[]
+      ).map((button, i) => (
         <group key={`button-group-${i}`}>
           {/* Button Housing */}
-          <mesh position={button.pos} castShadow>
-            <cylinderGeometry args={[button.size, button.size, 0.04, 16]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh position={button.pos} rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[button.size, button.size, 0.04, 16]} />
             <meshPhongMaterial color="#3A3A3A" specular="#777777" shininess={60} />
           </mesh>
           {/* Button Top */}
-          <mesh 
-            position={[button.pos[0], button.pos[1], button.pos[2] + 0.025]} 
+          <mesh
+            position={[button.pos[0], button.pos[1], button.pos[2] + 0.025]}
+            rotation={[Math.PI/2, 0, 0]}
             castShadow
-            onClick={button.action}
+            onClick={() => button.action?.()}
           >
-            <cylinderGeometry args={[button.size - 0.01, button.size - 0.01, 0.02, 16]} rotation={[Math.PI/2, 0, 0]} />
-            <meshPhongMaterial 
+            <cylinderGeometry args={[button.size - 0.01, button.size - 0.01, 0.02, 16]} />
+            <meshPhongMaterial
               color={button.color}
               emissive={
                 (button.label === 'START' && motorRunning) ||
@@ -531,14 +557,13 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
         {/* Main Heat Sink */}
         <mesh castShadow>
           <boxGeometry args={[2.4, 1.5, 0.6]} />
-          <meshPhongMaterial 
-            color="#4A4A4A" 
-            specular="#888888" 
+          <meshPhongMaterial
+            color="#4A4A4A"
+            specular="#888888"
             shininess={60}
-            metalness={0.8}
           />
         </mesh>
-        
+
         {/* Heat Sink Fins */}
         {Array.from({length: 12}, (_, i) => (
           <mesh key={`fin-${i}`} position={[(-1.1 + i * 0.2), 0, 0.2]} castShadow>
@@ -560,8 +585,8 @@ const VariableFrequencyDrive = ({ position, onClick, onDrag, isSelected, isDragg
       {[-0.6, 0.6].map((xPos, i) => (
         <group key={`fan-${i}`} position={[xPos, -1.6, 0.4]}>
           {/* Fan Housing */}
-          <mesh castShadow>
-            <cylinderGeometry args={[0.25, 0.25, 0.15, 16]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh rotation={[Math.PI/2, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.25, 0.25, 0.15, 16]} />
             <meshPhongMaterial color="#2A2A2A" specular="#666666" shininess={50} />
           </mesh>
           {/* Fan Blades */}
