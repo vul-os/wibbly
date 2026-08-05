@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { createPlayer } from '../src/game/player';
-import { createBall, updateBallPhysics } from '../src/game/ball';
-import { createGameState } from '../src/game/game-logic';
+import { createPlayer } from '../games/tennis/player';
+import { createBall, updateBallPhysics } from '../games/tennis/ball';
+import { createGameState } from '../games/tennis/game-logic';
 
 /**
  * updateBallPhysics is the per-frame integrator for the one game that plays

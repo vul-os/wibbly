@@ -493,7 +493,7 @@ async function main() {
     if (/Handling swing/.test(m.text())) swings.push(m.text());
     if (m.type() === 'error') p2Errors.push(m.text());
   });
-  // `?debug=1` — the documented opt-in in src/game/debug.js. The swing this
+  // `?debug=1` — the documented opt-in in games/tennis/debug.js. The swing this
   // check is looking for is observed through `debugLog('Handling swing!', …)`
   // in game.jsx's `handleSwing`, and that hot-path logging is OFF by default
   // for real players. Without the flag this check counted zero swings while

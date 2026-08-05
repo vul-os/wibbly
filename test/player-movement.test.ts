@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createPlayer, updatePlayerMovement } from '../src/game/player';
-import type { PlayerData } from '../src/game/types';
+import { createPlayer, updatePlayerMovement } from '../games/tennis/player';
+import type { PlayerData } from '../games/tennis/types';
 
 /**
  * Regression coverage for the frame-rate-dependence bug in

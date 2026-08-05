@@ -20,13 +20,13 @@ import {
     modelUrl,
     resolvePeerTransport,
     type WibblyWindow,
-} from '../mode';
+} from '../../src/mode';
 import {
     startMagnetiteAuthority,
     type AuthorityTelemetry,
     type MagnetiteAuthorityRunner,
 } from './magnetite-authority';
-import type { GameSettings } from '../components/game-settings';
+import type { GameSettings } from '../../src/components/game-settings';
 
 // Import game modules
 import { createPlayer, updatePlayerMovement, updatePlayerSwing, updateRacketAlignment, toggleHitBoxVisibility } from './player';

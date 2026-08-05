@@ -5,7 +5,7 @@
  * exists; a setting with no consumer is a lie told with a toggle, so the
  * menu renders those as visibly disabled instead of storing them.
  *
- *   usePoseDetection  → src/game/game.jsx reads gameState.usePoseDetection at
+ *   usePoseDetection  → games/tennis/game.jsx reads gameState.usePoseDetection at
  *                       mount and decides whether to start the camera pipeline.
  *   debug             → gameState.debug, read by game-logic.js and ball.js for
  *                       their diagnostic logging.

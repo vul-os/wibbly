@@ -1,5 +1,5 @@
 /**
- * Shared value types for the tennis game module (src/game/*).
+ * Shared value types for the tennis game module (games/tennis/*).
  *
  * Three.js's `Object3D.userData` is `Record<string, any>` by design (see
  * three's own Object3D.d.ts), so it structurally accepts any shape without a

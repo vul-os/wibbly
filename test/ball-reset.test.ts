@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { createPlayer } from '../src/game/player';
-import { createBall, resetBall } from '../src/game/ball';
-import { createGameState } from '../src/game/game-logic';
+import { createPlayer } from '../games/tennis/player';
+import { createBall, resetBall } from '../games/tennis/ball';
+import { createGameState } from '../games/tennis/game-logic';
 
 /**
  * resetBall() ends the current point and returns the game to the

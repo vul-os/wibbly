@@ -1,8 +1,7 @@
 # Games
 
-Every wibbly game lives in this directory, one folder per game. Tennis is the
-exception for now — it still sits in `src/game/` because it predates this
-layout. It will move.
+Every wibbly game lives in this directory, one folder per game: `tennis/` and
+`palmworks/`.
 
 > ## Status: this is the submission process, not a loader.
 >

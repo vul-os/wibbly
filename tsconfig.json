@@ -17,6 +17,6 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "test"],
-  "exclude": ["node_modules", "dist", "dist-demo", "games", "packages"]
+  "include": ["src", "test", "games/tennis"],
+  "exclude": ["node_modules", "dist", "dist-demo", "games/palmworks", "packages"]
 }
