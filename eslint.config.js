@@ -125,4 +125,22 @@ export default defineConfig([
       '@typescript-eslint/require-await': 'warn',
     },
   },
+
+  // no-unsafe-assignment's 2 findings in wibbly-p2p/test/session.test.ts
+  // (lines 219, 288) are both `expect.any(String)` used inside a `toEqual`
+  // object literal. vitest's own type declarations
+  // (@vitest/expect/dist/index.d.ts) type `expect.any` as
+  // `(constructor: unknown) => any` — a library typing gap, not anything
+  // this codebase controls — so every use of the single canonical
+  // Jest/Vitest idiom for "assert this field is present with the right
+  // type, regardless of value" trips the rule. No configurable option
+  // exists for this rule; scoped to this one file (the only file in the
+  // repo using expect.any(), confirmed via `grep -rn 'expect\.any\('`) so
+  // no-unsafe-assignment stays at `error` everywhere else.
+  {
+    files: ['packages/wibbly-p2p/test/session.test.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+    },
+  },
 ])
