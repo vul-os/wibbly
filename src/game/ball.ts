@@ -215,9 +215,7 @@ export function handleBallHit(
     // only a real camera-detected swing can come in under 1. Clamped and
     // NaN-guarded since it crosses a library boundary.
     const swingConfidence = Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 1;
-    const rightArm = player.userData.rightArm;
-    const racketGroup = player.userData.racketGroup;
-    
+
     // Get accurate racket head transformation
     const racketTransform = getRacketHeadTransform(player);
     
@@ -299,7 +297,7 @@ export function handleBallHit(
         const arcHeight = 5 + Math.random() * 3;
         
         // Calculate hit direction based on swing direction and racket orientation
-        let hitDirection = racketForward.clone();
+        const hitDirection = racketForward.clone();
         
         if (playerIndex === 0) { // Player 1
             // Ensure ball generally goes toward player 2 (positive X)

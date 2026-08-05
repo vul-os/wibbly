@@ -307,13 +307,6 @@ export function updateRacketAlignment(
     const racketGroup = player.userData.racketGroup;
     const rightArm = player.userData.rightArm;
     
-    // Calculate ball trajectory and predict where it will be at racket height
-    const ballDirection = new THREE.Vector3(
-        gameState.ballVelocity.x,
-        gameState.ballVelocity.y,
-        gameState.ballVelocity.z
-    );
-    
     // Get current racket world position
     const racketWorldPos = new THREE.Vector3();
     racketGroup.getWorldPosition(racketWorldPos);

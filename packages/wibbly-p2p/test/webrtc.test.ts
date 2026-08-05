@@ -61,7 +61,7 @@ class FakePeerConnection implements RTCPeerConnectionLike {
   // test to know that internal timing detail.
   private pendingChannel: DataChannelLike | null = null;
 
-  createDataChannel(_label: string): DataChannelLike {
+  createDataChannel(): DataChannelLike {
     const ch = new FakeDataChannel();
     this.createdChannel = ch;
     return ch;
@@ -75,7 +75,7 @@ class FakePeerConnection implements RTCPeerConnectionLike {
   async setLocalDescription(desc?: { type: string; sdp: string }) {
     if (desc) this.localDescription = desc;
   }
-  async setRemoteDescription(_desc: { type: string; sdp: string }) {
+  async setRemoteDescription() {
     // Real negotiation isn't modeled — nothing here depends on the remote
     // description's content, only on the datachannel event firing.
   }

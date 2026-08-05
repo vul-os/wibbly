@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Calibration, MemoryStorage, type BackendInfo, type Handedness } from '@vulos/wibbly-input';
 import TennisGame from '../game';
 import { clearOwnedStorage } from '../mode';

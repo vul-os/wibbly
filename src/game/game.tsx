@@ -159,9 +159,11 @@ function TennisGame({
     const playerDataRef = useRef(createPlayerData());
 
     // Calibration is per-player, persisted locally, and is what kills the old
-    // `isRightHanded = true` hardcode. Created once for the component's life.
-    const calibrationRef = useRef<Calibration | null>(null);
-    if (!calibrationRef.current) calibrationRef.current = calibration ?? new Calibration();
+    // `isRightHanded = true` hardcode. Created once for the component's
+    // life via a lazy state initializer, not a ref: it's read during render
+    // below (passed straight down to CameraPreview as a prop), which
+    // react-hooks/refs disallows for a ref's `.current`.
+    const [calibrationInstance] = useState(() => calibration ?? new Calibration());
 
     // Pause flag, read by the animation loop and the key handler.
     const pausedRef = useRef(paused);
@@ -254,7 +256,7 @@ function TennisGame({
             const baseOffset = new THREE.Vector3(-4.5, 4.8, 0); // Behind player 1, elevated but lower
             
             // Dynamic camera adjustment based on game state
-            let dynamicOffset = baseOffset.clone();
+            const dynamicOffset = baseOffset.clone();
             
             if (gameState.ballInPlay) {
                 // During play, adjust camera to follow the action
@@ -379,12 +381,8 @@ function TennisGame({
         // seams. Swapping MoveNet for something else later is a constructor
         // argument, not a rewrite of this file.
         async function setupGestureInput() {
-            // Never null in practice: calibrationRef.current is set
-            // synchronously above, before this effect's own setup calls this.
-            const calibration = calibrationRef.current!;
-
             const wibbly = new WibblyInput({
-                calibration,
+                calibration: calibrationInstance,
                 // Point the DEFAULT tracker at the vendored, same-origin model.
                 // The game still names no model and no vendor — it hands the
                 // seam a URL and the seam decides what to do with it. Without
@@ -421,7 +419,7 @@ function TennisGame({
                     new SwingRecognizer({
                         // Live lookup: flipping handedness in the preview takes
                         // effect on the very next frame.
-                        handedness: (playerId) => calibration.handednessFor(playerId),
+                        handedness: (playerId) => calibrationInstance.handednessFor(playerId),
                     }),
                 ],
                 frame: { width: 640, height: 480, fps: 30 },
@@ -465,7 +463,7 @@ function TennisGame({
                     prev.length === ids.length && prev.every((id, i) => id === ids[i]) ? prev : ids,
                 );
                 // Continuously widen each player's reach envelope during play.
-                for (const person of people) calibration.observeReach(person.playerId, person);
+                for (const person of people) calibrationInstance.observeReach(person.playerId, person);
             });
 
             try {
@@ -813,9 +811,27 @@ function TennisGame({
                 delete window.__WIBBLY_MAGNETITE__;
             }
 
-            containerRef.current?.removeChild(renderer.domElement);
+            // `container`, not `containerRef.current`: the ref's current
+            // value can have changed (or gone null) by the time this cleanup
+            // runs, but `container` is the exact node this effect attached
+            // its renderer to, captured once above.
+            container.removeChild(renderer.domElement);
         };
-    }, []);
+        // `calibrationInstance` is intentionally the only addition here:
+        // it's a useState value that never changes after mount (see its
+        // lazy initializer above), so listing it costs nothing and satisfies
+        // the rule honestly rather than suppressing it.
+        //
+        // `settings` stays out. This effect performs the one-time three.js
+        // scene setup; it is not supposed to re-run when settings changes —
+        // Play.jsx already remounts this whole component (`key={gameKey}`,
+        // see the doc comment at the top of this file and near the restart
+        // handler below) specifically so a settings change gets a fresh
+        // mount instead of a partial in-place update. Adding `settings` here
+        // would make the rule "satisfied" while changing real behavior:
+        // every settings change would re-run this effect on the OLD mount
+        // too, tearing down and rebuilding the whole scene twice.
+    }, [calibrationInstance]);
 
     return (
         <>
@@ -838,7 +854,7 @@ function TennisGame({
             {input && (
                 <CameraPreview
                     input={input}
-                    calibration={calibrationRef.current}
+                    calibration={calibrationInstance}
                     players={trackedPlayers}
                 />
             )}

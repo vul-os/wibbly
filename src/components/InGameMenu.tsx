@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Calibration, Handedness } from '@vulos/wibbly-input';
 import type { GameSettings } from './game-settings';
 
@@ -195,15 +195,23 @@ const InGameMenu = ({
   const previousFocusRef = useRef<Element | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (!isOpen && isClosing) setIsClosing(false);
-  }, [isOpen, isClosing]);
+  // Derived during render rather than in an effect, following the same
+  // idempotent-guard pattern as demo.tsx's cta flip: once isClosing flips to
+  // false the condition is false on every later render, so there is no
+  // ongoing effect to run here, just a value to correct in response to
+  // `isOpen` changing out from under it.
+  if (!isOpen && isClosing) setIsClosing(false);
 
   // Re-read handedness whenever the menu opens: it can also be changed from
-  // the setup flow, and this instance is shared with the game.
-  useEffect(() => {
-    if (isOpen && calibration) setHandedness(calibration.handednessFor(PLAYER_ID));
-  }, [isOpen, calibration]);
+  // the setup flow, and this instance is shared with the game. Also derived
+  // during render, not in an effect: `handednessFor` is a pure getter over
+  // calibration's current profile, so calling it during render is just a
+  // value read, and the `handedness !== next` guard makes the setState
+  // idempotent once it catches up.
+  if (isOpen && calibration) {
+    const next = calibration.handednessFor(PLAYER_ID);
+    if (next !== handedness) setHandedness(next);
+  }
 
   // `role="dialog" aria-modal="true"` is a promise, not a decoration: while
   // this is open, focus has to actually live inside it. Without this, Tab
@@ -264,17 +272,23 @@ const InGameMenu = ({
 
   // Motion-trail sparks — the one moving thing, in the accent that always means
   // movement in this product. Suppressed entirely under reduced motion.
-  const sparks = useMemo(
-    () =>
-      Array.from({ length: 22 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        size: Math.random() * 2.6 + 1.4,
-        duration: Math.random() * 12 + 11,
-        delay: Math.random() * -20,
-        opacity: Math.random() * 0.3 + 0.08,
-      })),
-    [],
+  //
+  // Lazy state init, not useMemo: `Math.random` is impure, and
+  // react-hooks/purity is right that a memo isn't the right place for it —
+  // React is free to discard and recompute a memo's value (e.g. under
+  // Strict Mode / Activity), which would make these sparks jump to new
+  // positions with no render-input having changed. useState's initializer
+  // runs exactly once for the component's mounted life, same as the
+  // lazy-init pattern used for the Calibration instances elsewhere.
+  const [sparks] = useState(() =>
+    Array.from({ length: 22 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      size: Math.random() * 2.6 + 1.4,
+      duration: Math.random() * 12 + 11,
+      delay: Math.random() * -20,
+      opacity: Math.random() * 0.3 + 0.08,
+    })),
   );
 
   const handleClose = () => {

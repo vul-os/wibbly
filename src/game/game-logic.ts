@@ -357,8 +357,7 @@ function checkPlayer2Swing(
         
         // Check if this is a new ball approach (ball changed direction toward player)
         const ballMovingToPlayer = gameState.ballVelocity.x > 0;
-        const ballWasMovingAway = !ballMovingToPlayer;
-        
+
         // Increment ball approach ID when ball direction changes toward player
         if (ballMovingToPlayer && gameState.player2LastAttemptedBall !== gameState.ballApproachId) {
             // This is a new ball approach - reset attempt tracking

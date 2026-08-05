@@ -9,7 +9,7 @@ function isMesh(obj: THREE.Object3D): obj is THREE.Mesh {
 }
 
 export function loadCourt(scene: THREE.Scene): Promise<THREE.Group | THREE.Mesh> {
-    return new Promise((resolve, _reject) => {
+    return new Promise((resolve) => {
         const loader = new GLTFLoader();
 
         loader.load(
