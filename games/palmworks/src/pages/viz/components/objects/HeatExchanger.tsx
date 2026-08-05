@@ -322,12 +322,14 @@ const HeatExchanger: PlantObjectComponent<HeatExchangerProps, HeatExchangerPort>
       </mesh>
       
       {/* Mounting Feet */}
-      {[
-        [-1.8, -1.3, -1.2],
-        [1.8, -1.3, -1.2],
-        [-1.8, -1.3, 1.2],
-        [1.8, -1.3, 1.2]
-      ].map((footPos, i) => (
+      {(
+        [
+          [-1.8, -1.3, -1.2],
+          [1.8, -1.3, -1.2],
+          [-1.8, -1.3, 1.2],
+          [1.8, -1.3, 1.2]
+        ] as const
+      ).map((footPos, i) => (
         <mesh key={`foot-${i}`} position={footPos} castShadow>
           <boxGeometry args={[0.3, 0.2, 0.3]} />
           <meshLambertMaterial color="#37474F" />

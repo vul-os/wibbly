@@ -284,12 +284,14 @@ const Pump: PlantObjectComponent<PumpProps, PumpPort> = ({ position, onClick, on
       </mesh>
       
       {/* Mounting Bolts */}
-      {[
-        [-0.8, -0.65, -0.8],
-        [0.8, -0.65, -0.8],
-        [-0.8, -0.65, 0.8],
-        [0.8, -0.65, 0.8]
-      ].map((pos, i) => (
+      {(
+        [
+          [-0.8, -0.65, -0.8],
+          [0.8, -0.65, -0.8],
+          [-0.8, -0.65, 0.8],
+          [0.8, -0.65, 0.8]
+        ] as const
+      ).map((pos, i) => (
         <mesh key={i} position={pos} castShadow>
           <cylinderGeometry args={[0.05, 0.05, 0.1, 8]} />
           <meshLambertMaterial color="#666666" />
