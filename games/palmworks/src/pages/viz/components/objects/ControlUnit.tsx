@@ -74,7 +74,7 @@ const ControlUnit: PlantObjectComponent<ControlUnitProps, ControlUnitPort> = ({ 
     let hasMovedMouse = false;
     gl.domElement.style.cursor = 'grabbing';
 
-    const handlePointerMove = (moveEvent: MouseEvent) => {
+    const handlePointerMove = (moveEvent: MouseEvent | TouchEvent) => {
       if (!onDrag) return;
 
       // Only set dragging to true when we actually move
@@ -84,11 +84,18 @@ const ControlUnit: PlantObjectComponent<ControlUnitProps, ControlUnitPort> = ({ 
       }
 
       // Get intersection with ground plane
+      // A TouchEvent carries its coordinates on `.touches[0]`, not on the
+      // event itself — reading `.clientX`/`.clientY` straight off the event
+      // (as this used to) is always `undefined` for touch input, which is
+      // why touch-drag never moved anything.
+      const point = 'touches' in moveEvent ? moveEvent.touches[0] : moveEvent;
+      if (!point) return;
+
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
-      mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
-      mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
+      mouse.x = (point.clientX / gl.domElement.clientWidth) * 2 - 1;
+      mouse.y = -(point.clientY / gl.domElement.clientHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
 
@@ -114,8 +121,8 @@ const ControlUnit: PlantObjectComponent<ControlUnitProps, ControlUnitPort> = ({ 
         // Remove event listeners
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove as EventListener);
-        document.removeEventListener('touchend', handlePointerUp as EventListener);
+        document.removeEventListener('touchmove', handlePointerMove);
+        document.removeEventListener('touchend', handlePointerUp);
 
         // Trigger click handler
         onClick?.(event);
@@ -127,15 +134,15 @@ const ControlUnit: PlantObjectComponent<ControlUnitProps, ControlUnitPort> = ({ 
 
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove as EventListener);
-      document.removeEventListener('touchend', handlePointerUp as EventListener);
+      document.removeEventListener('touchmove', handlePointerMove);
+      document.removeEventListener('touchend', handlePointerUp);
     };
 
     // Add global event listeners for better drag experience
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove as EventListener);
-    document.addEventListener('touchend', handlePointerUp as EventListener);
+    document.addEventListener('touchmove', handlePointerMove);
+    document.addEventListener('touchend', handlePointerUp);
 
     // Prevent default to avoid text selection. See Boiler.tsx: ThreeEvent
     // never actually has `.preventDefault` (only non-function properties are

@@ -243,8 +243,15 @@ const VariableFrequencyDrive: PlantObjectComponent<VariableFrequencyDriveProps, 
     let hasMovedMouse = false;
     gl.domElement.style.cursor = 'grabbing';
 
-    const handlePointerMove = (moveEvent: MouseEvent) => {
+    const handlePointerMove = (moveEvent: MouseEvent | TouchEvent) => {
       if (!onDrag) return;
+
+      // A TouchEvent carries its coordinates on `.touches[0]`, not on the
+      // event itself — reading `.clientX`/`.clientY` straight off the event
+      // (as this used to) is always `undefined` for touch input, which is
+      // why touch-drag never moved anything.
+      const point = 'touches' in moveEvent ? moveEvent.touches[0] : moveEvent;
+      if (!point) return;
 
       if (!hasMovedMouse) {
         hasMovedMouse = true;
@@ -254,8 +261,8 @@ const VariableFrequencyDrive: PlantObjectComponent<VariableFrequencyDriveProps, 
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
-      mouse.x = (moveEvent.clientX / gl.domElement.clientWidth) * 2 - 1;
-      mouse.y = -(moveEvent.clientY / gl.domElement.clientHeight) * 2 + 1;
+      mouse.x = (point.clientX / gl.domElement.clientWidth) * 2 - 1;
+      mouse.y = -(point.clientY / gl.domElement.clientHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
 
@@ -277,8 +284,8 @@ const VariableFrequencyDrive: PlantObjectComponent<VariableFrequencyDriveProps, 
 
         document.removeEventListener('mousemove', handlePointerMove);
         document.removeEventListener('mouseup', handlePointerUp);
-        document.removeEventListener('touchmove', handlePointerMove as EventListener);
-        document.removeEventListener('touchend', handlePointerUp as EventListener);
+        document.removeEventListener('touchmove', handlePointerMove);
+        document.removeEventListener('touchend', handlePointerUp);
 
         onClick?.(event);
         return;
@@ -289,14 +296,14 @@ const VariableFrequencyDrive: PlantObjectComponent<VariableFrequencyDriveProps, 
 
       document.removeEventListener('mousemove', handlePointerMove);
       document.removeEventListener('mouseup', handlePointerUp);
-      document.removeEventListener('touchmove', handlePointerMove as EventListener);
-      document.removeEventListener('touchend', handlePointerUp as EventListener);
+      document.removeEventListener('touchmove', handlePointerMove);
+      document.removeEventListener('touchend', handlePointerUp);
     };
 
     document.addEventListener('mousemove', handlePointerMove);
     document.addEventListener('mouseup', handlePointerUp);
-    document.addEventListener('touchmove', handlePointerMove as EventListener);
-    document.addEventListener('touchend', handlePointerUp as EventListener);
+    document.addEventListener('touchmove', handlePointerMove);
+    document.addEventListener('touchend', handlePointerUp);
 
     (event as unknown as { preventDefault?: () => void }).preventDefault?.();
   };
