@@ -42,17 +42,32 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
-  // src/ and packages/*/src are TS/TSX end to end — parse with the
-  // typescript-eslint parser and lint with the recommended TS rule set.
+  // src/, games/tennis, test/, and packages/*/{src,test} are TS/TSX end to
+  // end — parse with the typescript-eslint parser and lint with the
+  // type-aware recommended TS rule set. projectService resolves each file
+  // against the nearest tsconfig.json (this project's root tsconfig.json for
+  // src/games/tennis/test, each package's own tsconfig.json for
+  // packages/*/{src,test}) so no-floating-promises, no-misused-promises and
+  // the no-unsafe-* family actually run against real type information
+  // instead of being silently untyped `recommended`.
+  //
+  // Level: recommendedTypeChecked, not strictTypeChecked — measured
+  // 2026-08-05, see triage notes. strictTypeChecked added findings almost
+  // entirely from no-confusing-void-expression/no-non-null-assertion
+  // fighting deliberate idioms here, matching the fleet-wide pattern.
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
-      ...tseslint.configs.recommended,
+      ...tseslint.configs.recommendedTypeChecked,
       reactHooks.configs.flat.recommended,
     ],
     languageOptions: {
       globals: globals.browser,
-      parserOptions: { ecmaFeatures: { jsx: true } },
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
   },
 ])
