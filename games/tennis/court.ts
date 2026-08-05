@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { debugLog } from './debug';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { assetUrl } from '../mode';
+import { assetUrl } from '../../src/mode';
 
 /** Same narrowing three.js's own examples use — `isMesh` rather than `instanceof`. */
 function isMesh(obj: THREE.Object3D): obj is THREE.Mesh {

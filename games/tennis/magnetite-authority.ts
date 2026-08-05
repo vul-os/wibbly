@@ -26,7 +26,7 @@
  */
 
 import { MagnetiteAuthority, singleRoomConfig, makeInput } from '@vulos/wibbly-authority';
-import { assetUrl, isDemo } from '../mode';
+import { assetUrl, isDemo } from '../../src/mode';
 
 /** Where the vendored magnetite module lives, resolved against the deploy base. */
 export const AUTHORITY_WASM_PATH = 'magnetite/arena-authority.wasm';

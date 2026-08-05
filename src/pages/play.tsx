@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Calibration } from '@vulos/wibbly-input';
-import TennisGame from '../game';
+import TennisGame from '../../games/tennis';
 import InGameMenu from '../components/InGameMenu';
 import { loadSettings, saveSettings, setupState, type GameSettings } from '../components/game-settings';
-import type { AuthorityTelemetry } from '../game/magnetite-authority';
+import type { AuthorityTelemetry } from '../../games/tennis/magnetite-authority';
 
 type CameraStatus = 'unknown' | 'live' | 'keyboard';
 

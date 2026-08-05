@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { debugLog, isDebugEnabled, setDebugEnabled } from '../src/game/debug';
+import { debugLog, isDebugEnabled, setDebugEnabled } from '../games/tennis/debug';
 
 describe('game debug logging', () => {
   afterEach(() => {

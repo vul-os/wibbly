@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { calculateOptimalPosition, type HasXYZPosition, type HasXZPosition } from '../src/game/player';
-import { createGameState } from '../src/game/game-logic';
-import type { GameState } from '../src/game/types';
+import { calculateOptimalPosition, type HasXYZPosition, type HasXZPosition } from '../games/tennis/player';
+import { createGameState } from '../games/tennis/game-logic';
+import type { GameState } from '../games/tennis/types';
 
 // calculateOptimalPosition is the AI's positioning brain: it predicts where the
 // ball will be at racket height and returns where that player should stand to

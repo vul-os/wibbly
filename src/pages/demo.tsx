@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Calibration, MemoryStorage, type BackendInfo, type Handedness } from '@vulos/wibbly-input';
-import TennisGame from '../game';
+import TennisGame from '../../games/tennis';
 import { clearOwnedStorage } from '../mode';
 
 type DemoStage = 'intro' | 'playing';

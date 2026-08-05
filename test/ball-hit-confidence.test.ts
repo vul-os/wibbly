@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { createPlayer } from '../src/game/player';
-import { createBall, handleBallHit } from '../src/game/ball';
-import { createGameState } from '../src/game/game-logic';
-import type { GameState } from '../src/game/types';
+import { createPlayer } from '../games/tennis/player';
+import { createBall, handleBallHit } from '../games/tennis/ball';
+import { createGameState } from '../games/tennis/game-logic';
+import type { GameState } from '../games/tennis/types';
 
 /**
  * `GestureEvent.confidence` (0..1) is the input contract's explicit

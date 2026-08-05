@@ -3,7 +3,7 @@ import {
   createGameState,
   createPlayerData,
   updatePlayerPositions,
-} from '../src/game/game-logic';
+} from '../games/tennis/game-logic';
 
 // updatePlayerPositions drifts the two AI players to fresh idle spots every
 // 5–8 seconds, but ONLY while the ball is out of play and neither player is
