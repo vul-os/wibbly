@@ -42,11 +42,6 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
   const steamRef = useRef<THREE.Mesh>(null);
   const condensateRef = useRef<THREE.Mesh>(null);
   const evaporatorFinsRef = useRef<THREE.Mesh>(null);
-  // Declared and read in the useFrame loop below but never attached to any
-  // JSX element (no `ref={condenserFinsRef}` anywhere) - the same class of
-  // dead-ref bug as RackSystem's meshRef; `.current` is always null so the
-  // condenser-fin heat effect never runs. Pre-existing, not fixed here.
-  const condenserFinsRef = useRef<THREE.Mesh>(null);
   const pressureGaugeRef = useRef<THREE.Mesh>(null);
   const flowMeterRef = useRef<THREE.Mesh>(null);
   const alarmLEDRef = useRef<THREE.Mesh>(null);
@@ -175,12 +170,6 @@ const HeatPump: PlantObjectComponent<HeatPumpProps, HeatPumpPort> = ({
         0.9 + frostLevel * 0.1,
         0.95 + frostLevel * 0.05
       );
-    }
-
-    // Condenser fin heat dissipation effects
-    if (condenserFinsRef.current) {
-      const heatLevel = 0.08 + Math.sin(time * 1.8) * 0.05;
-      (condenserFinsRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = heatLevel;
     }
 
     // Water jet effects from heated water
