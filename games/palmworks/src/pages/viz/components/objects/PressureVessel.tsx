@@ -6,18 +6,13 @@ import type { PlantObjectProps } from './types';
 
 interface PressureVesselProps extends PlantObjectProps {
   position: [number, number, number];
-  // PlantScene's commonProps only ever sets `isSelected`, never `selected` —
-  // this component reads a prop name PlantScene never passes, so `selected`
-  // (and therefore the highlight/rotation below) is always undefined/off
-  // when driven from the scene. Pre-existing mismatch, not fixed here.
-  selected?: boolean;
 }
 
-const PressureVessel = ({ position, selected, onClick, showCoordinates }: PressureVesselProps) => {
+const PressureVessel = ({ position, isSelected, onClick, showCoordinates }: PressureVesselProps) => {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (groupRef.current && selected) {
+    if (groupRef.current && isSelected) {
       groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 2) * 0.1;
     }
   });
@@ -38,19 +33,19 @@ const PressureVessel = ({ position, selected, onClick, showCoordinates }: Pressu
       {/* Main vessel body - cylindrical */}
       <mesh position={[0, 2.5, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[1.2, 1.2, 4, 32]} />
-        <meshLambertMaterial color={selected ? "#4CAF50" : "#546E7A"} />
+        <meshLambertMaterial color={isSelected ? "#4CAF50" : "#546E7A"} />
       </mesh>
 
       {/* Top hemisphere cap */}
       <mesh position={[0, 4.8, 0]} castShadow receiveShadow>
         <sphereGeometry args={[1.2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshLambertMaterial color={selected ? "#66BB6A" : "#607D8B"} />
+        <meshLambertMaterial color={isSelected ? "#66BB6A" : "#607D8B"} />
       </mesh>
 
       {/* Bottom hemisphere cap */}
       <mesh position={[0, 0.2, 0]} rotation={[Math.PI, 0, 0]} castShadow receiveShadow>
         <sphereGeometry args={[1.2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshLambertMaterial color={selected ? "#66BB6A" : "#607D8B"} />
+        <meshLambertMaterial color={isSelected ? "#66BB6A" : "#607D8B"} />
       </mesh>
 
       {/* Pressure gauge */}
@@ -124,7 +119,7 @@ const PressureVessel = ({ position, selected, onClick, showCoordinates }: Pressu
       </mesh>
 
       {/* Selection indicator */}
-      {selected && (
+      {isSelected && (
         <mesh position={[0, 2.5, 0]}>
           <cylinderGeometry args={[1.5, 1.5, 4.2, 32]} />
           <meshLambertMaterial 

@@ -6,18 +6,13 @@ import type { PlantObjectProps } from './types';
 
 interface DayTankProps extends PlantObjectProps {
   position: [number, number, number];
-  // PlantScene's commonProps only ever sets `isSelected`, never `selected` —
-  // this component reads a prop name PlantScene never passes, so `selected`
-  // (and therefore the highlight/rotation below) is always undefined/off
-  // when driven from the scene. Pre-existing mismatch, not fixed here.
-  selected?: boolean;
 }
 
-const DayTank = ({ position, selected, onClick, showCoordinates }: DayTankProps) => {
+const DayTank = ({ position, isSelected, onClick, showCoordinates }: DayTankProps) => {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (groupRef.current && selected) {
+    if (groupRef.current && isSelected) {
       groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 2) * 0.1;
     }
   });
@@ -38,7 +33,7 @@ const DayTank = ({ position, selected, onClick, showCoordinates }: DayTankProps)
       {/* Support platform base */}
       <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[1.8, 1.8, 0.2, 32]} />
-        <meshLambertMaterial color={selected ? "#8D6E63" : "#5D4037"} />
+        <meshLambertMaterial color={isSelected ? "#8D6E63" : "#5D4037"} />
       </mesh>
 
       {/* Support legs */}
@@ -62,13 +57,13 @@ const DayTank = ({ position, selected, onClick, showCoordinates }: DayTankProps)
       {/* Main tank body - cylindrical */}
       <mesh position={[0, 2.2, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[1.0, 1.0, 2.5, 32]} />
-        <meshLambertMaterial color={selected ? "#A1887F" : "#6D4C41"} />
+        <meshLambertMaterial color={isSelected ? "#A1887F" : "#6D4C41"} />
       </mesh>
 
       {/* Tank top dome */}
       <mesh position={[0, 3.6, 0]} castShadow receiveShadow>
         <sphereGeometry args={[1.0, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshLambertMaterial color={selected ? "#BCAAA4" : "#795548"} />
+        <meshLambertMaterial color={isSelected ? "#BCAAA4" : "#795548"} />
       </mesh>
 
       {/* Level sight glass */}
@@ -180,7 +175,7 @@ const DayTank = ({ position, selected, onClick, showCoordinates }: DayTankProps)
       </mesh>
 
       {/* Selection indicator */}
-      {selected && (
+      {isSelected && (
         <mesh position={[0, 2.2, 0]}>
           <cylinderGeometry args={[1.3, 1.3, 2.8, 32]} />
           <meshLambertMaterial 
