@@ -166,6 +166,18 @@ export interface HandOverride {
   z?: number;
 }
 
+/**
+ * Named separately from `HandOptions['overrides']` so the fixture builders
+ * below (`pinchOverride`, `foldFinger`) can declare a return type that's
+ * always a concrete object — never `| undefined` — which is what they
+ * actually return. `HandOptions['overrides']` itself stays optional
+ * (indexed access on an optional property includes `undefined`), but under
+ * `exactOptionalPropertyTypes` a builder that returns `X | undefined` can't
+ * be spread into an `{ overrides: ... }` literal passed to `makeHand`, even
+ * when it never actually returns undefined.
+ */
+export type HandOverrides = Partial<Record<HandLandmarkName, HandOverride>>;
+
 export interface HandOptions {
   /** Wrist x, normalized. */
   cx: number;
@@ -179,7 +191,7 @@ export interface HandOptions {
   /** Per-landmark score/visibility for every landmark not explicitly overridden. */
   landmarkScore?: number;
   /** Absolute-position overrides for specific landmarks. */
-  overrides?: Partial<Record<HandLandmarkName, HandOverride>>;
+  overrides?: HandOverrides;
 }
 
 /** A plausible open, spread hand centred at (cx, cy). See the module doc above for the geometry. */
@@ -214,7 +226,7 @@ export function boundHand(hand: Hand, playerId: string): BoundHand {
  * of normalizing by hand size: this is a "clearly pinching" fixture at ANY
  * distance from camera).
  */
-export function pinchOverride(cx: number, cy: number, scale: number): HandOptions['overrides'] {
+export function pinchOverride(cx: number, cy: number, scale: number): HandOverrides {
   const [dx, dy] = HAND_LAYOUT.index_tip;
   return { thumb_tip: { x: cx + dx * scale, y: cy + dy * scale } };
 }
@@ -230,7 +242,7 @@ export function foldFinger(
   cy: number,
   scale: number,
   finger: 'thumb' | 'index' | 'middle' | 'ring' | 'pinky',
-): HandOptions['overrides'] {
+): HandOverrides {
   const mcpName = `${finger}_mcp` as HandLandmarkName;
   const tipName = `${finger}_tip` as HandLandmarkName;
   const [dx, dy] = HAND_LAYOUT[mcpName];

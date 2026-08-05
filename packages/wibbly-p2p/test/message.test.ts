@@ -2,8 +2,20 @@ import { describe, expect, it } from 'vitest';
 import type { GestureEvent } from '@vulos/wibbly-input';
 import { encodePeerMessage, gestureToWire, wireToGesture } from '../src/message';
 
-function gesture(over: Partial<GestureEvent> = {}): GestureEvent {
-  return {
+// `Partial<GestureEvent>`, not used here: this helper is also how tests
+// simulate `vector`/`detail` being genuinely ABSENT (see the "omits vector
+// and detail entirely" case below), which means explicitly passing `vector:
+// undefined` / `detail: undefined` to override the concrete defaults below —
+// a real, intentional `| undefined` override on just those two optional
+// fields, not a `Partial`'s "key omitted entirely" shape that
+// `exactOptionalPropertyTypes` would otherwise reject.
+type GestureOverride = Partial<Omit<GestureEvent, 'vector' | 'detail'>> & {
+  vector?: GestureEvent['vector'] | undefined;
+  detail?: GestureEvent['detail'] | undefined;
+};
+
+function gesture(over: GestureOverride = {}): GestureEvent {
+  const merged: GestureOverride = {
     playerId: 'player_2',
     kind: 'swing',
     confidence: 0.8,
@@ -12,6 +24,14 @@ function gesture(over: Partial<GestureEvent> = {}): GestureEvent {
     detail: { direction: 'right', stroke: 'forehand', speed: 0.004 },
     ...over,
   };
+  // A real GestureEvent never has `vector`/`detail` present-but-undefined —
+  // a producer either has one or doesn't include the key at all. `over`
+  // passing explicit `undefined` is this test file's way of asking for
+  // "absent"; deleting the key here is what actually produces that shape,
+  // rather than a `GestureEvent`-typed value that merely claims to.
+  if (merged.vector === undefined) delete merged.vector;
+  if (merged.detail === undefined) delete merged.detail;
+  return merged as GestureEvent;
 }
 
 describe('gestureToWire / wireToGesture', () => {

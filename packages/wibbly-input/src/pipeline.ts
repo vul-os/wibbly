@@ -92,7 +92,7 @@ export class WibblyInput {
 
     if (config.onGesture) this.gestureHandlers.add(config.onGesture);
     if (config.onPeople) this.peopleHandlers.add(config.onPeople);
-    this.errorHandler = config.onError;
+    if (config.onError) this.errorHandler = config.onError;
   }
 
   onGesture(cb: (event: GestureEvent) => void): () => void {

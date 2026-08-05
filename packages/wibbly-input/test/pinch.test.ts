@@ -109,7 +109,7 @@ function feedRatio(
       makeHand({
         cx: 0.5,
         handedness,
-        overrides: pinching ? pinchOverride(0.5, 0.5, 0.15) : undefined,
+        ...(pinching ? { overrides: pinchOverride(0.5, 0.5, 0.15) } : {}),
       }),
       playerId,
     );
