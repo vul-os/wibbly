@@ -90,4 +90,39 @@ export default defineConfig([
       '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
     },
   },
+
+  // require-await downgraded to `warn`, test files only. Measured: 20
+  // findings, every one hand-checked, all the same shape — a scripted
+  // fake/mock (ScriptedFrameSource, ScriptedTracker, FakePeerConnection,
+  // the injected `createLandmarker`/`tf` fixtures, …) implementing an
+  // interface or config shape whose real method IS async (FrameSource,
+  // PoseTracker, RTCPeerConnectionLike, HandTrackerConfig['createLandmarker'],
+  // …), so the fake must return a Promise to satisfy the type even though
+  // its own fake work never needs to await anything. require-await has no
+  // configurable options (unlike no-misused-promises above), so a narrower
+  // rule option isn't available — scoping to test files only is the
+  // narrowest mechanism left; src/ stays at `error` and did surface one
+  // real (non-noise) instance, see hand-tracker.ts.
+  {
+    files: ['**/*.{test,spec}.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/require-await': 'warn',
+    },
+  },
+
+  // require-await's one src/ (non-test) finding: HandLandmarkTracker.estimate
+  // (packages/wibbly-input/src/hand-tracker.ts) is declared `async` purely to
+  // conform to the `HandTracker` interface (Promise<Hand[]>) and to mirror
+  // `PoseTracker.estimate`'s seam exactly — see that method's own doc
+  // comment. Its one call, `detectForVideo`, is synchronous by the
+  // MediaPipe API it wraps, so there is genuinely no `await` to add. Same
+  // idiom as the test-fixture findings above, just in production code;
+  // scoped to this one file rather than folded into the test glob, so the
+  // rest of src/ stays at `error`.
+  {
+    files: ['packages/wibbly-input/src/hand-tracker.ts'],
+    rules: {
+      '@typescript-eslint/require-await': 'warn',
+    },
+  },
 ])
