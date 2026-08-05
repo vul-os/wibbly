@@ -34,6 +34,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # `npm run lint` covers both ESLint configs (root eslint.config.js and
+      # games/palmworks' own, a separate npm project outside the workspaces —
+      # `npm run lint` chains `--prefix games/palmworks`) but was not
+      # referenced by any workflow step before this: lint could go red on any
+      # push with CI staying green throughout.
+      - name: Lint (root + games/palmworks)
+        run: npm run lint
+
+      # Behavioural gate for the lint config itself, run against BOTH ESLint
+      # configs (chained the same way `lint` is): proves type-aware rules
+      # actually resolve type information (a config can say
+      # recommendedTypeChecked and still not resolve types), that typescript
+      # is pinned exactly with node_modules agreeing in both package.json
+      # files, and a real per-config file-coverage floor.
+      - name: Lint config gate (type-awareness, TS pin, coverage floor)
+        run: npm run check:lint-config
+
       - name: Typecheck
         run: npm run typecheck
 
