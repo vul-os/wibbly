@@ -5,6 +5,8 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import PlantScene, { type PlantSceneHandle } from './components/PlantScene';
+import GestureRaycastBridge, { type GestureRaycastHandle } from './components/GestureRaycastBridge';
+import { useHandGestureInput } from '../../gestures/use-hand-gesture-input';
 import {
   Zap,
   Cog,
@@ -36,7 +38,9 @@ import {
   Blend,
   Fan,
   Wind,
-  Droplets
+  Droplets,
+  Hand,
+  VideoOff
 } from 'lucide-react';
 
 interface PlantComponentDef {
@@ -68,6 +72,15 @@ const PalmworksViz = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const sceneRef = useRef<PlantSceneHandle>(null);
   const cameraControlsRef = useRef<OrbitControlsImpl>(null);
+  const raycastRef = useRef<GestureRaycastHandle>(null);
+
+  // Hand-gesture input layer — see use-hand-gesture-input.ts's own doc
+  // comment. `start()`/`stop()` are only ever called from the button below;
+  // nothing here touches a camera at mount. Mouse/pointer play (everything
+  // above this point in the file) is completely unmodified by this hook's
+  // presence — it is an ADDITIONAL input path, driven through the same
+  // handlers the mouse already uses, never a replacement for them.
+  const gestures = useHandGestureInput({ sceneRef, raycastRef });
 
   // Categorized plant objects - expandable to 1000s
   const componentCategories: Record<string, PlantComponentDef[]> = {
@@ -492,6 +505,11 @@ const PalmworksViz = () => {
             showCoordinates={showCoordinates}
           />
 
+          {/* Renders nothing — exposes screen-point -> ground-plane raycasting
+              to the hand-gesture layer, which runs outside this <Canvas>
+              tree. See GestureRaycastBridge.tsx. */}
+          <GestureRaycastBridge ref={raycastRef} />
+
           {/* Camera Controls */}
           <OrbitControls
             ref={cameraControlsRef}
@@ -532,6 +550,36 @@ const PalmworksViz = () => {
 
       {/* Floating Scene Controls - Top Right */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        {/* Hand tracking is OFF by default and the camera prompt only fires
+            from this explicit click — never at page load, never implicitly
+            from any other control on this screen. See
+            use-hand-gesture-input.ts's own doc comment. Mouse/pointer play
+            works identically whether this is ever pressed or not. */}
+        <Button
+          onClick={gestures.status === 'live' || gestures.status === 'starting' ? gestures.stop : gestures.start}
+          className={`h-8 px-3 flex items-center gap-2 bg-black/80 backdrop-blur-sm border border-gray-700 shadow-xl text-white ${
+            gestures.status === 'live' ? 'bg-green-700/80 hover:bg-green-700' : 'hover:bg-gray-700'
+          }`}
+          variant="outline"
+          title={
+            gestures.status === 'live'
+              ? 'Hand tracking is live — click to turn the camera off'
+              : 'Enable hand tracking (asks for camera permission)'
+          }
+        >
+          {gestures.status === 'unavailable' ? (
+            <VideoOff size={16} className="text-red-400" />
+          ) : (
+            <Hand size={16} className={gestures.status === 'live' ? 'text-white' : 'text-white'} />
+          )}
+          <span className="text-xs">
+            {gestures.status === 'live' && 'Hands: live'}
+            {gestures.status === 'starting' && 'Starting…'}
+            {gestures.status === 'unavailable' && 'Hands: unavailable'}
+            {gestures.status === 'idle' && 'Enable hand tracking'}
+          </span>
+        </Button>
+
         <Button
           onClick={autoLayout}
           className="h-8 w-8 p-0 bg-black/80 backdrop-blur-sm hover:bg-gray-700 border border-gray-700 shadow-xl text-white"
@@ -774,6 +822,12 @@ const PalmworksViz = () => {
                           onMouseLeave={handleTooltipHide}
                           className="h-20 bg-gray-900/70 hover:bg-gray-700 border border-gray-600/50 hover:border-gray-500 flex flex-col items-center justify-center gap-2 transition-all duration-200 text-white p-2"
                           variant="outline"
+                          // Read by the hand-gesture layer's PlacementRouter
+                          // (use-hand-gesture-input.ts) to recognise "the
+                          // player pinched down on a palette item" without
+                          // this component knowing gestures exist at all —
+                          // an ordinary data attribute, inert for mouse play.
+                          data-component-type={component.type}
                         >
                           <IconComponent 
                             size={20} 
@@ -807,6 +861,7 @@ const PalmworksViz = () => {
                     onMouseLeave={handleTooltipHide}
                     className="h-10 w-10 p-0 bg-gray-900/70 hover:bg-gray-700 border border-gray-600/50 hover:border-gray-500 flex items-center justify-center text-white mx-auto"
                     variant="outline"
+                    data-component-type={component.type}
                   >
                     <IconComponent 
                       size={18} 
@@ -856,6 +911,36 @@ const PalmworksViz = () => {
           </span>
         </div>
       </div>
+
+      {/* Hand-tracking "unavailable" explanation — only rendered after the
+          player actually asked for it (gestures.status === 'unavailable'
+          only ever follows a start() call, see use-hand-gesture-input.ts).
+          Never a crash, never a silently dead camera button: this is the
+          same "no camera? here's what to do" honesty wibbly's own title
+          screen uses for the mouse-driven fallback. */}
+      {gestures.status === 'unavailable' && gestures.message && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 max-w-md bg-black/90 backdrop-blur-sm border border-red-900/60 rounded-lg px-4 py-2 shadow-xl text-xs text-red-200">
+          {gestures.message}
+        </div>
+      )}
+
+      {/* On-screen cursor for the pointing hand — the only visual feedback a
+          player driving this with a camera instead of a mouse has for where
+          "the mouse" currently is. Plain positioned dot, viewport pixels
+          (the same client coordinates VirtualPointer dispatches events at),
+          pointer-events-none so it never itself becomes a click target. */}
+      {gestures.status === 'live' && gestures.cursor && (
+        <div
+          className="fixed z-50 pointer-events-none"
+          style={{
+            left: gestures.cursor.clientX,
+            top: gestures.cursor.clientY,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <div className="w-4 h-4 rounded-full border-2 border-pink-400 bg-pink-400/30 shadow-[0_0_10px_2px_rgba(244,114,182,0.6)]" />
+        </div>
+      )}
 
       {/* Click overlay to close CAD controls */}
       {showCADControls && (
