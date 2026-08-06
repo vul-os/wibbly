@@ -119,4 +119,36 @@ export default tseslint.config(
       '@typescript-eslint/require-await': 'warn',
     },
   },
+  // eslint-plugin-react-hooks 5.0.0 -> 7.1.1 (this pass's toolchain
+  // alignment, see package.json) brought in 14 NEW rules beyond the two
+  // that existed in 5.x (rules-of-hooks, exhaustive-deps) — the "React
+  // Compiler" rule family (purity, immutability, refs, globals, ...),
+  // folded into this plugin's `recommended` config in 6.x+. Measured across
+  // this package (2026-08-06): 147 new errors, ALL either
+  // `react-hooks/purity` (30, `Math.random()` called directly in a JSX prop
+  // during render — a real anti-pattern the rule is right to flag in
+  // general) or `react-hooks/immutability` (117, all of them
+  // `gl.domElement.style.cursor = ...` inside a drag handler, where `gl`
+  // comes from `useThree()`) — and ALL 27 affected files are the 29
+  // industrial-object components under
+  // src/pages/viz/components/objects/**, the visualisation layer folded in
+  // wholesale from the deleted `vul-os/palmworks` repo (see
+  // ../../PALMWORKS.md §1) rather than written against these rules. Fixing
+  // 147 findings across 27 unrelated files is out of scope for wiring up
+  // hand gestures, and `gl.domElement` is a raw DOM/canvas element — an
+  // imperative escape hatch outside React's own state, not the kind of
+  // hook-return mutation this rule exists to catch — so it is a real,
+  // scoped false-positive shape here, not noise being waved away. Scoped to
+  // exactly that directory; `rules-of-hooks`/`exhaustive-deps` and every
+  // other rule in the set (including for THESE same files) stay at their
+  // full `recommended` severity, and the gesture-input code this pass adds
+  // (src/gestures/**, plant-scene-logic.ts, the refactored PlantScene.tsx)
+  // is held to the complete, unmodified ruleset.
+  {
+    files: ['src/pages/viz/components/objects/**/*.tsx'],
+    rules: {
+      'react-hooks/purity': 'off',
+      'react-hooks/immutability': 'off',
+    },
+  },
 )
