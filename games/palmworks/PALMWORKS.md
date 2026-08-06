@@ -39,11 +39,13 @@ something. That feeling is the whole bet this game is making.
 
 ## 3. What's built today (verified by reading the code, not assumed)
 
-Everything in this section runs, right now, with a mouse — `cd games/palmworks
-&& npm run dev`. There is no camera involvement anywhere in the current code;
-`games/palmworks/src` contains zero references to gestures, hand tracking, or
-`@vulos/wibbly-input`. It is a fully mouse/pointer-driven React Three Fiber
-app today.
+**This section describes the game as it stood before §4's hand mapping was
+implemented — read it for the mouse-driven baseline.** It originally said
+"`games/palmworks/src` contains zero references to gestures, hand tracking,
+or `@vulos/wibbly-input`" — that sentence is now false; see §7 for what
+changed and §8 for the detail. Everything below still runs, right now, with
+a mouse — `cd games/palmworks && npm run dev` — and none of it required a
+camera to build or to keep working:
 
 - **The scene**: a `Canvas` (`src/pages/viz/index.jsx`) with an infinite
   snap-grid, ground plane, and `OrbitControls` for pan/zoom/rotate of the
