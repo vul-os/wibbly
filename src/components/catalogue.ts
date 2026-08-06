@@ -59,12 +59,16 @@ export const GAMES: GameEntry[] = [
     id: 'palmworks',
     name: 'Palmworks',
     status: 'planned',
-    blurb: 'Planned. Build a factory with your hands.',
+    blurb: 'Planned here. Playable today as its own standalone app.',
     detail:
       'Place pumps, boilers, tanks and heat exchangers on a grid and route the pipework between ' +
-      'them. The scene and 29 industrial objects are already in games/palmworks — what is missing ' +
-      'is the hands: pinch to place, point to select, pinch-drag to connect two ports.',
-    gesture: 'pinch + point — not built',
+      'them, with pinch to place, point to select, and pinch-tap to connect two ports — all built ' +
+      'and tested in games/palmworks (cd games/palmworks && npm run dev), driven by ' +
+      '@vulos/wibbly-input/hand (HandInput, PinchRecognizer, PointRecognizer). It stays "planned" ' +
+      'HERE because it is not yet reachable from this title screen: games/palmworks is a fully ' +
+      'separate nested project (its own Vite build, no route in this app\'s router), and this ' +
+      'card only ever lights up for something a player can actually click through to.',
+    gesture: 'pinch + point — built in games/palmworks, not wired into this shell\'s router yet',
     art: 'palmworks',
   },
 ];
