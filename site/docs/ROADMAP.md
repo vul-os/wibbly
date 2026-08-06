@@ -22,7 +22,7 @@ demo.
     <text x="36" y="79.2" font-size="12.6" fill="var(--tx2)" letter-spacing="1.56">PHASE 1</text>
     <text x="36" y="103.2" font-size="16.2" font-weight="700" fill="var(--tx)">The library</text>
     <text x="36" y="127.2" font-size="12.6" fill="var(--ok)" font-weight="700">● LANDED</text>
-    <text x="36" y="151.2" font-size="12.6" fill="var(--tx2)">7 of 7 items done · 221 tests</text>
+    <text x="36" y="151.2" font-size="12.6" fill="var(--tx2)">7 of 7 items done · 231 tests</text>
     <text x="36" y="170.4" font-size="12.6" fill="var(--tx2)">unvalidated: hand thresholds vs. real camera</text>
     <text x="36" y="189.6" font-size="12.6" fill="var(--tx2)">not wired: hands into the pipeline</text>
     <rect x="376.8" y="52.8" width="326.4" height="146.4" rx="9.6" fill="var(--sf)" stroke="var(--am)" stroke-width="1.68"/>
@@ -73,8 +73,9 @@ Nothing else could start until the input layer was importable. **This phase has 
       not yet compose the hand tracker — it still wires body pose and `SwingRecognizer` only. The
       MediaPipe hand model and Wasm runtime are also not vendored in this repo yet.
 
-221 tests pass across the eleven seam suites. What none of them touch is a camera — see the
-validation item at the top of phase 2.
+231 tests pass across the twelve seam suites (up from 221/eleven — `HandInput`,
+the new `@vulos/wibbly-input/hand` pipeline, added the twelfth). What none of them touch is a
+camera — see the validation item at the top of phase 2.
 
 ## Phase 2 — the platform
 
@@ -101,9 +102,12 @@ validation item at the top of phase 2.
       separate, magnetite-free track: peer-to-peer WebRTC via `packages/wibbly-p2p` (renamed from
       `packages/wibbly-magnetite`, which no longer has any magnetite code in it).
 - [ ] **Palmworks** — folded into [`games/palmworks`](https://github.com/vul-os/wibbly/tree/main/games/palmworks)
-      with its full history and its own build: an industrial factory-building game. **Hands are not
-      wired to it.** `HandLandmarkTracker` and the pinch/point recognizers now exist (Phase 1,
-      above), but nothing in Palmworks or `WibblyInput` calls them yet.
+      with its full history and its own build: an industrial factory-building game. **Hands are
+      wired to it now, and tested.** `HandLandmarkTracker` and the pinch/point recognizers (Phase 1,
+      above) drive Palmworks' own `HandInput` pipeline, `GestureController` and `VirtualPointer` —
+      46 new tests against synthetic hand fixtures. `WibblyInput` (tennis's pipeline) still doesn't
+      call them; Palmworks doesn't go through it. What's still open: no live-camera run, and no
+      route from *wibbly's* own title screen into the game.
 - [ ] **Soccer** — second reference game. Chosen because a kick is the first gesture that is *not* a
       swing: it is a lower-body gesture, so it exercises the leg keypoints `SwingRecognizer` ignores
       entirely and forces `GestureRecognizer` to be genuinely plural rather than plural in the type
@@ -116,8 +120,9 @@ validation item at the top of phase 2.
 
 > Soccer and Boxing are tracked here with a stated rationale so that any "coming soon" surfaced in
 > the app points at real backlog items rather than at nothing. Neither is playable, and neither
-> should ever be described as such. Palmworks is playable as a standalone game today but has no
-> gesture wiring — do not describe it as a wibbly game yet either.
+> should ever be described as such. Palmworks is playable as a standalone game today, by mouse and
+> now by gesture too — but it still has no route from wibbly's own title screen into it, so do not
+> describe it as a wibbly game yet either.
 
 ## Phase 3 — depth
 
@@ -147,8 +152,8 @@ Genuinely open. None of these has been decided.
 - **Other contributors.** There are several active branches on origin, and the seam refactor deleted
   `poseDetection.js` — shared ground that has now moved under them. Coordinate before they rebase.
 - **Hands or body first?** The name says hand gesture; the code does body pose; tennis needs body.
-  Palmworks raises the stakes on this — it is a hands-first game folded in, and while a hand
-  tracker plus pinch/point recognizers now exist as a library, nothing wires them to drive it yet.
-  The flagship input modality has not been decided.
+  Palmworks raises the stakes on this — it is a hands-first game folded in, and the hand tracker
+  plus pinch/point recognizers now do drive it, through Palmworks' own pipeline rather than
+  `WibblyInput`. The flagship input modality has not been decided.
 - **No in-browser benchmarks exist** for RTMO or YOLO-pose at any player count. If phase 3 proceeds,
   wibbly measures them itself. There is no number to inherit.
