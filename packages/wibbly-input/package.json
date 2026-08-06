@@ -12,6 +12,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./hand": {
+      "types": "./src/hand-index.ts",
+      "default": "./src/hand-index.ts"
     }
   },
   "files": [
