@@ -30,50 +30,31 @@ import WaterPump from './objects/WaterPump';
 import HeatPump from './objects/HeatPump';
 
 import AutoRoutingConnection, { type RoutePort } from './AutoRoutingConnection';
+import {
+  buildConnection,
+  canPortsConnect as canPortsConnectPure,
+  getObjectGroundPosition,
+  GROUND_LEVEL,
+  placementPosition,
+  snapToGrid as snapToGridPure,
+  type PlantConnection,
+  type PlantObject,
+  type PlantPort,
+  type PortData,
+  type Vec3Tuple,
+} from './plant-scene-logic';
 
-type Vec3Tuple = [number, number, number];
-
-/**
- * The port shapes differ across object components (some use `offset` +
- * a `[x,y,z]` `direction`, others use `position` + a string `direction`
- * like 'input'/'output' - see objects/types.ts). PlantScene only ever
- * reads `.id`/`.type`/`.label` off a port itself; everything else is
- * forwarded opaquely to AutoRoutingConnection, which documents the same
- * cross-shape inconsistency for the offset/direction fields it reads.
- */
-interface PlantPort {
-  id: string;
-  type: string;
-  label: string;
-  [key: string]: unknown;
-}
-
-interface PlantObject {
-  id: number;
-  type: string;
-  position: Vec3Tuple;
-  connections: number[];
-}
-
-interface PortData {
-  object: PlantObject;
-  port: PlantPort;
-  position: Vec3Tuple;
-}
-
-interface PlantConnection {
-  id: number;
-  startObjectId: number;
-  endObjectId: number;
-  startPort: PlantPort;
-  endPort: PlantPort;
-  type: string;
-  startPosition: Vec3Tuple;
-  endPosition: Vec3Tuple;
-}
+export type { PlantConnection, PlantObject, PlantPort, PortData, Vec3Tuple };
 
 export interface PlantSceneHandle {
-  addObject: (type: string) => void;
+  /**
+   * Places a new object of `type`. With no `position`, drops it at a random
+   * grid-snapped spot — the original mouse-driven behaviour, unchanged. With
+   * an explicit `{x, z}` (world ground coordinates, e.g. a raycast hit from a
+   * gesture-driven "pinch to place"), drops it there instead — see
+   * PALMWORKS.md §4.2's placement mapping.
+   */
+  addObject: (type: string, position?: { x: number; z: number }) => void;
   autoLayout: () => void;
   clearAll: () => void;
   setCameraControlsRef: (controlsRef: unknown) => void;
@@ -98,68 +79,15 @@ const PlantScene = forwardRef<PlantSceneHandle, PlantSceneProps>(({ mode, select
   const connectionIdRef = useRef(0);
   const cameraControlsRef = useRef<unknown>(null);
 
-  const snapToGrid = (value: number): number => {
-    if (!gridSnap) return value;
-    return Math.round(value / gridSize) * gridSize;
-  };
-
-  // Constants for consistent ground level
-  const GROUND_LEVEL = 0;
-
-  // Object height offsets to position bottoms on ground level
-  const OBJECT_GROUND_OFFSETS: Record<string, number> = {
-    boiler: 1.6,      // Bottom cap extends 1.6 units below center
-    pump: 0.8,        // Base plate bottom is 0.8 units below center
-    valve: 1.0,       // Valve body base bottom is 1.0 units below center  
-    sensor: 0.15,     // Sensor body height 0.3, so bottom is 0.15 below center
-    controlUnit: 1.25, // Main cabinet height 2.5, so bottom is 1.25 below center
-    conveyorBelt: 0.8, // Simple support legs height, so bottom is 0.8 below center
-    powerBox: 0.1, // Base plate extends 0.1 below center, so bottom sits on ground
-    storageTank: 3.0, // Tank support base plates are 3 units below center
-    heatExchanger: 1.4, // Mounting feet bottom is 1.4 units below center
-    oilTankControlPanel: 4.0, // Base platform and support structure bottom is 4 units below center
-    temperatureSwitch: 1.3, // Mounting bracket and probe bottom is 1.3 units below center
-    pressureSensor: 1.8, // Process connection bottom is 1.8 units below center
-    pressureControlValve: 0.9, // Mounting base bottom is 0.9 units below center
-    motorStarter: 1.8, // Enclosure feet bottom is 1.8 units below center
-    pressureVessel: 2.5, // Vessel center is 2.5 units above support legs and bottom hemisphere
-    dayTank: 2.2, // Tank center is 2.2 units above support legs and platform base
-    distillationColumn: 4.5, // Column support base is 4.5 units below center with reboiler
-    mixerAgitator: 2.5, // Tank center is 2.5 units above support legs and base
-    centrifugalCompressor: 2.8, // Compressor center is 2.8 units above skid base platform
-    coolingTower: 2.8, // Tower center is 2.8 units above foundation base
-    stirredTankReactor: 2.0, // Reactor vessel center is 2.0 units above foundation base
-    extruder: 1.8, // Extruder barrel center is 1.8 units above machine base
-    rackSystem: 4.0, // Rack structure center is 4.0 units above foundation
-    pipelineSystem: 1.2, // Pipeline center is 1.2 units above support foundations
-    waterSupply: 1.2, // Water supply system center is 1.2 units above ground level
-    waterDrain: 0.8, // Water drain system center is 0.8 units above ground level
-    waterPump: 0.6, // Water pump system center is 0.6 units above ground level
-    heatPump: 0.8 // Heat pump system center is 0.8 units above ground level
-  };
-
-  const getObjectGroundPosition = (basePosition: Vec3Tuple, objectType: string): Vec3Tuple => {
-    const offset = OBJECT_GROUND_OFFSETS[objectType] || 0;
-    return [basePosition[0], GROUND_LEVEL + offset, basePosition[2]];
-  };
+  // Placement/grid-snap/port-compatibility rules live in plant-scene-logic.ts
+  // now (pure functions, no React state) — this component only owns the
+  // React state transitions around them. See that file's module doc for why:
+  // the gesture layer drives the SAME functions directly, off-DOM, and its
+  // tests would prove nothing if this component had its own separate copy.
+  const snapToGrid = (value: number): number => snapToGridPure(value, gridSnap, gridSize);
 
   // Verify if two specific ports can be connected
-  const canPortsConnect = (sourcePortData: PortData, targetPortData: PortData): boolean => {
-    const { port: sourcePort } = sourcePortData;
-    const { port: targetPort } = targetPortData;
-
-    // Must be same type
-    if (sourcePort.type !== targetPort.type) {
-      return false;
-    }
-
-    // Prevent connecting port to itself
-    if (sourcePortData.object.id === targetPortData.object.id && sourcePort.id === targetPort.id) {
-      return false;
-    }
-
-    return true;
-  };
+  const canPortsConnect = canPortsConnectPure;
 
   const handlePortClick = (port: PlantPort, objectPosition: Vec3Tuple, objectId: number, event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
@@ -176,16 +104,7 @@ const PlantScene = forwardRef<PlantSceneHandle, PlantSceneProps>(({ mode, select
     // If we have a connection start, try to connect to this port
     if (connectionStart) {
       if (canPortsConnect(connectionStart, portData)) {
-        const newConnection: PlantConnection = {
-          id: connectionIdRef.current++,
-          startObjectId: connectionStart.object.id,
-          endObjectId: objectId,
-          startPort: connectionStart.port,
-          endPort: port,
-          type: port.type,
-          startPosition: connectionStart.object.position,
-          endPosition: clickedObject.position
-        };
+        const newConnection: PlantConnection = buildConnection(connectionIdRef.current++, connectionStart, portData);
 
         setConnections(prev => [...prev, newConnection]);
         console.log(`Connected ${connectionStart.port.type} port: ${connectionStart.port.label} -> ${port.label}`);
@@ -363,28 +282,24 @@ const PlantScene = forwardRef<PlantSceneHandle, PlantSceneProps>(({ mode, select
   };
 
   useImperativeHandle(ref, () => ({
-    addObject: (type) => {
+    addObject: (type, position) => {
       const id = objectIdRef.current++;
-      
-      // Generate position with grid snapping
-      const rawX = (Math.random() - 0.5) * 10;
-      const rawZ = (Math.random() - 0.5) * 10;
-      
-      const basePosition: Vec3Tuple = [
-        snapToGrid(rawX),
-        GROUND_LEVEL,
-        snapToGrid(rawZ)
-      ];
 
-      const position = getObjectGroundPosition(basePosition, type);
-      
+      // With no explicit position (the original mouse behaviour, via the
+      // sidebar palette): drop at a random grid-snapped spot. With one (the
+      // gesture-driven "pinch to place" path, a ground-plane raycast hit):
+      // place there instead — same snap/ground-offset rule either way, via
+      // placementPosition (plant-scene-logic.ts).
+      const rawX = position ? position.x : (Math.random() - 0.5) * 10;
+      const rawZ = position ? position.z : (Math.random() - 0.5) * 10;
+
       const newObject = {
         id,
         type,
-        position,
+        position: placementPosition(rawX, rawZ, type, gridSnap, gridSize),
         connections: []
       };
-      
+
       setObjects(prev => [...prev, newObject]);
     },
 
