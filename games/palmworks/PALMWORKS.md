@@ -272,25 +272,47 @@ hands-driven session could.
 
 ## 7. Honest status table
 
+**Updated 2026-08-07 — the hands are wired in.** Everything below §4's core
+mapping (point-to-select, pinch-to-place, pinch-drag/tap-to-connect) is now
+real, running code with real tests, not just a design grounded in real event
+shapes. What follows is what changed and what is honestly still not there.
+
 | Piece | Status |
 |---|---|
-| 3D scene, grid, camera controls | **Built.** Mouse-driven, real, works today. |
-| 29 industrial objects | **Built.** All 29 render, all expose typed ports. |
-| Port-to-port connection + auto-routing | **Built.** Two-click flow, collision-aware pipe routing, animated flow shader. |
-| Component palette, search, categories | **Built.** |
-| Auto-layout, clear-all, grid snap | **Built.** |
-| `HandLandmarkTracker` (library) | **Built**, as of this pass — MediaPipe HandLandmarker wrapper, real delegate fallback, not camera-verified. |
-| `PinchRecognizer` / `PointRecognizer` (library) | **Built**, as of this pass — real hysteresis/debounce state machines, not camera-verified. |
-| Hands wired into `WibblyInput` (the pipeline games actually use) | **Not built.** `pipeline.ts` only composes body pose + `SwingRecognizer`. |
-| Multi-person hand identity (hand → `playerId` binder) | **Not built.** Fine for one local player; a real gap for two. |
-| 2D-gesture → 3D-raycast integration | **Not built.** |
-| Pinch-to-place / point-to-select / pinch-drag-to-connect in this game's code | **Not built.** Everything in §4 is a design, grounded in real event shapes, not yet wired into `PlantScene`/`index.jsx`. |
-| Two-hand camera gesture correlation | **Not built.** |
-| Live connection-preview line while dragging | **Not built.** |
-| Keyboard fallback | **Not built.** Zero keyboard handling exists in this codebase today. Design in §6. |
-| Wired into the wibbly shell (`game.json`, catalogue routing, build integration) | **Not built**, out of scope for this pass by explicit instruction — see §5.8 for what it would take. |
+| 3D scene, grid, camera controls | **Built.** Mouse-driven, real, works today, unchanged. |
+| 29 industrial objects | **Built.** All 29 render, all expose typed ports, unchanged. |
+| Port-to-port connection + auto-routing | **Built.** Two-click (now also two-*tap*) flow, collision-aware pipe routing, animated flow shader. `canPortsConnect`/the connection builder were extracted to `plant-scene-logic.ts` (pure functions) so mouse play and the gesture layer share ONE implementation, not two. |
+| Component palette, search, categories | **Built.** Palette buttons now also carry `data-component-type` (inert for mouse play) so the gesture layer can recognise a pinch-down over one. |
+| Auto-layout, clear-all, grid snap | **Built.**, unchanged. |
+| `HandLandmarkTracker` / `PinchRecognizer` / `PointRecognizer` (library) | **Built.** Still not verified against a real camera/GPU (no hardware available while building this either) — the recognizer thresholds remain "reasoned, not measured." |
+| `HandInput` — hands wired into a pipeline games actually use | **Built.** `packages/wibbly-input/src/hand-pipeline.ts`, a hand-only analogue of `WibblyInput` (FrameSource -> HandTracker -> PinchRecognizer/PointRecognizer -> callbacks), exported at the new `@vulos/wibbly-input/hand` subpath so a consumer that only wants hands does not pull in `@tensorflow*`. `pipeline.ts` (the body-pose `WibblyInput` tennis uses) is untouched. |
+| Multi-person hand identity (hand → `playerId` binder) | **Still not built** as a real binder — `HandInput` defaults to one fixed local `playerId` for both hands (documented, correct for solo play; a second person on the same camera is still indistinguishable, same honest gap as before). |
+| 2D-gesture → 3D-raycast integration | **Built, via DOM reuse, not a hand-rolled raycaster.** `virtual-pointer.ts` dispatches real `pointerdown`/`mousemove`/`mouseup`/`click` events at the mapped screen position — the same events a mouse or touchscreen would send — so `PlantScene`'s existing, UNMODIFIED click/drag handlers do the actual hit-testing. `GestureRaycastBridge.tsx` covers the one case DOM reuse can't (a NEW object's ground position for "pinch to place"). |
+| Pinch-to-place / point-to-select / pinch-drag(tap)-to-connect in this game's code | **Built.** `GestureController` (pinch/point -> down/move/up), `PlacementRouter` (palette pick-up/drop, since a `<button>` has no drag concept to reuse), `VirtualPointer` (DOM dispatch). 36 tests in `games/palmworks`, plus 10 in `packages/wibbly-input` for `HandInput` itself. |
+| Two-hand camera gesture correlation | **Not built.** Out of scope for this pass, same as before — `GestureController` drives a single cursor (whichever hand's pinch is active), not two-hand compound gestures. |
+| Live connection-preview line while dragging | **Not built.** Connecting is tap-tap (pinch-tap port A, pinch-tap port B), matching the mouse's own two-click flow exactly, rather than a continuous drag with a preview line — a deliberate scope cut for this pass, not an oversight. |
+| Keyboard fallback | **Not built.** Still true. Not needed for "stays playable without a camera," though: this game was ALREADY fully mouse-driven before any of this pass's work, and every gesture wired in this pass is a pure ADDITION alongside the mouse path, never a replacement for it — see §8. |
+| Wired into the wibbly shell (`game.json`, catalogue routing, build integration) | **Not built.** `games/palmworks` is still a fully separate nested Vite project with no route in the top-level app's router. The catalogue entry (`src/components/catalogue.ts`) states this plainly and stays `status: 'planned'` for exactly this reason — flipping it would make the title screen's card navigate to nothing. See §5.8; unchanged by this pass by the same explicit-scope reasoning as before. |
 
-Nothing above claims a release date. The factory is real. The hands are a
-design, grounded in code that exists but isn't connected yet, on top of a
-pipeline that doesn't compose it yet, in a game that isn't wired into the
-shell yet. That's four separate, honestly-stated gaps, not one.
+## 8. What "pinch-drag to connect" actually means today
+
+§4.2's table described connecting a port as a single continuous pinch-drag
+from port to port. What is actually built is **pinch-TAP to connect**: a
+quick pinch (down, then up with barely any movement) on port A starts a
+pending connection — mechanically identical to the mouse's first click,
+same `connectionStart` state, same pulsing indicator — and a second
+pinch-tap on a compatible port completes it, or on the same port cancels it.
+A real drag-style release IS distinguished from a tap (`PinchRecognizer`'s
+own `detail.delta`, thresholded in `GestureController`), but nothing
+downstream currently treats a drag differently for ports — only object
+placement and object repositioning use the continuous drag. This is an
+honest, deliberate narrowing for a first pass, not what §4.2 originally
+specified; a continuous drag-to-connect with a live preview line remains a
+real, separate piece of future work (see §7's "Live connection-preview
+line" row).
+
+Nothing above claims a release date. The factory was always real. As of
+this pass, the hands are real too — wired, tested with synthetic hand
+fixtures through the actual recognizers (not mocked), and never verified
+against a live camera, which remains the one gap no amount of test-writing
+in this environment could close.
