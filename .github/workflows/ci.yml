@@ -31,8 +31,17 @@ jobs:
           node-version: 22
           cache: npm
 
+      # games/palmworks is a separate npm project outside the `packages/*`
+      # workspaces (its own package.json + package-lock.json + node_modules —
+      # see the doc comment in games/palmworks/eslint.config.js), so root
+      # `npm ci` alone never installs it. Every script below that chains a
+      # `--prefix games/palmworks` call (lint, check:lint-config, typecheck)
+      # needs its node_modules present first, or the chained call dies with
+      # ERR_MODULE_NOT_FOUND on palmworks' own eslint/typescript plugins.
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm ci --prefix games/palmworks
 
       # `npm run lint` covers both ESLint configs (root eslint.config.js and
       # games/palmworks' own, a separate npm project outside the workspaces —
