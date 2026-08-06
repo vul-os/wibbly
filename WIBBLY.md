@@ -17,7 +17,8 @@ and needs no cloud to play or host.**
 Magnetite is the platform. Wibbly is what building on it looks like when your controller is a
 webcam: one reference game today (tennis), soccer and boxing specified in the backlog, and
 [Palmworks](games/palmworks) — an industrial factory-building game — folded into `games/` with its
-full history, not yet wired to any gesture. Wibbly is free and dual-licensed **MIT OR Apache-2.0**.
+full history. Its own gestures are now wired and tested; what's not wired is a route from
+*wibbly's* title screen into it — see §8. Wibbly is free and dual-licensed **MIT OR Apache-2.0**.
 There is no payment path anywhere in it: no wagers, no tournament pools, no revenue share, no ads.
 That is not an oversight to fix later — it is the position. See §7's removal note.
 
@@ -382,10 +383,14 @@ ads. Nothing in §0 or §2 depends on any of it existing.
       multiplayer is a separate, magnetite-free track: peer-to-peer WebRTC via
       `packages/wibbly-p2p` (renamed from `packages/wibbly-magnetite`).
 - [ ] **Palmworks** — folded into [`games/palmworks`](games/palmworks) with its full history and
-      its own build: an industrial factory-building game. **Hands are not wired to it yet.**
-      `HandLandmarkTracker` + `PinchRecognizer`/`PointRecognizer` now exist (Phase 1, above), but
-      nothing in Palmworks or `WibblyInput` calls them yet — getting it playable by gesture is
-      still open.
+      its own build: an industrial factory-building game. **Hands are wired to it now**, and
+      tested: `HandInput` (`packages/wibbly-input/src/hand-pipeline.ts`, the new
+      `@vulos/wibbly-input/hand` subpath) drives the game's own `GestureController` →
+      `VirtualPointer`, which dispatches real DOM pointer events so `PlantScene`'s existing
+      handlers do the hit-testing — 46 new tests against synthetic `Hand` fixtures. `WibblyInput`
+      (`pipeline.ts`, what tennis uses) is untouched by this — Palmworks gets hands through its
+      own pipeline, not through the shared one. What's still open: no live-camera session has run
+      it, and Palmworks still has no route from *wibbly's* own title screen (below).
 - [ ] **Soccer** — second reference game. Proves the SDK generalises beyond tennis,
       and is the first game to need a gesture that is *not* a swing: a kick is a
       lower-body gesture, so it exercises leg keypoints the `SwingRecognizer` ignores
@@ -396,13 +401,15 @@ ads. Nothing in §0 or §2 depends on any of it existing.
       into `Calibration.handedness` today. Also the natural first test of 2-player
       local, since boxing is head-to-head by nature.
 
-> The title screen (`src/pages/title.jsx`, catalogue in `src/components/catalogue.js`) shows
+> The title screen (`src/pages/title.jsx`, catalogue in `src/components/catalogue.ts`) shows
 > **four** cards: Tennis is `playable`; Soccer, Boxing, and **Palmworks** all carry
 > `status: 'planned'` and render as non-clickable **Planned** cards. They are listed here so
 > that presentation points at tracked work rather than at nothing. Soccer and Boxing exist as
 > no code at all. Palmworks is different from the other two: it exists as a real, independent
-> app (`games/palmworks`) playable standalone by mouse and keyboard — it is only *wibbly's own*
-> title screen it can't be reached from, because nothing wires a gesture to it yet. See above.
+> app (`games/palmworks`) playable standalone by mouse and keyboard, *and* by gesture now — it
+> is only *wibbly's own* title screen it can't be reached from, because `games/palmworks` is a
+> fully separate nested Vite project with no route in this app's router, not because it lacks a
+> gesture. See above.
 
 ### Phase 3 — depth
 - [ ] `RtmoOnnxTracker` (ONNX Runtime Web + WebGPU), benchmarked against MoveNet.
@@ -428,9 +435,10 @@ ads. Nothing in §0 or §2 depends on any of it existing.
   independently reverified for this pass). The phase-1 refactor already deleted the old
   `poseDetection.js` that those branches may have been built against. If any are still active,
   they need to rebase onto the current history rather than expecting a clean merge.
-- **Hands or body first?** The name says "hand gesture," the shipped game does body pose.
-  Palmworks raises the stakes on this: it is a hands-first game, and while `HandLandmarkTracker` +
-  `PinchRecognizer`/`PointRecognizer` now exist as a library, nothing wires them to drive it yet.
-  Still undecided which modality is the flagship one.
+- **Hands or body first?** The name says "hand gesture," the shipped game (tennis) does body
+  pose. Palmworks raises the stakes on this: it is a hands-first game, and `HandLandmarkTracker` +
+  `PinchRecognizer`/`PointRecognizer` now do drive it, through Palmworks' own `HandInput`
+  pipeline — just not through the wibbly title screen or `WibblyInput`. Still undecided which
+  modality is the flagship one.
 - **No in-browser benchmarks exist** for RTMO/YOLO-pose at any player count. If phase 3 proceeds,
   we benchmark it ourselves — there is no number to inherit.
