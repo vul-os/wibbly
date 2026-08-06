@@ -9,3 +9,16 @@ dist-demo
 
 # Claude Code session state (local only)
 .claude/
+
+# MediaPipe HandLandmarker assets — ~39 MB, regenerated on demand, never
+# committed. `scripts/vendor-hand-assets.mjs` copies the Wasm runtime out of
+# the already-installed @mediapipe/tasks-vision package (no network) and
+# fetches the model from a pinned URL, so a re-run reproduces these byte for
+# byte. They were committed once and removed from history with git-filter-repo;
+# this rule is what stops the next `git add` putting them back.
+#
+#   npm run vendor:hands
+#
+# Note this deliberately differs from public/models/movenet-* , which IS
+# committed so pose games work from a bare clone.
+games/palmworks/public/models/hand-landmarker/
