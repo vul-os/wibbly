@@ -66,14 +66,26 @@ export interface GestureControllerConfig {
   /**
    * Normalized-image-space distance (see wibbly-input's coordinate contract)
    * below which a pinch start->release counts as a TAP rather than a drag.
-   * 0.03 is roughly 3% of the frame — comfortably above hand-tracking jitter
-   * on a held-still pinch, comfortably below a deliberate drag.
+   *
+   * NOT an arbitrary "feels about right" number — it has to clear a real
+   * geometric floor. `PinchRecognizer`'s own hysteresis band (pinch.ts)
+   * means a release-by-separating-fingers ALWAYS moves the measured
+   * midpoint by at least `exitRatio * handScale / 2` (half of the
+   * thumb-index gap that must open to cross `exitRatio`, since the midpoint
+   * sits between them) — at the library's `DEFAULT_PINCH_CONFIG`
+   * (`exitRatio: 0.5`) that floor is `0.25 * handScale`, i.e. genuinely
+   * unavoidable even for a hand held perfectly still except for the pinch
+   * itself opening. `tapThreshold` must sit comfortably above that floor or
+   * every real tap would misclassify as a drag; 0.05 clears it with margin
+   * for ordinary hand scales (`handScale` around 0.12-0.2 in typical
+   * framing) while staying well under a deliberate drag to a different grid
+   * cell or a distant port (routinely 0.1+).
    */
   tapThreshold: number;
 }
 
 export const DEFAULT_GESTURE_CONTROLLER_CONFIG: GestureControllerConfig = {
-  tapThreshold: 0.03,
+  tapThreshold: 0.05,
 };
 
 function magnitude(v: Vector2): number {

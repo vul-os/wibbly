@@ -72,6 +72,27 @@ export function pinchOverride(cx: number, cy: number, scale: number): HandOverri
   return { thumb_tip: { x: cx + dx * scale, y: cy + dy * scale } };
 }
 
+/**
+ * Thumb tip nudged just past PinchRecognizer's DEFAULT_PINCH_CONFIG exit
+ * boundary (`exitRatio: 0.5`, i.e. raw distance `0.5 * handScale`) from
+ * index tip — a hand mid-release, NOT the fully-open resting pose `makeHand`
+ * with no override would give. This matters: the natural open-hand
+ * thumb_tip position (HAND_LAYOUT.thumb_tip) sits in a very different
+ * direction from index_tip than "just barely separated," so releasing into
+ * a fully-open hand overstates how far the pinch MIDPOINT moved — a real
+ * fast tap is far more likely to be captured mid-release at typical camera
+ * frame rates than fully-open in the very same frame. `margin` (>1.0)
+ * pushes slightly past the exact boundary so the sample reliably crosses
+ * PinchRecognizer's hysteresis exit predicate rather than landing exactly
+ * on it.
+ */
+export function pinchReleaseOverride(cx: number, cy: number, scale: number, margin = 1.1): HandOverrides {
+  const [idx, idy] = HAND_LAYOUT.index_tip;
+  const indexTip = { x: cx + idx * scale, y: cy + idy * scale };
+  const exitDistance = 0.5 * scale * margin; // 0.5 == DEFAULT_PINCH_CONFIG.exitRatio
+  return { thumb_tip: { x: indexTip.x, y: indexTip.y + exitDistance } };
+}
+
 /** Folds one non-thumb finger's tip back onto its own mcp joint — a curled finger. */
 export function foldFinger(cx: number, cy: number, scale: number, finger: 'index' | 'middle' | 'ring' | 'pinky'): HandOverrides {
   const mcpName = `${finger}_mcp` as HandLandmarkName;

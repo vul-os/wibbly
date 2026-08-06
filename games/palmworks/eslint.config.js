@@ -27,7 +27,17 @@ const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url))
 // (`react/no-unknown-property`, `react/prop-types`) do not exist without
 // the plugin, so there is nothing left to suppress.
 export default tseslint.config(
-  { ignores: ['dist'] },
+  {
+    ignores: [
+      'dist',
+      // Vendored MediaPipe Tasks Vision wasm loader (scripts/vendor-hand-
+      // assets.mjs copies these verbatim from @mediapipe/tasks-vision's own
+      // npm package) — third-party build output, not this project's source.
+      // Same reasoning root repo's public/models/movenet-multipose-
+      // lightning has never needed linting for.
+      'public/models/hand-landmarker/wasm/**',
+    ],
+  },
   // Shared across both JS and TS: the app's own plugin rules don't care
   // which language a file is written in.
   {
@@ -77,7 +87,12 @@ export default tseslint.config(
       globals: globals.browser,
       parserOptions: {
         ecmaFeatures: { jsx: true },
-        projectService: true,
+        projectService: {
+          // vitest.config.ts lives at the package root, outside tsconfig.json's
+          // own `"include": ["src"]` — typescript-eslint's own documented
+          // fix for a root-level TS file with no project of its own.
+          allowDefaultProject: ['vitest.config.ts'],
+        },
         tsconfigRootDir,
       },
     },
