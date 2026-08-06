@@ -2,7 +2,6 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import js from '@eslint/js'
 import globals from 'globals'
-import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
@@ -12,8 +11,21 @@ const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url))
 // palmworks is a SEPARATE npm project from the workspace root one level up
 // (its own package.json, package-lock.json and node_modules) — see the doc
 // comment in ../../eslint.config.js for why the two are not merged into one
-// config. This file lints palmworks' own 45 sources, all but 3 of which are
-// .tsx (see src/).
+// config. This file lints palmworks' own sources.
+//
+// `eslint-plugin-react` (recommended + jsx-runtime rulesets) USED to be part
+// of this config. It was dropped when this package's ESLint was aligned to
+// the workspace root's ^10.8.0 (2026-08-06): the plugin's own
+// `peerDependencies` cap at `eslint: "... || ^9.7"` — no released version
+// supports ESLint 10 — so keeping it would have meant staying on ESLint 9
+// and forking this package's toolchain from root's, the opposite of the
+// point of aligning it. Root's own config (../../eslint.config.js) never
+// depended on eslint-plugin-react at all — react-hooks + react-refresh +
+// typescript-eslint's type-aware rules are root's whole React lint surface
+// — so dropping it here is adopting root's existing shape, not inventing a
+// weaker one. The two rules this file used to turn OFF via the plugin
+// (`react/no-unknown-property`, `react/prop-types`) do not exist without
+// the plugin, so there is nothing left to suppress.
 export default tseslint.config(
   { ignores: ['dist'] },
   // Shared across both JS and TS: the app's own plugin rules don't care
@@ -21,29 +33,15 @@ export default tseslint.config(
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
-      react,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
     },
-    settings: { react: { version: '18.3' } },
     rules: {
-      ...react.configs.recommended.rules,
-      ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
-      'react/jsx-no-target-blank': 'off',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
-      // This scene is built with @react-three/fiber: <mesh>, <group>,
-      // <boxGeometry> etc. are r3f-managed Three.js objects, not DOM
-      // elements. Their props (args, castShadow, metalness, ...) are not
-      // real DOM/SVG attributes, so this rule is 100% false positives here.
-      'react/no-unknown-property': 'off',
-      // No component in this codebase uses the prop-types package (it
-      // isn't even a dependency) — every prop on every component would
-      // otherwise be flagged, which drowns out real lint signal.
-      'react/prop-types': 'off',
     },
   },
   // Anything still plain JS/JSX (vite.config.js, postcss.config.js,
@@ -108,6 +106,17 @@ export default tseslint.config(
     files: ['tailwind.config.js'],
     languageOptions: {
       sourceType: 'commonjs',
+    },
+  },
+  // require-await downgraded to `warn`, test files only — same measured
+  // reasoning and same narrow scope as root eslint.config.js's identical
+  // override: scripted test fakes (e.g. a fake HandTracker) implement an
+  // interface whose real method IS async, so the fake returns a Promise to
+  // satisfy the type even though its own fake body never awaits anything.
+  {
+    files: ['**/*.{test,spec}.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/require-await': 'warn',
     },
   },
 )
