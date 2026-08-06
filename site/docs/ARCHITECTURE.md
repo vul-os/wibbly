@@ -232,8 +232,8 @@ capability-by-capability table for developers; the player-language version of th
 | Multi-person play validated with real people | **Not validated** — fixtures are not a living room |
 | 2-player tennis | **Next** — the binder is multi-player, the game is not |
 | Soccer, Boxing reference games | **Planned** — tracked backlog, no code |
-| Palmworks (`games/palmworks`) | **Playable standalone**, mouse/keyboard — but listed "Planned" on wibbly's own title screen and driven by no gesture |
-| Hand landmarks, pinch, point | **Implemented**, unit-tested — not wired into the pipeline or any game, thresholds unvalidated against a real camera |
+| Palmworks (`games/palmworks`) | **Playable standalone**, mouse/keyboard *and* pinch/point gesture, tested — but still listed "Planned" on wibbly's own title screen (no route in this app's router) |
+| Hand landmarks, pinch, point | **Implemented**, unit-tested, **and now wired into Palmworks** via its own `HandInput` pipeline — still not wired into `WibblyInput` (tennis's pipeline), and thresholds remain unvalidated against a real camera |
 | magnetite integration (`@vulos/wibbly-authority`) | **Built, running** — a real magnetite `AuthoritativeGame` compiled to wasm, run client-side; refused in demo mode |
 | Networked play (peer-to-peer, browser-hosted) | **Transport implemented**, unit-tested, wired into tennis (off by default) — no lobby UI, so nothing turns it into a click-to-play flow |
 | Tauri desktop shell | **Phase 3** |
